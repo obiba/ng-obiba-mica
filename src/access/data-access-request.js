@@ -21,7 +21,7 @@ angular.module('obiba.mica.access', [
   'templates-ngObibaMica'
 ])
   .config(['$provide', function($provide) {
-    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaTemplateUrlFactory.create(
+    $provide.provider('ngObibaMicaAccessTemplateUrl', new NgObibaMicaTemplateUrlFactory().create(
       {
         list: { header: null, footer: null},
         view: { header: null, footer: null},
