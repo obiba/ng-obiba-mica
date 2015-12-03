@@ -1309,6 +1309,7 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "  -->\n" +
     "\n" +
     "<div>\n" +
+    "  <div ng-if=\"headerTemplateUrl\" ng-include=\"headerTemplateUrl\"></div>\n" +
     "\n" +
     "  <obiba-alert id=\"DataAccessRequestViewController\"></obiba-alert>\n" +
     "\n" +
