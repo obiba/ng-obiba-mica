@@ -378,10 +378,6 @@ angular.module('obiba.mica.access')
         $scope.loading = false;
       };
 
-      var requestDownloadUrl = function() {
-        return ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
-      };
-
       DataAccessRequestService.getStatusFilterData(function(translated) {
         $scope.REQUEST_STATUS  = translated;
       });
@@ -389,7 +385,8 @@ angular.module('obiba.mica.access')
 
       $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
       $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
-      $scope.requestDownloadUrl = requestDownloadUrl;
+      $scope.requestDownloadUrl =
+        ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
       $scope.searchStatus = {};
       $scope.loading = true;
       DataAccessRequestsResource.query({}, onSuccess, onError);
@@ -1353,7 +1350,7 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "        class=\"btn btn-primary\" title=\"{{'edit' | translate}}\">\n" +
     "        <i class=\"fa fa-pencil-square-o\"></i>\n" +
     "      </a>\n" +
-    "      <a target=\"_self\" ng-href=\"requestDownloadUrl()\" class=\"btn btn-default\">\n" +
+    "      <a target=\"_self\" href=\"{{requestDownloadUrl}}\" class=\"btn btn-default\">\n" +
     "        <i class=\"glyphicon glyphicon-download-alt\"></i> <span translate>download</span>\n" +
     "      </a>\n" +
     "      <a ng-click=\"delete()\"\n" +
