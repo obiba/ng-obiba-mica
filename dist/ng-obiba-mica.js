@@ -50,16 +50,16 @@ function NgObibaMicaTemplateUrlFactory() {
     var urlRegistry = registry;
 
     this.getHeaderUrl =function(key) {
-      if (key in urlRegistry.header) {
-        return urlRegistry.header[key];
+      if (key in urlRegistry) {
+        return urlRegistry[key].header;
       }
 
       return null;
     };
 
     this.getFooterUrl =function(key) {
-      if (key in urlRegistry.footer) {
-        return urlRegistry.footer[key];
+      if (key in urlRegistry) {
+        return urlRegistry[key].footer;
       }
 
       return null;
