@@ -43,8 +43,8 @@ function NgObibaMicaUrlProvider() {
 }
 
 /* exported NgObibaMicaTemplateUrlProvider */
-function NgObibaMicaTemplateUrlProvider() {
-  var registry = {header: null, footer: null};
+function NgObibaMicaTemplateUrlProvider(inputRegistry) {
+  var registry = inputRegistry;
 
   function TemplateUrlProvider(registry) {
     var urlRegistry = registry;
@@ -58,12 +58,16 @@ function NgObibaMicaTemplateUrlProvider() {
     };
   }
 
-  this.setHeaderUrl = function(url) {
-    registry.header = url;
+  this.setHeaderUrl = function(key, url) {
+    if (key in registry) {
+      registry[key].header = url;
+    }
   };
 
-  this.setFooterUrl = function(url) {
-    registry.footer = url;
+  this.setFooterUrl = function(key, url) {
+    if (key in registry) {
+      registry[key].footer = url;
+    }
   };
 
   this.$get = function() {
@@ -284,6 +288,14 @@ angular.module('obiba.mica.attachment')
 'use strict';
 
 /*global NgObibaMicaTemplateUrlProvider */
+function NgObibaMicaAccessTemplateUrlProvider($injector) {
+  $injector.invoke(NgObibaMicaTemplateUrlProvider, this, {
+      list: { header: null, footer: null},
+      view: { header: null, footer: null},
+      form: { header: null, footer: null}
+  });
+}
+
 angular.module('obiba.mica.access', [
   'pascalprecht.translate',
   'obiba.alert',
@@ -294,7 +306,7 @@ angular.module('obiba.mica.access', [
   'templates-ngObibaMica'
 ])
   .config(['$provide', function($provide) {
-    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaTemplateUrlProvider);
+    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaAccessTemplateUrlProvider);
   }]);
 
 
@@ -1126,9 +1138,6 @@ angular.module("access/views/data-access-request-list.html", []).run(["$template
     "\n" +
     "<div id=\"data-access-request-list\">\n" +
     "\n" +
-    "  <h2>\n" +
-    "    <span translate>data-access-requests</span>\n" +
-    "  </h2>\n" +
     "  <a ng-href=\"#/data-access-request/new\" class=\"btn btn-info\">\n" +
     "    <i class=\"fa fa-plus\"></i> <span translate>data-access-request.add</span>\n" +
     "  </a>\n" +
@@ -1265,12 +1274,6 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "  -->\n" +
     "\n" +
     "<div>\n" +
-    "  <h2>\n" +
-    "    <ol class=\"mica-breadcrumb\">\n" +
-    "      <li><a href=\"#/data-access-requests\" translate>data-access-requests</a></li>\n" +
-    "      <li class=\"active\">{{dataAccessRequest.id}}</li>\n" +
-    "    </ol>\n" +
-    "  </h2>\n" +
     "\n" +
     "  <obiba-alert id=\"DataAccessRequestViewController\"></obiba-alert>\n" +
     "\n" +
