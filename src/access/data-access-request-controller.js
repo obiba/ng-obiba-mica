@@ -19,6 +19,7 @@ angular.module('obiba.mica.access')
     'NOTIFICATION_EVENTS',
     'SessionProxy',
     'USER_ROLES',
+    'ngObibaMicaUrl',
     'ngObibaMicaAccessTemplateUrl',
 
     function ($rootScope,
@@ -29,6 +30,7 @@ angular.module('obiba.mica.access')
               NOTIFICATION_EVENTS,
               SessionProxy,
               USER_ROLES,
+              ngObibaMicaUrl,
               ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(reqs) {
@@ -51,6 +53,10 @@ angular.module('obiba.mica.access')
         $scope.loading = false;
       };
 
+      var requestDownloadUrl = function() {
+        return ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
+      };
+
       DataAccessRequestService.getStatusFilterData(function(translated) {
         $scope.REQUEST_STATUS  = translated;
       });
@@ -58,6 +64,7 @@ angular.module('obiba.mica.access')
 
       $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
       $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
+      $scope.requestDownloadUrl = requestDownloadUrl;
       $scope.searchStatus = {};
       $scope.loading = true;
       DataAccessRequestsResource.query({}, onSuccess, onError);

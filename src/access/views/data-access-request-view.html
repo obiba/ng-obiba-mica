@@ -45,7 +45,7 @@
         class="btn btn-primary" title="{{'edit' | translate}}">
         <i class="fa fa-pencil-square-o"></i>
       </a>
-      <a target="_self" ng-href="/ws/data-access-request/{{dataAccessRequest.id}}/_pdf" class="btn btn-default">
+      <a target="_self" ng-href="requestDownloadUrl()" class="btn btn-default">
         <i class="glyphicon glyphicon-download-alt"></i> <span translate>download</span>
       </a>
       <a ng-click="delete()"

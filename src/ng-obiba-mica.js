@@ -5,6 +5,7 @@ function NgObibaMicaUrlProvider() {
     'DataAccessFormConfigResource': 'ws/config/data-access-form',
     'DataAccessRequestsResource': 'ws/data-access-requests',
     'DataAccessRequestResource': 'ws/data-access-request/:id',
+    'DataAccessRequestDownloadPdfResource': '/ws/data-access-request/:id/_pdf',
     'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
     'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
     'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
