@@ -7,6 +7,69 @@
  */
 'use strict';
 
+function NgObibaMicaUrlProvider() {
+  var registry = {
+    'DataAccessFormConfigResource': 'ws/config/data-access-form',
+    'DataAccessRequestsResource': 'ws/data-access-requests',
+    'DataAccessRequestResource': 'ws/data-access-request/:id',
+    'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
+    'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
+    'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
+    'TempFileUploadResource': 'ws/files/temp',
+    'TempFileResource': 'ws/files/temp/:id'
+  };
+
+  function UrlProvider(registry) {
+    var urlRegistry = registry;
+
+    this.getUrl =function(resource) {
+      if (resource in urlRegistry) {
+        return urlRegistry[resource];
+      }
+
+      return null;
+    };
+  }
+
+  this.setUrl = function(key, url) {
+    if (key in registry) {
+      registry[key] = url;
+    }
+  };
+
+  this.$get = function() {
+    return new UrlProvider(registry);
+  };
+}
+
+/* exported NgObibaMicaTemplateUrlProvider */
+function NgObibaMicaTemplateUrlProvider() {
+  var registry = {header: null, footer: null};
+
+  function TemplateUrlProvider(registry) {
+    var urlRegistry = registry;
+
+    this.getHeaderUrl =function() {
+      return urlRegistry.header;
+    };
+
+    this.getFooterUrl =function() {
+      return urlRegistry.footer;
+    };
+  }
+
+  this.setHeaderUrl = function(url) {
+    registry.header = url;
+  };
+
+  this.setFooterUrl = function(url) {
+    registry.footer = url;
+  };
+
+  this.$get = function() {
+    return new TemplateUrlProvider(registry);
+  };
+}
 
 angular.module('ngObibaMica', [
   'schemaForm',
@@ -23,44 +86,8 @@ angular.module('ngObibaMica', [
     user: 'mica-user',
     dao: 'mica-data-access-officer'
   })
-
   .config(['$provide', function($provide) {
-    $provide.provider('ngObibaMicaUrl', function() {
-      var registry = {
-        'DataAccessFormConfigResource': 'ws/config/data-access-form',
-        'DataAccessRequestsResource': 'ws/data-access-requests',
-        'DataAccessRequestResource': 'ws/data-access-request/:id',
-        'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
-        'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
-        'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
-        'TempFileUploadResource': 'ws/files/temp',
-        'TempFileResource': 'ws/files/temp/:id'
-      };
-
-      function UrlProvider(registry) {
-        var urlRegistry = registry;
-
-        this.getUrl =function(resource) {
-          if (resource in urlRegistry) {
-            return urlRegistry[resource];
-          }
-
-          return null;
-        };
-      }
-
-      this.setUrl = function(key, url) {
-        if (key in registry) {
-          registry[key] = url;
-        }
-      };
-
-      this.$get = function() {
-        return new UrlProvider(registry);
-      };
-
-    });
-
+    $provide.provider('ngObibaMicaUrl', NgObibaMicaUrlProvider);
   }]);
 
 ;'use strict';
@@ -256,6 +283,7 @@ angular.module('obiba.mica.attachment')
 
 'use strict';
 
+/*global NgObibaMicaTemplateUrlProvider */
 angular.module('obiba.mica.access', [
   'pascalprecht.translate',
   'obiba.alert',
@@ -264,7 +292,10 @@ angular.module('obiba.mica.access', [
   'obiba.utils',
   'angularMoment',
   'templates-ngObibaMica'
-]);
+])
+  .config(['$provide', function($provide) {
+    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaTemplateUrlProvider);
+  }]);
 
 
 
@@ -601,7 +632,11 @@ angular.module('obiba.mica.access')
       $scope.forms = {};
     }])
 
-  .controller('DataAccessRequestEditController', ['$log', '$scope', '$routeParams', '$location', '$modal',
+  .controller('DataAccessRequestEditController', ['$log',
+    '$scope',
+    '$routeParams',
+    '$location',
+    '$modal',
     'DataAccessRequestsResource',
     'DataAccessRequestResource',
     'DataAccessFormConfigResource',
@@ -610,6 +645,7 @@ angular.module('obiba.mica.access')
     'ServerErrorUtils',
     'SessionProxy',
     'DataAccessRequestService',
+    'ngObibaMicaAccessTemplateUrl',
 
     function ($log, $scope, $routeParams, $location, $modal,
               DataAccessRequestsResource,
@@ -619,7 +655,8 @@ angular.module('obiba.mica.access')
               AlertService,
               ServerErrorUtils,
               SessionProxy,
-              DataAccessRequestService) {
+              DataAccessRequestService,
+              ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(response, getResponseHeaders) {
         var parts = getResponseHeaders().location.split('/');
@@ -720,6 +757,8 @@ angular.module('obiba.mica.access')
       $scope.save = save;
       $scope.editable = true;
       $scope.validate = validate;
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl();
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl();
       $scope.form = {
         schema: null,
         definition: null,
@@ -1002,20 +1041,8 @@ angular.module("access/views/data-access-request-form.html", []).run(["$template
     "  -->\n" +
     "\n" +
     "<div>\n" +
-    "  <h2>\n" +
-    "    <ol class=\"mica-breadcrumb\">\n" +
-    "      <li><a href=\"#/data-access-requests\" translate>data-access-requests</a></li>\n" +
-    "      <li ng-if=\"!newRequest\"><a href=\"#/data-access-request/{{requestId}}\">{{requestId}}</a></li>\n" +
-    "      <li class=\"active\">\n" +
-    "        <span ng-if=\"newRequest\" translate>add-sm</span>\n" +
-    "        <span ng-if=\"!newRequest\" translate>edit-sm</span>\n" +
-    "        <small><span translate>or</span>\n" +
-    "          <a ng-click=\"cancel()\">\n" +
-    "            <span translate>cancel-sm</span>\n" +
-    "          </a></small>\n" +
-    "      </li>\n" +
-    "    </ol>\n" +
-    "  </h2>\n" +
+    "\n" +
+    "  <div ng-if=\"headerTemplateUrl\" ng-include=\"headerTemplateUrl\"></div>\n" +
     "\n" +
     "  <obiba-alert id=\"DataAccessRequestEditController\"></obiba-alert>\n" +
     "\n" +

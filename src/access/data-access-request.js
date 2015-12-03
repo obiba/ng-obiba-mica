@@ -10,6 +10,7 @@
 
 'use strict';
 
+/*global NgObibaMicaTemplateUrlProvider */
 angular.module('obiba.mica.access', [
   'pascalprecht.translate',
   'obiba.alert',
@@ -18,7 +19,10 @@ angular.module('obiba.mica.access', [
   'obiba.utils',
   'angularMoment',
   'templates-ngObibaMica'
-]);
+])
+  .config(['$provide', function($provide) {
+    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaTemplateUrlProvider);
+  }]);
 
 
 
