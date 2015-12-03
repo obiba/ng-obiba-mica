@@ -780,8 +780,8 @@ angular.module('obiba.mica.access')
       $scope.save = save;
       $scope.editable = true;
       $scope.validate = validate;
-      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl();
-      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl();
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('form');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('form');
       $scope.form = {
         schema: null,
         definition: null,
