@@ -19,10 +19,10 @@ angular.module('obiba.mica.access', [
   'obiba.utils',
   'angularMoment',
   'templates-ngObibaMica'
-])
-  .config(['$provide', function($provide) {
-    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaTemplateUrlProvider);
-  }]);
+]);
+  //.config(['$provide', function($provide) {
+  //  $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaTemplateUrlProvider);
+  //}]);
 
 
 

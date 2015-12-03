@@ -344,7 +344,7 @@ angular.module('obiba.mica.access')
     'ServerErrorUtils',
     'SessionProxy',
     'DataAccessRequestService',
-    'ngObibaMicaAccessTemplateUrl',
+    //'ngObibaMicaAccessTemplateUrl',
 
     function ($log, $scope, $routeParams, $location, $modal,
               DataAccessRequestsResource,
@@ -355,7 +355,8 @@ angular.module('obiba.mica.access')
               ServerErrorUtils,
               SessionProxy,
               DataAccessRequestService,
-              ngObibaMicaAccessTemplateUrl) {
+              //ngObibaMicaAccessTemplateUrl
+    ) {
 
       var onSuccess = function(response, getResponseHeaders) {
         var parts = getResponseHeaders().location.split('/');
@@ -456,8 +457,8 @@ angular.module('obiba.mica.access')
       $scope.save = save;
       $scope.editable = true;
       $scope.validate = validate;
-      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl();
-      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl();
+      //$scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl();
+      //$scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl();
       $scope.form = {
         schema: null,
         definition: null,
