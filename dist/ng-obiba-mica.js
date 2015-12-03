@@ -344,7 +344,6 @@ angular.module('obiba.mica.access')
     'NOTIFICATION_EVENTS',
     'SessionProxy',
     'USER_ROLES',
-    'ngObibaMicaUrl',
     'ngObibaMicaAccessTemplateUrl',
 
     function ($rootScope,
@@ -355,7 +354,6 @@ angular.module('obiba.mica.access')
               NOTIFICATION_EVENTS,
               SessionProxy,
               USER_ROLES,
-              ngObibaMicaUrl,
               ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(reqs) {
@@ -385,8 +383,6 @@ angular.module('obiba.mica.access')
 
       $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
       $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
-      $scope.requestDownloadUrl =
-        ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
       $scope.searchStatus = {};
       $scope.loading = true;
       DataAccessRequestsResource.query({}, onSuccess, onError);
@@ -432,6 +428,7 @@ angular.module('obiba.mica.access')
       'JsonUtils',
       'DataAccessRequestCommentsResource',
       'DataAccessRequestCommentResource',
+      'ngObibaMicaUrl',
       'ngObibaMicaAccessTemplateUrl',
       'AlertService',
       'ServerErrorUtils',
@@ -449,6 +446,7 @@ angular.module('obiba.mica.access')
               JsonUtils,
               DataAccessRequestCommentsResource,
               DataAccessRequestCommentResource,
+              ngObibaMicaUrl,
               ngObibaMicaAccessTemplateUrl,
               AlertService,
               ServerErrorUtils,
@@ -522,6 +520,8 @@ angular.module('obiba.mica.access')
       $scope.deleteComment = deleteComment;
       $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('view');
       $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('view');
+      $scope.requestDownloadUrl =
+        ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
       $scope.getStatusHistoryInfoId = DataAccessRequestService.getStatusHistoryInfoId;
       DataAccessRequestService.getStatusHistoryInfo(function(statusHistoryInfo) {
         $scope.getStatusHistoryInfo = statusHistoryInfo;
