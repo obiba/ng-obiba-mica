@@ -19,3 +19,37 @@ angular.module('obiba.mica.access', [
   'angularMoment',
   'templates-ngObibaMica'
 ]);
+  //.config(['$provide', function($provide) {
+  //  $provide.provider('ngObibaMicaUrl', function() {
+  //    var templates = {
+  //      'header': '',
+  //      'footer': ''
+  //    };
+  //
+  //    function UrlProvider(registry) {
+  //      var urlRegistry = registry;
+  //
+  //      this.getUrl =function(resource) {
+  //        if (resource in urlRegistry) {
+  //          return urlRegistry[resource];
+  //        }
+  //
+  //        return null;
+  //      };
+  //    }
+  //
+  //    this.setHeader = function(key, url) {
+  //      if (key in registry) {
+  //        registry[key] = url;
+  //      }
+  //    };
+  //
+  //    this.$get = function() {
+  //      return new UrlProvider(registry);
+  //    };
+  //
+  //  });
+  //
+  //}]);
+
+

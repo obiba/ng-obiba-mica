@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2015-12-02
+ * Date: 2015-12-03
  */
 'use strict';
 
@@ -66,7 +66,8 @@ angular.module('ngObibaMica', [
         'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
         'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
         'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
-        'TempFileUploadResource': '/ws/files/temp',
+        'TempFileUploadResource': 'ws/files/temp',
+        'TempFileResource': 'ws/files/temp/:id'
       };
 
       function UrlProvider(registry) {
@@ -110,9 +111,9 @@ angular.module('obiba.mica.file')
 ;'use strict';
 
 angular.module('obiba.mica.file')
-  .factory('TempFileResource', ['$resource',
-    function ($resource) {
-      return $resource('ws/files/temp/:id', {}, {
+  .factory('TempFileResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('TempFileResource'), {}, {
         'get': {method: 'GET'},
         'delete': {method: 'DELETE'}
       });
@@ -264,6 +265,40 @@ angular.module('obiba.mica.access', [
   'angularMoment',
   'templates-ngObibaMica'
 ]);
+  //.config(['$provide', function($provide) {
+  //  $provide.provider('ngObibaMicaUrl', function() {
+  //    var templates = {
+  //      'header': '',
+  //      'footer': ''
+  //    };
+  //
+  //    function UrlProvider(registry) {
+  //      var urlRegistry = registry;
+  //
+  //      this.getUrl =function(resource) {
+  //        if (resource in urlRegistry) {
+  //          return urlRegistry[resource];
+  //        }
+  //
+  //        return null;
+  //      };
+  //    }
+  //
+  //    this.setHeader = function(key, url) {
+  //      if (key in registry) {
+  //        registry[key] = url;
+  //      }
+  //    };
+  //
+  //    this.$get = function() {
+  //      return new UrlProvider(registry);
+  //    };
+  //
+  //  });
+  //
+  //}]);
+
+
 ;/*
  * Copyright (c) 2014 OBiBa. All rights reserved.
  *

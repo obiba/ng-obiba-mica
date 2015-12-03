@@ -26,7 +26,8 @@ angular.module('ngObibaMica', [
         'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
         'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
         'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
-        'TempFileUploadResource': '/ws/files/temp',
+        'TempFileUploadResource': 'ws/files/temp',
+        'TempFileResource': 'ws/files/temp/:id'
       };
 
       function UrlProvider(registry) {

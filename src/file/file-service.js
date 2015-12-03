@@ -1,9 +1,9 @@
 'use strict';
 
 angular.module('obiba.mica.file')
-  .factory('TempFileResource', ['$resource',
-    function ($resource) {
-      return $resource('ws/files/temp/:id', {}, {
+  .factory('TempFileResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('TempFileResource'), {}, {
         'get': {method: 'GET'},
         'delete': {method: 'DELETE'}
       });
