@@ -40,7 +40,7 @@ angular.module('obiba.mica.utils', [])
 
 ;'use strict';
 
-function NgObibaMicaUrlProvider() {
+var NgObibaMicaUrlProvider = function () {
   var registry = {
     'DataAccessFormConfigResource': 'ws/config/data-access-form',
     'DataAccessRequestsResource': 'ws/data-access-requests',
@@ -73,7 +73,7 @@ function NgObibaMicaUrlProvider() {
   this.$get = function() {
     return new UrlProvider(registry);
   };
-}
+};
 
 /* exported NgObibaMicaTemplateUrlProvider */
 function NgObibaMicaTemplateUrlProvider() {
