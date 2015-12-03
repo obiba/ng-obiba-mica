@@ -1353,7 +1353,7 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "        class=\"btn btn-primary\" title=\"{{'edit' | translate}}\">\n" +
     "        <i class=\"fa fa-pencil-square-o\"></i>\n" +
     "      </a>\n" +
-    "      <a target=\"_self\" ng-href=\"requestDownloadUrl()\" class=\"btn btn-default\">\n" +
+    "      <a target=\"_self\" href=\"{{requestDownloadUrl()}}\" class=\"btn btn-default\">\n" +
     "        <i class=\"glyphicon glyphicon-download-alt\"></i> <span translate>download</span>\n" +
     "      </a>\n" +
     "      <a ng-click=\"delete()\"\n" +
