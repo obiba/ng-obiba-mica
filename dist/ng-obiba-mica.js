@@ -49,12 +49,20 @@ function NgObibaMicaTemplateUrlFactory() {
   function TemplateUrlProvider(registry) {
     var urlRegistry = registry;
 
-    this.getHeaderUrl =function() {
-      return urlRegistry.header;
+    this.getHeaderUrl =function(key) {
+      if (key in urlRegistry.header) {
+        return urlRegistry.header[key];
+      }
+
+      return null;
     };
 
-    this.getFooterUrl =function() {
-      return urlRegistry.footer;
+    this.getFooterUrl =function(key) {
+      if (key in urlRegistry.footer) {
+        return urlRegistry.footer[key];
+      }
+
+      return null;
     };
   }
 
