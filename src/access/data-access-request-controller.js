@@ -354,7 +354,8 @@ angular.module('obiba.mica.access')
               AlertService,
               ServerErrorUtils,
               SessionProxy,
-              DataAccessRequestService,
+              DataAccessRequestService
+      //,
               //ngObibaMicaAccessTemplateUrl
     ) {
 
