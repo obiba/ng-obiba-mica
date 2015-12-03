@@ -9,13 +9,7 @@
   -->
 
 <div>
-  <h2>
-    <ol class="mica-breadcrumb">
-      <li><a href="#/data-access-requests" translate>data-access-requests</a></li>
-      <li class="active">{{dataAccessRequest.id}}</li>
-    </ol>
-  </h2>
-  <p>Testing</p>
+  <div ng-if="headerTemplateUrl" ng-include="headerTemplateUrl"></div>
 
   <obiba-alert id="DataAccessRequestViewController"></obiba-alert>
 
@@ -51,7 +45,7 @@
         class="btn btn-primary" title="{{'edit' | translate}}">
         <i class="fa fa-pencil-square-o"></i>
       </a>
-      <a target="_self" ng-href="/ws/data-access-request/{{dataAccessRequest.id}}/_pdf" class="btn btn-default">
+      <a target="_self" href="{{requestDownloadUrl}}" class="btn btn-default">
         <i class="glyphicon glyphicon-download-alt"></i> <span translate>download</span>
       </a>
       <a ng-click="delete()"

@@ -27,6 +27,7 @@
     "document": false,
     "describe": false,
     "it": false,
+    "filesize": true,
     "before": false,
     "beforeEach": false,
     "after": false,

@@ -10,10 +10,26 @@
 
 'use strict';
 
-angular.module('dataAccessRequest')
-  .controller('DataAccessRequestListController', ['$rootScope', '$scope', 'DataAccessRequestsResource', 'DataAccessRequestResource', 'DataAccessRequestService', 'NOTIFICATION_EVENTS', 'Session', 'USER_ROLES',
+angular.module('obiba.mica.access')
+  .controller('DataAccessRequestListController', ['$rootScope',
+    '$scope',
+    'DataAccessRequestsResource',
+    'DataAccessRequestResource',
+    'DataAccessRequestService',
+    'NOTIFICATION_EVENTS',
+    'SessionProxy',
+    'USER_ROLES',
+    'ngObibaMicaAccessTemplateUrl',
 
-    function ($rootScope, $scope, DataAccessRequestsResource, DataAccessRequestResource, DataAccessRequestService, NOTIFICATION_EVENTS, Session, USER_ROLES) {
+    function ($rootScope,
+              $scope,
+              DataAccessRequestsResource,
+              DataAccessRequestResource,
+              DataAccessRequestService,
+              NOTIFICATION_EVENTS,
+              SessionProxy,
+              USER_ROLES,
+              ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(reqs) {
         for (var i = 0; i < reqs.length; i++) {
@@ -39,11 +55,14 @@ angular.module('dataAccessRequest')
         $scope.REQUEST_STATUS  = translated;
       });
 
+
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
       $scope.searchStatus = {};
       $scope.loading = true;
       DataAccessRequestsResource.query({}, onSuccess, onError);
       $scope.actions = DataAccessRequestService.actions;
-      $scope.showApplicant = Session.roles.filter(function(role) {
+      $scope.showApplicant = SessionProxy.roles().filter(function(role) {
         return [USER_ROLES.dao, USER_ROLES.admin].indexOf(role) > -1;
       }).length > 0;
 
@@ -81,9 +100,11 @@ angular.module('dataAccessRequest')
       'DataAccessRequestService',
       'DataAccessRequestStatusResource',
       'DataAccessFormConfigResource',
-      'DataAccessFormService',
+      'JsonUtils',
       'DataAccessRequestCommentsResource',
       'DataAccessRequestCommentResource',
+      'ngObibaMicaUrl',
+      'ngObibaMicaAccessTemplateUrl',
       'AlertService',
       'ServerErrorUtils',
       'NOTIFICATION_EVENTS',
@@ -97,9 +118,11 @@ angular.module('dataAccessRequest')
               DataAccessRequestService,
               DataAccessRequestStatusResource,
               DataAccessFormConfigResource,
-              DataAccessFormService,
+              JsonUtils,
               DataAccessRequestCommentsResource,
               DataAccessRequestCommentResource,
+              ngObibaMicaUrl,
+              ngObibaMicaAccessTemplateUrl,
               AlertService,
               ServerErrorUtils,
               NOTIFICATION_EVENTS) {
@@ -170,6 +193,8 @@ angular.module('dataAccessRequest')
       $scope.submitComment = submitComment;
       $scope.updateComment = updateComment;
       $scope.deleteComment = deleteComment;
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('view');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('view');
       $scope.getStatusHistoryInfoId = DataAccessRequestService.getStatusHistoryInfoId;
       DataAccessRequestService.getStatusHistoryInfo(function(statusHistoryInfo) {
         $scope.getStatusHistoryInfo = statusHistoryInfo;
@@ -181,6 +206,8 @@ angular.module('dataAccessRequest')
         return DataAccessRequestResource.get({id: $routeParams.id}, function onSuccess(request) {
           try {
             $scope.form.model = request.content ? JSON.parse(request.content) : {};
+            $scope.requestDownloadUrl =
+              ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
           } catch (e) {
             $scope.validForm = false;
             $scope.form.model = {};
@@ -194,8 +221,8 @@ angular.module('dataAccessRequest')
           // Retrieve form data
           DataAccessFormConfigResource.get(
             function onSuccess(dataAccessForm) {
-              $scope.form.definition = DataAccessFormService.parseJsonSafely(dataAccessForm.definition, []);
-              $scope.form.schema = DataAccessFormService.parseJsonSafely(dataAccessForm.schema, {});
+              $scope.form.definition = JsonUtils.parseJsonSafely(dataAccessForm.definition, []);
+              $scope.form.schema = JsonUtils.parseJsonSafely(dataAccessForm.schema, {});
 
               if ($scope.form.definition.length === 0) {
                 $scope.validForm = false;
@@ -331,25 +358,31 @@ angular.module('dataAccessRequest')
       $scope.forms = {};
     }])
 
-  .controller('DataAccessRequestEditController', ['$log', '$scope', '$routeParams', '$location', '$modal',
+  .controller('DataAccessRequestEditController', ['$log',
+    '$scope',
+    '$routeParams',
+    '$location',
+    '$modal',
     'DataAccessRequestsResource',
     'DataAccessRequestResource',
     'DataAccessFormConfigResource',
-    'DataAccessFormService',
+    'JsonUtils',
     'AlertService',
     'ServerErrorUtils',
-    'Session',
+    'SessionProxy',
     'DataAccessRequestService',
+    'ngObibaMicaAccessTemplateUrl',
 
     function ($log, $scope, $routeParams, $location, $modal,
               DataAccessRequestsResource,
               DataAccessRequestResource,
               DataAccessFormConfigResource,
-              DataAccessFormService,
+              JsonUtils,
               AlertService,
               ServerErrorUtils,
-              Session,
-              DataAccessRequestService) {
+              SessionProxy,
+              DataAccessRequestService,
+              ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(response, getResponseHeaders) {
         var parts = getResponseHeaders().location.split('/');
@@ -392,8 +425,8 @@ angular.module('dataAccessRequest')
       // Retrieve form data
       DataAccessFormConfigResource.get(
         function onSuccess(dataAccessForm) {
-          $scope.form.definition = DataAccessFormService.parseJsonSafely(dataAccessForm.definition, []);
-          $scope.form.schema = DataAccessFormService.parseJsonSafely(dataAccessForm.schema, {});
+          $scope.form.definition = JsonUtils.parseJsonSafely(dataAccessForm.definition, []);
+          $scope.form.schema = JsonUtils.parseJsonSafely(dataAccessForm.schema, {});
           if ($scope.form.definition.length === 0) {
             $scope.form.definition = [];
             $scope.validForm = false;
@@ -434,7 +467,7 @@ angular.module('dataAccessRequest')
                 request.attachments = request.attachments || [];
                 return request;
               }) : {
-              applicant: Session.login,
+              applicant: SessionProxy.login(),
               status: DataAccessRequestService.status.OPENED,
               attachments: []
             };
@@ -450,6 +483,8 @@ angular.module('dataAccessRequest')
       $scope.save = save;
       $scope.editable = true;
       $scope.validate = validate;
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('form');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('form');
       $scope.form = {
         schema: null,
         definition: null,

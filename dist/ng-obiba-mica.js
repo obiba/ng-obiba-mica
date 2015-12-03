@@ -3,27 +3,292 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2015-11-26
+ * Date: 2015-12-03
  */
-/*
- * Copyright (c) 2014 OBiBa. All rights reserved.
- *
- * This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 'use strict';
 
-angular.module('dataAccessRequest', [
-  'pascalprecht.translate',
-  'obiba.alert',
-  'obiba.comments',
-  'angularMoment',
+function NgObibaMicaUrlProvider() {
+  var registry = {
+    'DataAccessFormConfigResource': 'ws/config/data-access-form',
+    'DataAccessRequestsResource': 'ws/data-access-requests',
+    'DataAccessRequestResource': 'ws/data-access-request/:id',
+    'DataAccessRequestDownloadPdfResource': '/ws/data-access-request/:id/_pdf',
+    'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
+    'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
+    'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
+    'TempFileUploadResource': 'ws/files/temp',
+    'TempFileResource': 'ws/files/temp/:id'
+  };
+
+  function UrlProvider(registry) {
+    var urlRegistry = registry;
+
+    this.getUrl =function(resource) {
+      if (resource in urlRegistry) {
+        return urlRegistry[resource];
+      }
+
+      return null;
+    };
+  }
+
+  this.setUrl = function(key, url) {
+    if (key in registry) {
+      registry[key] = url;
+    }
+  };
+
+  this.$get = function() {
+    return new UrlProvider(registry);
+  };
+}
+
+/* exported NgObibaMicaTemplateUrlFactory */
+function NgObibaMicaTemplateUrlFactory() {
+  var factory = {registry: null};
+
+  function TemplateUrlProvider(registry) {
+    var urlRegistry = registry;
+
+    this.getHeaderUrl =function(key) {
+      if (key in urlRegistry) {
+        return urlRegistry[key].header;
+      }
+
+      return null;
+    };
+
+    this.getFooterUrl =function(key) {
+      if (key in urlRegistry) {
+        return urlRegistry[key].footer;
+      }
+
+      return null;
+    };
+  }
+
+  factory.setHeaderUrl = function(key, url) {
+    if (key in this.registry) {
+      this.registry[key].header = url;
+    }
+  };
+
+  factory.setFooterUrl = function(key, url) {
+    if (key in this.registry) {
+      this.registry[key].footer = url;
+    }
+  };
+
+  factory.$get = function() {
+    return new TemplateUrlProvider(this.registry);
+  };
+
+  this.create = function(inputRegistry) {
+    factory.registry = inputRegistry;
+    return factory;
+  };
+}
+
+angular.module('ngObibaMica', [
+  'schemaForm',
+  'obiba.mica.utils',
+  'obiba.mica.file',
+  'obiba.mica.attachment',
+  'obiba.mica.access'
+])
+  .constant('USER_ROLES', {
+    all: '*',
+    admin: 'mica-administrator',
+    reviewer: 'mica-reviewer',
+    editor: 'mica-editor',
+    user: 'mica-user',
+    dao: 'mica-data-access-officer'
+  })
+  .config(['$provide', function($provide) {
+    $provide.provider('ngObibaMicaUrl', NgObibaMicaUrlProvider);
+  }]);
+
+;'use strict';
+
+angular.module('obiba.mica.utils', [])
+
+  .factory('UserProfileService',
+    function () {
+
+      var getAttributeValue = function(attributes, key) {
+        var result = attributes.filter(function (attribute) {
+          return attribute.key === key;
+        });
+
+        return result && result.length > 0 ? result[0].value : null;
+      };
+
+      return {
+
+        'getAttribute': function (attributes, key) {
+          return getAttributeValue(attributes, key);
+        },
+
+        'getFullName': function (profile) {
+          if (profile) {
+            if (profile.attributes) {
+              return getAttributeValue(profile.attributes, 'firstName') + ' ' + getAttributeValue(profile.attributes, 'lastName');
+            }
+            return profile.username;
+          }
+          return null;
+        }
+      };
+    });
+
+;'use strict';
+
+angular.module('obiba.mica.file', ['ngResource']);
+;'use strict';
+
+angular.module('obiba.mica.file')
+  .filter('bytes', function () {
+    return function (bytes) {
+      return bytes === null || typeof bytes === 'undefined' ? '' : filesize(bytes);
+    };
+  });
+
+;'use strict';
+
+angular.module('obiba.mica.file')
+  .factory('TempFileResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('TempFileResource'), {}, {
+        'get': {method: 'GET'},
+        'delete': {method: 'DELETE'}
+      });
+    }])
+;
+;'use strict';
+
+angular.module('obiba.mica.attachment', [
+  'obiba.mica.file',
+  'ui',
+  'ui.bootstrap',
+  'ngFileUpload',
   'templates-ngObibaMica'
 ]);
+;'use strict';
+
+angular.module('obiba.mica.attachment')
+  .directive('attachmentList', [function() {
+    return {
+      restrict: 'E',
+      scope: {
+        hrefBuilder: '&',
+        files: '='
+      },
+      templateUrl: 'attachment/attachment-list-template.html',
+      link: function(scope) {
+        scope.attachments = [];
+        scope.hrefBuilder = scope.hrefBuilder || function(a) { return a.id; };
+
+        scope.$watch('files', function(val) {
+          if (val) {
+            scope.attachments = val.map(function (a) {
+              var temp = angular.copy(a);
+              temp.href = scope.hrefBuilder({id: a.id});
+              return temp;
+            });
+          }
+        }, true);
+      }
+    };
+  }])
+  .directive('attachmentInput', [function () {
+    return {
+      restrict: 'E',
+      require: '^form',
+      scope: {
+        multiple: '=',
+        accept: '@',
+        files: '='
+      },
+      templateUrl: 'attachment/attachment-input-template.html',
+      controller: 'AttachmentCtrl'
+    };
+  }])
+  .controller('AttachmentCtrl', ['$scope', '$timeout', '$log', 'Upload', 'TempFileResource', 'ngObibaMicaUrl',
+    function ($scope, $timeout, $log, Upload, TempFileResource, ngObibaMicaUrl) {
+      $scope.onFileSelect = function (file) {
+        $scope.uploadedFiles = file;
+        $scope.uploadedFiles.forEach(function (f) {
+          uploadFile(f);
+        });
+      };
+
+      var uploadFile = function (file) {
+        $log.debug('file', file);
+
+        var attachment = {
+          showProgressBar: true,
+          lang: 'en',
+          progress: 0,
+          fileName: file.name,
+          size: file.size
+        };
+
+        if ($scope.multiple) {
+          $scope.files.push(attachment);
+        } else {
+          $scope.files.splice(0, $scope.files.length);
+          $scope.files.push(attachment);
+        }
+
+        $scope.upload = Upload
+          .upload({
+            url: ngObibaMicaUrl.getUrl('TempFileUploadResource'),
+            method: 'POST',
+            file: file
+          })
+          .progress(function (evt) {
+            attachment.progress = parseInt(100.0 * evt.loaded / evt.total);
+          })
+          .success(function (data, status, getResponseHeaders) {
+            var parts = getResponseHeaders().location.split('/');
+            var fileId = parts[parts.length - 1];
+            TempFileResource.get(
+              {id: fileId},
+              function (tempFile) {
+                $log.debug('tempFile', tempFile);
+                attachment.id = tempFile.id;
+                attachment.md5 = tempFile.md5;
+                attachment.justUploaded = true;
+                // wait for 1 second before hiding progress bar
+                $timeout(function () { attachment.showProgressBar = false; }, 1000);
+              }
+            );
+          });
+      };
+
+      $scope.deleteTempFile = function (tempFileId) {
+        TempFileResource.delete(
+          {id: tempFileId},
+          function () {
+            for (var i = $scope.files.length; i--;) {
+              var attachment = $scope.files[i];
+              if (attachment.justUploaded && attachment.id === tempFileId) {
+                $scope.files.splice(i, 1);
+              }
+            }
+          }
+        );
+      };
+
+      $scope.deleteFile = function (fileId) {
+        for (var i = $scope.files.length; i--;) {
+          if ($scope.files[i].id === fileId) {
+            $scope.files.splice(i, 1);
+          }
+        }
+      };
+    }
+  ]);
 ;/*
  * Copyright (c) 2014 OBiBa. All rights reserved.
  *
@@ -36,10 +301,60 @@ angular.module('dataAccessRequest', [
 
 'use strict';
 
-angular.module('dataAccessRequest')
-  .controller('DataAccessRequestListController', ['$rootScope', '$scope', 'DataAccessRequestsResource', 'DataAccessRequestResource', 'DataAccessRequestService', 'NOTIFICATION_EVENTS', 'Session', 'USER_ROLES',
+/*global NgObibaMicaTemplateUrlFactory */
+angular.module('obiba.mica.access', [
+  'pascalprecht.translate',
+  'obiba.alert',
+  'obiba.comments',
+  'obiba.mica.attachment',
+  'obiba.utils',
+  'angularMoment',
+  'templates-ngObibaMica'
+])
+  .config(['$provide', function($provide) {
+    $provide.provider('ngObibaMicaAccessTemplateUrl', new NgObibaMicaTemplateUrlFactory().create(
+      {
+        list: { header: null, footer: null},
+        view: { header: null, footer: null},
+        form: { header: null, footer: null}
+      }
+    ));
+  }]);
 
-    function ($rootScope, $scope, DataAccessRequestsResource, DataAccessRequestResource, DataAccessRequestService, NOTIFICATION_EVENTS, Session, USER_ROLES) {
+
+
+;/*
+ * Copyright (c) 2014 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+angular.module('obiba.mica.access')
+  .controller('DataAccessRequestListController', ['$rootScope',
+    '$scope',
+    'DataAccessRequestsResource',
+    'DataAccessRequestResource',
+    'DataAccessRequestService',
+    'NOTIFICATION_EVENTS',
+    'SessionProxy',
+    'USER_ROLES',
+    'ngObibaMicaAccessTemplateUrl',
+
+    function ($rootScope,
+              $scope,
+              DataAccessRequestsResource,
+              DataAccessRequestResource,
+              DataAccessRequestService,
+              NOTIFICATION_EVENTS,
+              SessionProxy,
+              USER_ROLES,
+              ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(reqs) {
         for (var i = 0; i < reqs.length; i++) {
@@ -65,11 +380,14 @@ angular.module('dataAccessRequest')
         $scope.REQUEST_STATUS  = translated;
       });
 
+
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
       $scope.searchStatus = {};
       $scope.loading = true;
       DataAccessRequestsResource.query({}, onSuccess, onError);
       $scope.actions = DataAccessRequestService.actions;
-      $scope.showApplicant = Session.roles.filter(function(role) {
+      $scope.showApplicant = SessionProxy.roles().filter(function(role) {
         return [USER_ROLES.dao, USER_ROLES.admin].indexOf(role) > -1;
       }).length > 0;
 
@@ -107,9 +425,11 @@ angular.module('dataAccessRequest')
       'DataAccessRequestService',
       'DataAccessRequestStatusResource',
       'DataAccessFormConfigResource',
-      'DataAccessFormService',
+      'JsonUtils',
       'DataAccessRequestCommentsResource',
       'DataAccessRequestCommentResource',
+      'ngObibaMicaUrl',
+      'ngObibaMicaAccessTemplateUrl',
       'AlertService',
       'ServerErrorUtils',
       'NOTIFICATION_EVENTS',
@@ -123,9 +443,11 @@ angular.module('dataAccessRequest')
               DataAccessRequestService,
               DataAccessRequestStatusResource,
               DataAccessFormConfigResource,
-              DataAccessFormService,
+              JsonUtils,
               DataAccessRequestCommentsResource,
               DataAccessRequestCommentResource,
+              ngObibaMicaUrl,
+              ngObibaMicaAccessTemplateUrl,
               AlertService,
               ServerErrorUtils,
               NOTIFICATION_EVENTS) {
@@ -196,6 +518,8 @@ angular.module('dataAccessRequest')
       $scope.submitComment = submitComment;
       $scope.updateComment = updateComment;
       $scope.deleteComment = deleteComment;
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('view');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('view');
       $scope.getStatusHistoryInfoId = DataAccessRequestService.getStatusHistoryInfoId;
       DataAccessRequestService.getStatusHistoryInfo(function(statusHistoryInfo) {
         $scope.getStatusHistoryInfo = statusHistoryInfo;
@@ -207,6 +531,8 @@ angular.module('dataAccessRequest')
         return DataAccessRequestResource.get({id: $routeParams.id}, function onSuccess(request) {
           try {
             $scope.form.model = request.content ? JSON.parse(request.content) : {};
+            $scope.requestDownloadUrl =
+              ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
           } catch (e) {
             $scope.validForm = false;
             $scope.form.model = {};
@@ -220,8 +546,8 @@ angular.module('dataAccessRequest')
           // Retrieve form data
           DataAccessFormConfigResource.get(
             function onSuccess(dataAccessForm) {
-              $scope.form.definition = DataAccessFormService.parseJsonSafely(dataAccessForm.definition, []);
-              $scope.form.schema = DataAccessFormService.parseJsonSafely(dataAccessForm.schema, {});
+              $scope.form.definition = JsonUtils.parseJsonSafely(dataAccessForm.definition, []);
+              $scope.form.schema = JsonUtils.parseJsonSafely(dataAccessForm.schema, {});
 
               if ($scope.form.definition.length === 0) {
                 $scope.validForm = false;
@@ -357,25 +683,31 @@ angular.module('dataAccessRequest')
       $scope.forms = {};
     }])
 
-  .controller('DataAccessRequestEditController', ['$log', '$scope', '$routeParams', '$location', '$modal',
+  .controller('DataAccessRequestEditController', ['$log',
+    '$scope',
+    '$routeParams',
+    '$location',
+    '$modal',
     'DataAccessRequestsResource',
     'DataAccessRequestResource',
     'DataAccessFormConfigResource',
-    'DataAccessFormService',
+    'JsonUtils',
     'AlertService',
     'ServerErrorUtils',
-    'Session',
+    'SessionProxy',
     'DataAccessRequestService',
+    'ngObibaMicaAccessTemplateUrl',
 
     function ($log, $scope, $routeParams, $location, $modal,
               DataAccessRequestsResource,
               DataAccessRequestResource,
               DataAccessFormConfigResource,
-              DataAccessFormService,
+              JsonUtils,
               AlertService,
               ServerErrorUtils,
-              Session,
-              DataAccessRequestService) {
+              SessionProxy,
+              DataAccessRequestService,
+              ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(response, getResponseHeaders) {
         var parts = getResponseHeaders().location.split('/');
@@ -418,8 +750,8 @@ angular.module('dataAccessRequest')
       // Retrieve form data
       DataAccessFormConfigResource.get(
         function onSuccess(dataAccessForm) {
-          $scope.form.definition = DataAccessFormService.parseJsonSafely(dataAccessForm.definition, []);
-          $scope.form.schema = DataAccessFormService.parseJsonSafely(dataAccessForm.schema, {});
+          $scope.form.definition = JsonUtils.parseJsonSafely(dataAccessForm.definition, []);
+          $scope.form.schema = JsonUtils.parseJsonSafely(dataAccessForm.schema, {});
           if ($scope.form.definition.length === 0) {
             $scope.form.definition = [];
             $scope.validForm = false;
@@ -460,7 +792,7 @@ angular.module('dataAccessRequest')
                 request.attachments = request.attachments || [];
                 return request;
               }) : {
-              applicant: Session.login,
+              applicant: SessionProxy.login(),
               status: DataAccessRequestService.status.OPENED,
               attachments: []
             };
@@ -476,6 +808,8 @@ angular.module('dataAccessRequest')
       $scope.save = save;
       $scope.editable = true;
       $scope.validate = validate;
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('form');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('form');
       $scope.form = {
         schema: null,
         definition: null,
@@ -495,7 +829,7 @@ angular.module('dataAccessRequest')
 
 'use strict';
 
-angular.module('dataAccessRequest')
+angular.module('obiba.mica.access')
   .config(['$routeProvider',
     function ($routeProvider) {
       $routeProvider
@@ -528,35 +862,35 @@ angular.module('dataAccessRequest')
 
 'use strict';
 
-angular.module('dataAccessRequest')
+angular.module('obiba.mica.access')
 
-  .factory('DataAccessFormConfigResource', ['$resource',
-    function ($resource) {
-      return $resource('data-access-form/ws', {}, {
+  .factory('DataAccessFormConfigResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('DataAccessFormConfigResource'), {}, {
         'get': {method: 'GET', errorHandler: true}
       });
     }])
 
-  .factory('DataAccessRequestsResource', ['$resource',
-    function ($resource) {
-      return $resource('ws/data-access-requests', {}, {
+  .factory('DataAccessRequestsResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('DataAccessRequestsResource'), {}, {
         'save': {method: 'POST', errorHandler: true},
         'get': {method: 'GET'}
       });
     }])
 
-  .factory('DataAccessRequestResource', ['$resource',
-    function ($resource) {
-      return $resource('ws/data-access-request/:id', {}, {
+  .factory('DataAccessRequestResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('DataAccessRequestResource'), {}, {
         'save': {method: 'PUT', params: {id: '@id'}, errorHandler: true},
         'get': {method: 'GET'},
         'delete': {method: 'DELETE'}
       });
     }])
 
-  .factory('DataAccessRequestCommentsResource', ['$resource',
-    function ($resource) {
-      return $resource('ws/data-access-request/:id/comments', {}, {
+  .factory('DataAccessRequestCommentsResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('DataAccessRequestCommentsResource'), {}, {
         'save': {
           method: 'POST',
           params: {id: '@id'},
@@ -567,9 +901,9 @@ angular.module('dataAccessRequest')
       });
     }])
 
-  .factory('DataAccessRequestCommentResource', ['$resource',
-    function ($resource) {
-      return $resource('ws/data-access-request/:id/comment/:commentId', {}, {
+  .factory('DataAccessRequestCommentResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('DataAccessRequestCommentResource'), {}, {
         'delete': {
           method: 'DELETE',
           params: {id: '@id', commentId: '@commentId'},
@@ -584,9 +918,9 @@ angular.module('dataAccessRequest')
       });
     }])
 
-  .factory('DataAccessRequestStatusResource', ['$resource',
-    function ($resource) {
-      return $resource('ws/data-access-request/:id/_status?to=:status', {}, {
+  .factory('DataAccessRequestStatusResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('DataAccessRequestStatusResource'), {}, {
         'update': {method: 'PUT', params: {id: '@id', status: '@status'}, errorHandler: true}
       });
     }])
@@ -743,12 +1077,7 @@ angular.module('dataAccessRequest')
 
       return this;
     }]);
-;'use strict';
-
-angular.module('ngObibaMica', [
-  'dataAccessRequest'
-]);
-;angular.module('templates-ngObibaMica', ['access/views/data-access-request-form.html', 'access/views/data-access-request-histroy-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html']);
+;angular.module('templates-ngObibaMica', ['access/views/data-access-request-form.html', 'access/views/data-access-request-histroy-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html']);
 
 angular.module("access/views/data-access-request-form.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("access/views/data-access-request-form.html",
@@ -763,20 +1092,8 @@ angular.module("access/views/data-access-request-form.html", []).run(["$template
     "  -->\n" +
     "\n" +
     "<div>\n" +
-    "  <h2>\n" +
-    "    <ol class=\"mica-breadcrumb\">\n" +
-    "      <li><a href=\"#/data-access-requests\" translate>data-access-requests</a></li>\n" +
-    "      <li ng-if=\"!newRequest\"><a href=\"#/data-access-request/{{requestId}}\">{{requestId}}</a></li>\n" +
-    "      <li class=\"active\">\n" +
-    "        <span ng-if=\"newRequest\" translate>add-sm</span>\n" +
-    "        <span ng-if=\"!newRequest\" translate>edit-sm</span>\n" +
-    "        <small><span translate>or</span>\n" +
-    "          <a ng-click=\"cancel()\">\n" +
-    "            <span translate>cancel-sm</span>\n" +
-    "          </a></small>\n" +
-    "      </li>\n" +
-    "    </ol>\n" +
-    "  </h2>\n" +
+    "\n" +
+    "  <div ng-if=\"headerTemplateUrl\" ng-include=\"headerTemplateUrl\"></div>\n" +
     "\n" +
     "  <obiba-alert id=\"DataAccessRequestEditController\"></obiba-alert>\n" +
     "\n" +
@@ -859,10 +1176,8 @@ angular.module("access/views/data-access-request-list.html", []).run(["$template
     "  -->\n" +
     "\n" +
     "<div id=\"data-access-request-list\">\n" +
+    "  <div ng-if=\"headerTemplateUrl\" ng-include=\"headerTemplateUrl\"></div>\n" +
     "\n" +
-    "  <h2>\n" +
-    "    <span translate>data-access-requests</span>\n" +
-    "  </h2>\n" +
     "  <a ng-href=\"#/data-access-request/new\" class=\"btn btn-info\">\n" +
     "    <i class=\"fa fa-plus\"></i> <span translate>data-access-request.add</span>\n" +
     "  </a>\n" +
@@ -999,13 +1314,7 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "  -->\n" +
     "\n" +
     "<div>\n" +
-    "  <h2>\n" +
-    "    <ol class=\"mica-breadcrumb\">\n" +
-    "      <li><a href=\"#/data-access-requests\" translate>data-access-requests</a></li>\n" +
-    "      <li class=\"active\">{{dataAccessRequest.id}}</li>\n" +
-    "    </ol>\n" +
-    "  </h2>\n" +
-    "  <p>Testing</p>\n" +
+    "  <div ng-if=\"headerTemplateUrl\" ng-include=\"headerTemplateUrl\"></div>\n" +
     "\n" +
     "  <obiba-alert id=\"DataAccessRequestViewController\"></obiba-alert>\n" +
     "\n" +
@@ -1041,7 +1350,7 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "        class=\"btn btn-primary\" title=\"{{'edit' | translate}}\">\n" +
     "        <i class=\"fa fa-pencil-square-o\"></i>\n" +
     "      </a>\n" +
-    "      <a target=\"_self\" ng-href=\"/ws/data-access-request/{{dataAccessRequest.id}}/_pdf\" class=\"btn btn-default\">\n" +
+    "      <a target=\"_self\" href=\"{{requestDownloadUrl}}\" class=\"btn btn-default\">\n" +
     "        <i class=\"glyphicon glyphicon-download-alt\"></i> <span translate>download</span>\n" +
     "      </a>\n" +
     "      <a ng-click=\"delete()\"\n" +
@@ -1078,5 +1387,54 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "  </div>\n" +
     "\n" +
     "</div>\n" +
+    "");
+}]);
+
+angular.module("attachment/attachment-input-template.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("attachment/attachment-input-template.html",
+    "<button type=\"button\" class=\"btn btn-primary btn-xs\" aria-hidden=\"true\" ngf-select ngf-change=\"onFileSelect($files)\" translate>file.upload.button</button>\n" +
+    "\n" +
+    "<table ng-show=\"files.length\" class=\"table table-striped\">\n" +
+    "  <tbody>\n" +
+    "  <tr ng-repeat=\"file in files\">\n" +
+    "    <td>\n" +
+    "      {{file.fileName}}\n" +
+    "      <progressbar ng-show=\"file.showProgressBar\" class=\"progress-striped\" value=\"file.progress\">\n" +
+    "        {{file.progress}}%\n" +
+    "      </progressbar>\n" +
+    "    </td>\n" +
+    "    <td>\n" +
+    "      {{file.size | bytes}}\n" +
+    "    </td>\n" +
+    "    <td>\n" +
+    "      <a ng-show=\"file.id\" ng-click=\"deleteFile(file.id)\" class=\"action\">\n" +
+    "        <i class=\"fa fa-trash-o\"></i>\n" +
+    "      </a>\n" +
+    "      <a ng-show=\"file.tempId\" ng-click=\"deleteTempFile(file.tempId)\" class=\"action\">\n" +
+    "        <i class=\"fa fa-trash-o\"></i>\n" +
+    "      </a>\n" +
+    "    </td>\n" +
+    "  </tr>\n" +
+    "  </tbody>\n" +
+    "</table>\n" +
+    "");
+}]);
+
+angular.module("attachment/attachment-list-template.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("attachment/attachment-list-template.html",
+    "<table class=\"table table-bordered table-striped\" ng-show=\"attachments.length\">\n" +
+    "  <tbody>\n" +
+    "  <tr ng-repeat=\"attachment in attachments\">\n" +
+    "    <th>\n" +
+    "      <a target=\"_self\" ng-href=\"{{attachment.href}}\"\n" +
+    "        download=\"{{attachment.fileName}}\">{{attachment.fileName}}\n" +
+    "      </a>\n" +
+    "    </th>\n" +
+    "    <td>\n" +
+    "      {{attachment.size | bytes}}\n" +
+    "    </td>\n" +
+    "  </tr>\n" +
+    "  </tbody>\n" +
+    "</table>\n" +
     "");
 }]);
