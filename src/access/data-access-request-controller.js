@@ -195,8 +195,6 @@ angular.module('obiba.mica.access')
       $scope.deleteComment = deleteComment;
       $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('view');
       $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('view');
-      $scope.requestDownloadUrl =
-        ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $routeParams.id);
       $scope.getStatusHistoryInfoId = DataAccessRequestService.getStatusHistoryInfoId;
       DataAccessRequestService.getStatusHistoryInfo(function(statusHistoryInfo) {
         $scope.getStatusHistoryInfo = statusHistoryInfo;
@@ -208,6 +206,8 @@ angular.module('obiba.mica.access')
         return DataAccessRequestResource.get({id: $routeParams.id}, function onSuccess(request) {
           try {
             $scope.form.model = request.content ? JSON.parse(request.content) : {};
+            $scope.requestDownloadUrl =
+              ngObibaMicaUrl.getUrl('DataAccessRequestDownloadPdfResource').replace(':id', $scope.dataAccessRequest.id);
           } catch (e) {
             $scope.validForm = false;
             $scope.form.model = {};
