@@ -9,8 +9,8 @@ module.exports = function (grunt) {
       src: {
         js: [
           // order is important!
-          'src/utils/utils.js',
           'src/ng-obiba-mica.js',
+          'src/utils/utils.js',
           'src/file/file.js',
           'src/file/file-filter.js',
           'src/file/file-service.js',
