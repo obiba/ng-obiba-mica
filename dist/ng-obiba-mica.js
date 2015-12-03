@@ -40,40 +40,7 @@ angular.module('obiba.mica.utils', [])
 
 ;'use strict';
 
-var NgObibaMicaUrlProvider = function () {
-  var registry = {
-    'DataAccessFormConfigResource': 'ws/config/data-access-form',
-    'DataAccessRequestsResource': 'ws/data-access-requests',
-    'DataAccessRequestResource': 'ws/data-access-request/:id',
-    'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
-    'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
-    'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
-    'TempFileUploadResource': 'ws/files/temp',
-    'TempFileResource': 'ws/files/temp/:id'
-  };
 
-  function UrlProvider(registry) {
-    var urlRegistry = registry;
-
-    this.getUrl =function(resource) {
-      if (resource in urlRegistry) {
-        return urlRegistry[resource];
-      }
-
-      return null;
-    };
-  }
-
-  this.setUrl = function(key, url) {
-    if (key in registry) {
-      registry[key] = url;
-    }
-  };
-
-  this.$get = function() {
-    return new UrlProvider(registry);
-  };
-};
 
 /* exported NgObibaMicaTemplateUrlProvider */
 function NgObibaMicaTemplateUrlProvider() {
@@ -120,7 +87,40 @@ angular.module('ngObibaMica', [
     dao: 'mica-data-access-officer'
   })
   .config(['$provide', function($provide) {
-    $provide.provider('ngObibaMicaUrl', NgObibaMicaUrlProvider);
+    $provide.provider('ngObibaMicaUrl', function NgObibaMicaUrlProvider() {
+      var registry = {
+        'DataAccessFormConfigResource': 'ws/config/data-access-form',
+        'DataAccessRequestsResource': 'ws/data-access-requests',
+        'DataAccessRequestResource': 'ws/data-access-request/:id',
+        'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
+        'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
+        'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
+        'TempFileUploadResource': 'ws/files/temp',
+        'TempFileResource': 'ws/files/temp/:id'
+      };
+
+      function UrlProvider(registry) {
+        var urlRegistry = registry;
+
+        this.getUrl =function(resource) {
+          if (resource in urlRegistry) {
+            return urlRegistry[resource];
+          }
+
+          return null;
+        };
+      }
+
+      this.setUrl = function(key, url) {
+        if (key in registry) {
+          registry[key] = url;
+        }
+      };
+
+      this.$get = function() {
+        return new UrlProvider(registry);
+      };
+    });
   }]);
 
 ;'use strict';
