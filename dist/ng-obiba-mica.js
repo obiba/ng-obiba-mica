@@ -42,9 +42,9 @@ function NgObibaMicaUrlProvider() {
   };
 }
 
-/* exported NgObibaMicaTemplateUrlProvider */
-function NgObibaMicaTemplateUrlProvider(inputRegistry) {
-  var registry = inputRegistry;
+/* exported NgObibaMicaTemplateUrlFactory */
+function NgObibaMicaTemplateUrlFactory() {
+  var factory = {registry: null};
 
   function TemplateUrlProvider(registry) {
     var urlRegistry = registry;
@@ -58,20 +58,25 @@ function NgObibaMicaTemplateUrlProvider(inputRegistry) {
     };
   }
 
-  this.setHeaderUrl = function(key, url) {
-    if (key in registry) {
-      registry[key].header = url;
+  factory.setHeaderUrl = function(key, url) {
+    if (key in this.registry) {
+      this.registry[key].header = url;
     }
   };
 
-  this.setFooterUrl = function(key, url) {
-    if (key in registry) {
-      registry[key].footer = url;
+  factory.setFooterUrl = function(key, url) {
+    if (key in this.registry) {
+      this.registry[key].footer = url;
     }
   };
 
-  this.$get = function() {
-    return new TemplateUrlProvider(registry);
+  factory.$get = function() {
+    return new TemplateUrlProvider(this.registry);
+  };
+
+  this.create = function(inputRegistry) {
+    factory.registry = inputRegistry;
+    return factory;
   };
 }
 
@@ -287,15 +292,7 @@ angular.module('obiba.mica.attachment')
 
 'use strict';
 
-/*global NgObibaMicaTemplateUrlProvider */
-function NgObibaMicaAccessTemplateUrlProvider($injector) {
-  $injector.invoke(NgObibaMicaTemplateUrlProvider, this, {
-      list: { header: null, footer: null},
-      view: { header: null, footer: null},
-      form: { header: null, footer: null}
-  });
-}
-
+/*global NgObibaMicaTemplateUrlFactory */
 angular.module('obiba.mica.access', [
   'pascalprecht.translate',
   'obiba.alert',
@@ -306,7 +303,13 @@ angular.module('obiba.mica.access', [
   'templates-ngObibaMica'
 ])
   .config(['$provide', function($provide) {
-    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaAccessTemplateUrlProvider);
+    $provide.provider('ngObibaMicaAccessTemplateUrl', new NgObibaMicaTemplateUrlFactory.create(
+      {
+        list: { header: null, footer: null},
+        view: { header: null, footer: null},
+        form: { header: null, footer: null}
+      }
+    ));
   }]);
 
 

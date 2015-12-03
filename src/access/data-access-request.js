@@ -10,15 +10,7 @@
 
 'use strict';
 
-/*global NgObibaMicaTemplateUrlProvider */
-function NgObibaMicaAccessTemplateUrlProvider($injector) {
-  $injector.invoke(NgObibaMicaTemplateUrlProvider, this, {
-      list: { header: null, footer: null},
-      view: { header: null, footer: null},
-      form: { header: null, footer: null}
-  });
-}
-
+/*global NgObibaMicaTemplateUrlFactory */
 angular.module('obiba.mica.access', [
   'pascalprecht.translate',
   'obiba.alert',
@@ -29,7 +21,13 @@ angular.module('obiba.mica.access', [
   'templates-ngObibaMica'
 ])
   .config(['$provide', function($provide) {
-    $provide.provider('ngObibaMicaAccessTemplateUrl', NgObibaMicaAccessTemplateUrlProvider);
+    $provide.provider('ngObibaMicaAccessTemplateUrl', new NgObibaMicaTemplateUrlFactory.create(
+      {
+        list: { header: null, footer: null},
+        view: { header: null, footer: null},
+        form: { header: null, footer: null}
+      }
+    ));
   }]);
 
 

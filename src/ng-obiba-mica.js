@@ -35,9 +35,9 @@ function NgObibaMicaUrlProvider() {
   };
 }
 
-/* exported NgObibaMicaTemplateUrlProvider */
-function NgObibaMicaTemplateUrlProvider(inputRegistry) {
-  var registry = inputRegistry;
+/* exported NgObibaMicaTemplateUrlFactory */
+function NgObibaMicaTemplateUrlFactory() {
+  var factory = {registry: null};
 
   function TemplateUrlProvider(registry) {
     var urlRegistry = registry;
@@ -51,20 +51,25 @@ function NgObibaMicaTemplateUrlProvider(inputRegistry) {
     };
   }
 
-  this.setHeaderUrl = function(key, url) {
-    if (key in registry) {
-      registry[key].header = url;
+  factory.setHeaderUrl = function(key, url) {
+    if (key in this.registry) {
+      this.registry[key].header = url;
     }
   };
 
-  this.setFooterUrl = function(key, url) {
-    if (key in registry) {
-      registry[key].footer = url;
+  factory.setFooterUrl = function(key, url) {
+    if (key in this.registry) {
+      this.registry[key].footer = url;
     }
   };
 
-  this.$get = function() {
-    return new TemplateUrlProvider(registry);
+  factory.$get = function() {
+    return new TemplateUrlProvider(this.registry);
+  };
+
+  this.create = function(inputRegistry) {
+    factory.registry = inputRegistry;
+    return factory;
   };
 }
 
