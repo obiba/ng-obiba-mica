@@ -9,6 +9,7 @@
   -->
 
 <div id="data-access-request-list">
+  <div ng-if="headerTemplateUrl" ng-include="headerTemplateUrl"></div>
 
   <a ng-href="#/data-access-request/new" class="btn btn-info">
     <i class="fa fa-plus"></i> <span translate>data-access-request.add</span>

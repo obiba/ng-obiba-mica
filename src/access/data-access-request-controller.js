@@ -11,9 +11,25 @@
 'use strict';
 
 angular.module('obiba.mica.access')
-  .controller('DataAccessRequestListController', ['$rootScope', '$scope', 'DataAccessRequestsResource', 'DataAccessRequestResource', 'DataAccessRequestService', 'NOTIFICATION_EVENTS', 'SessionProxy', 'USER_ROLES',
+  .controller('DataAccessRequestListController', ['$rootScope',
+    '$scope',
+    'DataAccessRequestsResource',
+    'DataAccessRequestResource',
+    'DataAccessRequestService',
+    'NOTIFICATION_EVENTS',
+    'SessionProxy',
+    'USER_ROLES',
+    'ngObibaMicaAccessTemplateUrl',
 
-    function ($rootScope, $scope, DataAccessRequestsResource, DataAccessRequestResource, DataAccessRequestService, NOTIFICATION_EVENTS, SessionProxy, USER_ROLES) {
+    function ($rootScope,
+              $scope,
+              DataAccessRequestsResource,
+              DataAccessRequestResource,
+              DataAccessRequestService,
+              NOTIFICATION_EVENTS,
+              SessionProxy,
+              USER_ROLES,
+              ngObibaMicaAccessTemplateUrl) {
 
       var onSuccess = function(reqs) {
         for (var i = 0; i < reqs.length; i++) {
@@ -39,6 +55,9 @@ angular.module('obiba.mica.access')
         $scope.REQUEST_STATUS  = translated;
       });
 
+
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
       $scope.searchStatus = {};
       $scope.loading = true;
       DataAccessRequestsResource.query({}, onSuccess, onError);
@@ -84,6 +103,7 @@ angular.module('obiba.mica.access')
       'JsonUtils',
       'DataAccessRequestCommentsResource',
       'DataAccessRequestCommentResource',
+      'ngObibaMicaAccessTemplateUrl',
       'AlertService',
       'ServerErrorUtils',
       'NOTIFICATION_EVENTS',
@@ -100,6 +120,7 @@ angular.module('obiba.mica.access')
               JsonUtils,
               DataAccessRequestCommentsResource,
               DataAccessRequestCommentResource,
+              ngObibaMicaAccessTemplateUrl,
               AlertService,
               ServerErrorUtils,
               NOTIFICATION_EVENTS) {
@@ -170,6 +191,8 @@ angular.module('obiba.mica.access')
       $scope.submitComment = submitComment;
       $scope.updateComment = updateComment;
       $scope.deleteComment = deleteComment;
+      $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('view');
+      $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('view');
       $scope.getStatusHistoryInfoId = DataAccessRequestService.getStatusHistoryInfoId;
       DataAccessRequestService.getStatusHistoryInfo(function(statusHistoryInfo) {
         $scope.getStatusHistoryInfo = statusHistoryInfo;
