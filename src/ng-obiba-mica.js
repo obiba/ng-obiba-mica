@@ -13,7 +13,7 @@ function NgObibaMicaUrlProvider() {
     'TempFileUploadResource': 'ws/files/temp',
     'TempFileResource': 'ws/files/temp/:id'
   };
-
+  console.log('test modif');
   function UrlProvider(registry) {
     var urlRegistry = registry;
 
