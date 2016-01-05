@@ -13,7 +13,6 @@ function NgObibaMicaUrlProvider() {
     'TempFileUploadResource': 'ws/files/temp',
     'TempFileResource': 'ws/files/temp/:id'
   };
-  console.log('test modif');
   function UrlProvider(registry) {
     var urlRegistry = registry;
 
@@ -88,7 +87,9 @@ angular.module('ngObibaMica', [
   'obiba.mica.utils',
   'obiba.mica.file',
   'obiba.mica.attachment',
-  'obiba.mica.access'
+  'obiba.mica.access',
+  'obiba.mica.GraphicChartsStudyDesignChart',
+  'obiba.mica.GraphicChartsGeoChart'
 ])
   .constant('USER_ROLES', {
     all: '*',
@@ -100,5 +101,6 @@ angular.module('ngObibaMica', [
   })
   .config(['$provide', function($provide) {
     $provide.provider('ngObibaMicaUrl', NgObibaMicaUrlProvider);
+    $provide.provider('ngObibaMicaOptions', NgObibaMicaOptionsProvider);
   }]);
 
