@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2015-12-16
+ * Date: 2016-01-05
  */
 'use strict';
 
@@ -20,7 +20,7 @@ function NgObibaMicaUrlProvider() {
     'TempFileUploadResource': 'ws/files/temp',
     'TempFileResource': 'ws/files/temp/:id'
   };
-
+  console.log('test modif');
   function UrlProvider(registry) {
     var urlRegistry = registry;
 
