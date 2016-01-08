@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-01-06
+ * Date: 2016-01-08
  */
 'use strict';
 
@@ -18,13 +18,12 @@ function NgObibaMicaUrlProvider() {
     'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
     'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
     'TempFileUploadResource': 'ws/files/temp',
-    'TempFileResource': 'ws/files/temp/:id'
+    'getStudiesStatistics': 'mica/statistics/get_statistics/:id/ws'
   };
-
   function UrlProvider(registry) {
     var urlRegistry = registry;
 
-    this.getUrl =function(resource) {
+    this.getUrl = function (resource) {
       if (resource in urlRegistry) {
         return urlRegistry[resource];
       }
@@ -33,13 +32,13 @@ function NgObibaMicaUrlProvider() {
     };
   }
 
-  this.setUrl = function(key, url) {
+  this.setUrl = function (key, url) {
     if (key in registry) {
       registry[key] = url;
     }
   };
 
-  this.$get = function() {
+  this.$get = function () {
     return new UrlProvider(registry);
   };
 }
@@ -51,7 +50,7 @@ function NgObibaMicaTemplateUrlFactory() {
   function TemplateUrlProvider(registry) {
     var urlRegistry = registry;
 
-    this.getHeaderUrl =function(key) {
+    this.getHeaderUrl = function (key) {
       if (key in urlRegistry) {
         return urlRegistry[key].header;
       }
@@ -59,7 +58,7 @@ function NgObibaMicaTemplateUrlFactory() {
       return null;
     };
 
-    this.getFooterUrl =function(key) {
+    this.getFooterUrl = function (key) {
       if (key in urlRegistry) {
         return urlRegistry[key].footer;
       }
@@ -68,35 +67,36 @@ function NgObibaMicaTemplateUrlFactory() {
     };
   }
 
-  factory.setHeaderUrl = function(key, url) {
+  factory.setHeaderUrl = function (key, url) {
     if (key in this.registry) {
       this.registry[key].header = url;
     }
   };
 
-  factory.setFooterUrl = function(key, url) {
+  factory.setFooterUrl = function (key, url) {
     if (key in this.registry) {
       this.registry[key].footer = url;
     }
   };
 
-  factory.$get = function() {
+  factory.$get = function () {
     return new TemplateUrlProvider(this.registry);
   };
 
-  this.create = function(inputRegistry) {
+  this.create = function (inputRegistry) {
     factory.registry = inputRegistry;
     return factory;
   };
 }
 
 angular.module('ngObibaMica', [
-  'schemaForm',
-  'obiba.mica.utils',
-  'obiba.mica.file',
-  'obiba.mica.attachment',
-  'obiba.mica.access'
-])
+    'schemaForm',
+    'obiba.mica.utils',
+    'obiba.mica.file',
+    'obiba.mica.attachment',
+    'obiba.mica.access',
+    'obiba.mica.graphics'
+  ])
   .constant('USER_ROLES', {
     all: '*',
     admin: 'mica-administrator',
@@ -105,7 +105,7 @@ angular.module('ngObibaMica', [
     user: 'mica-user',
     dao: 'mica-data-access-officer'
   })
-  .config(['$provide', function($provide) {
+  .config(['$provide', function ($provide) {
     $provide.provider('ngObibaMicaUrl', NgObibaMicaUrlProvider);
   }]);
 
@@ -304,26 +304,23 @@ angular.module('obiba.mica.attachment')
 
 /*global NgObibaMicaTemplateUrlFactory */
 angular.module('obiba.mica.access', [
-  'pascalprecht.translate',
-  'obiba.alert',
-  'obiba.comments',
-  'obiba.mica.attachment',
-  'obiba.utils',
-  'angularMoment',
-  'templates-ngObibaMica'
-])
-  .config(['$provide', function($provide) {
+    'pascalprecht.translate',
+    'obiba.alert',
+    'obiba.comments',
+    'obiba.mica.attachment',
+    'obiba.utils',
+    'angularMoment',
+    'templates-ngObibaMica'
+  ])
+  .config(['$provide', function ($provide) {
     $provide.provider('ngObibaMicaAccessTemplateUrl', new NgObibaMicaTemplateUrlFactory().create(
       {
-        list: { header: null, footer: null},
-        view: { header: null, footer: null},
-        form: { header: null, footer: null}
+        list: {header: null, footer: null},
+        view: {header: null, footer: null},
+        form: {header: null, footer: null}
       }
     ));
   }]);
-
-
-
 ;/*
  * Copyright (c) 2014 OBiBa. All rights reserved.
  *
@@ -1114,7 +1111,323 @@ angular.module('obiba.mica.access')
 
       return this;
     }]);
-;angular.module('templates-ngObibaMica', ['access/views/data-access-request-form.html', 'access/views/data-access-request-histroy-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html']);
+;/*
+ * Copyright (c) 2014 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+function GraphicChartsDataProvider() {
+
+  function DataProvider(dataResponse) {
+    var data = dataResponse;
+    this.getData = function (callback) {
+      data.$promise.then(callback);
+    };
+  }
+
+  this.$get = function (GraphicChartsGetData, GraphicChartsConfig) {
+    return new DataProvider(GraphicChartsGetData.get({id: GraphicChartsConfig.getOptions().IdNetworks}));
+  };
+}
+
+angular.module('obiba.mica.graphics', [
+    'googlechart',
+    'obiba.utils'
+  ])
+  .config(['$provide', function ($provide) {
+    $provide.provider('GraphicChartsData', GraphicChartsDataProvider);
+  }]);
+;/*
+ * Copyright (c) 2014 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+angular.module('obiba.mica.graphics')
+  .controller('GraphicGeoChartsController', [
+    '$rootScope',
+    '$scope',
+    '$filter',
+    'GraphicChartsConfig',
+    'GraphicChartsUtils',
+    'GraphicChartsData',
+    function ($rootScope,
+              $scope,
+              $filter,
+              GraphicChartsConfig,
+              GraphicChartsUtils,
+              GraphicChartsData) {
+
+      var geoChartConfig = GraphicChartsConfig.getOptions();
+      GraphicChartsData.getData(function (StudiesByCountriesData) {
+        if (StudiesByCountriesData) {
+          $scope.ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('populations-selectionCriteria-countriesIso', StudiesByCountriesData.studyResultDto, 'country');
+          $scope.ItemDataJSon.unshift(geoChartConfig.GeoChartOptions.header);
+          if ($scope.ItemDataJSon) {
+            $scope.geoChartObject = {};
+            $scope.geoChartObject.type = 'GeoChart';
+            $scope.geoChartObject.data = $scope.ItemDataJSon;
+            $scope.geoChartObject.options = {backgroundColor: {fill: 'transparent'}};
+            angular.extend($scope.geoChartObject.options, geoChartConfig.GeoChartOptions.options);
+          }
+        }
+      });
+
+    }])
+
+  .controller('GraphicRecruitmentResourcesChartsController', [
+    '$rootScope',
+    '$scope',
+    'GraphicChartsConfig',
+    'GraphicChartsUtils',
+    'GraphicChartsData',
+    function ($rootScope,
+              $scope,
+              GraphicChartsConfig,
+              GraphicChartsUtils,
+              GraphicChartsData) {
+
+      var piChartConfig = GraphicChartsConfig.getOptions();
+      GraphicChartsData.getData(function (RecruitmentResourcesData) {
+        if (RecruitmentResourcesData) {
+          var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('populations-recruitment-dataSources', RecruitmentResourcesData.studyResultDto);
+          ItemDataJSon.unshift(piChartConfig.ChartsOptions.recruitmentResources.header);
+          $scope.chartObject = {};
+          $scope.chartObject.options = {};
+          $scope.chartObject.type = 'PieChart';
+          $scope.chartObject.data = ItemDataJSon;
+          $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
+          angular.extend($scope.chartObject.options, piChartConfig.ChartsOptions.recruitmentResources.options);
+          $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + RecruitmentResourcesData.studyResultDto.totalHits + ')';
+
+        } else {
+          $scope.chartObject = {};
+        }
+      });
+
+    }])
+
+  .controller('GraphicStudyDesignChartsController', [
+    '$rootScope',
+    '$scope',
+    'GraphicChartsConfig',
+    'GraphicChartsUtils',
+    'GraphicChartsData',
+    function ($rootScope,
+              $scope,
+              GraphicChartsConfig,
+              GraphicChartsUtils,
+              GraphicChartsData) {
+
+      var piChartConfig = GraphicChartsConfig.getOptions();
+      GraphicChartsData.getData(function (StudiesDesignData) {
+          if (StudiesDesignData) {
+            var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('methods-designs', StudiesDesignData.studyResultDto);
+            ItemDataJSon.unshift(piChartConfig.ChartsOptions.studyDesign.header);
+            $scope.chartObject = {};
+            $scope.chartObject.options = {};
+            $scope.chartObject.type = 'PieChart';
+            $scope.chartObject.data = ItemDataJSon;
+            $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
+            angular.extend($scope.chartObject.options,piChartConfig.ChartsOptions.studyDesign.options );
+            $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + StudiesDesignData.studyResultDto.totalHits + ')';
+
+          } else {
+            $scope.chartObject = {};
+          }
+      });
+    }])
+
+  .controller('GraphicBiologicalSamplesChartsController', [
+    '$rootScope',
+    '$scope',
+    'GraphicChartsConfig',
+    'GraphicChartsUtils',
+    'GraphicChartsData',
+    function ($rootScope,
+              $scope,
+              GraphicChartsConfig,
+              GraphicChartsUtils,
+              GraphicChartsData) {
+
+      var piChartConfig = GraphicChartsConfig.getOptions();
+      GraphicChartsData.getData(function (BiologicalSamples) {
+          if (BiologicalSamples) {
+            var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('populations-dataCollectionEvents-bioSamples', BiologicalSamples.studyResultDto);
+            ItemDataJSon.unshift(piChartConfig.ChartsOptions.biologicalSamples.header);
+            $scope.chartObject = {};
+            $scope.chartObject.options = {};
+            $scope.chartObject.type = 'PieChart';
+            $scope.chartObject.data = ItemDataJSon;
+            $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
+            angular.extend($scope.chartObject.options,piChartConfig.ChartsOptions.biologicalSamples.options );
+            $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + BiologicalSamples.studyResultDto.totalHits + ')';
+
+          } else {
+            $scope.chartObject = {};
+          }
+      });
+    }])
+
+  .controller('GraphicAccessChartsController', [
+    '$rootScope',
+    '$scope',
+    'GraphicChartsConfig',
+    'GraphicChartsUtils',
+    'GraphicChartsData',
+    function ($rootScope,
+              $scope,
+              GraphicChartsConfig,
+              GraphicChartsUtils,
+              GraphicChartsData) {
+
+      var piChartConfig = GraphicChartsConfig.getOptions();
+      GraphicChartsData.getData(function (Access) {
+          if (Access) {
+            var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('access', Access.studyResultDto);
+            ItemDataJSon.unshift(piChartConfig.ChartsOptions.access.header);
+            $scope.chartObject = {};
+            $scope.chartObject.options = {};
+            $scope.chartObject.type = 'BarChart';
+            $scope.chartObject.data = ItemDataJSon;
+            $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
+            angular.extend($scope.chartObject.options,piChartConfig.ChartsOptions.access.options );
+            $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + Access.studyResultDto.totalHits + ')';
+
+          } else {
+            $scope.chartObject = {};
+          }
+      });
+    }]);
+;/*
+ * Copyright (c) 2014 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+angular.module('obiba.mica.graphics')
+  .factory('GraphicChartsGetData', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('getStudiesStatistics'), {}, {
+        'get': {method: 'GET', errorHandler: true}
+      });
+    }])
+  .service('GraphicChartsConfig', function () {
+    var factory = {
+      options: {
+        IdNetworks: 'NaN',
+        ChartsOptions: {
+          recruitmentResources: {
+            header: null,
+            options: {
+              title: null,
+              colors: ['#006600', '#009900', '#009966', '#009933', '#66CC33'],
+              width: 500,
+              height: 300
+            }
+          },
+          studiesDesigns: {
+            header: null,
+            options: {
+              title: null,
+              colors: ['#006600', '#009900', '#009966', '#009933', '#66CC33'],
+              width: 500,
+              height: 300
+            }
+          },
+          biologicalSamples: {
+            header: null,
+            options: {
+              title: null,
+              colors: ['#006600', '#009900', '#009966', '#009933', '#66CC33'],
+              width: 500,
+              height: 300
+            }
+          },
+          access: {
+            header: null,
+            options: {
+              title: null,
+              colors: ['#006600', '#009900', '#009966', '#009933', '#66CC33'],
+              width: 500,
+              height: 300
+            }
+          }
+        },
+        GeoChartOptions: {
+          header: null,
+          options: {
+            title: null
+          }
+        }
+      }
+    };
+    factory.setOptions = function (newOptions) {
+      if (typeof(newOptions) === 'object') {
+        Object.keys(newOptions).forEach(function (option) {
+          if (option in factory.options) {
+            factory.options[option] = newOptions[option];
+          }
+        });
+      }
+    };
+
+    factory.getOptions = function () {
+      return angular.copy(factory.options);
+    };
+    return factory;
+
+  })
+  .service('GraphicChartsUtils', [
+    'CountriesIsoUtils',
+    'LocalizedStringService',
+    function (CountriesIsoUtils,
+              LocalizedStringService) {
+
+      this.getArrayByAggregation = function (AggregationName, EntityDto, specialRetrieve) {
+        var ArrayData = [];
+        angular.forEach(EntityDto.aggs, function (aggragation) {
+          var itemName = [];
+          if (aggragation.aggregation === AggregationName) {
+            var i = 0;
+            angular.forEach(aggragation['obiba.mica.TermsAggregationResultDto.terms'], function (term) {
+              switch (specialRetrieve) {
+                case 'country' :
+                  itemName.name = CountriesIsoUtils.findByCode(term.title.toUpperCase(), LocalizedStringService.getLocal()); //todo retrieve country name
+                  break;
+                default :
+                  itemName.name = term.title;
+                  break;
+              }
+              if (term.count) {
+                ArrayData[i] = [itemName.name, term.count];
+                i ++;
+              }
+            });
+          }
+        });
+        return ArrayData;
+      };
+    }]);;angular.module('templates-ngObibaMica', ['access/views/data-access-request-form.html', 'access/views/data-access-request-histroy-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html']);
 
 angular.module("access/views/data-access-request-form.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("access/views/data-access-request-form.html",

@@ -19,7 +19,10 @@ module.exports = function (grunt) {
           'src/access/data-access-request.js',
           'src/access/data-access-request-controller.js',
           'src/access/data-access-request-router.js',
-          'src/access/data-access-request-service.js'
+          'src/access/data-access-request-service.js',
+          'src/graphics/graphics.js',
+          'src/graphics/graphics-controller.js',
+          'src/graphics/graphics-service.js'
         ]
       }
     },
@@ -64,11 +67,11 @@ module.exports = function (grunt) {
       options: {
         separator: ';',
         banner: '/*!\n' +
-          ' * <%= meta.pkg.name %> - v<%= meta.pkg.version %>\n' +
-          ' * <%= meta.pkg.homepage %>\n\n' +
-          ' * License: <%= meta.pkg.license %>\n' +
-          ' * Date: <%= grunt.template.today("yyyy-mm-dd") %>\n' +
-          ' */\n'
+        ' * <%= meta.pkg.name %> - v<%= meta.pkg.version %>\n' +
+        ' * <%= meta.pkg.homepage %>\n\n' +
+        ' * License: <%= meta.pkg.license %>\n' +
+        ' * Date: <%= grunt.template.today("yyyy-mm-dd") %>\n' +
+        ' */\n'
       },
       dist: {
         src: ['<%= meta.src.js %>', 'tmp/*.js'],
