@@ -21,6 +21,7 @@ module.exports = function (grunt) {
           'src/access/data-access-request-router.js',
           'src/access/data-access-request-service.js',
           'src/graphics/graphics.js',
+          'src/graphics/graphics-directive.js',
           'src/graphics/graphics-controller.js',
           'src/graphics/graphics-service.js'
         ]

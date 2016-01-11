@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-01-08
+ * Date: 2016-01-11
  */
 'use strict';
 
@@ -18,7 +18,8 @@ function NgObibaMicaUrlProvider() {
     'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
     'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
     'TempFileUploadResource': 'ws/files/temp',
-    'getStudiesStatistics': 'mica/statistics/get_statistics/:id/ws'
+    'getStudiesStatistics': 'ws/studies/_search'
+
   };
   function UrlProvider(registry) {
     var urlRegistry = registry;
@@ -1139,7 +1140,8 @@ function GraphicChartsDataProvider() {
 
 angular.module('obiba.mica.graphics', [
     'googlechart',
-    'obiba.utils'
+    'obiba.utils',
+    'templates-ngObibaMica'
   ])
   .config(['$provide', function ($provide) {
     $provide.provider('GraphicChartsData', GraphicChartsDataProvider);
@@ -1157,7 +1159,96 @@ angular.module('obiba.mica.graphics', [
 'use strict';
 
 angular.module('obiba.mica.graphics')
-  .controller('GraphicGeoChartsController', [
+
+  .directive('graphicsGeoCharts', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        fieldTransformer: '@',
+        chartType: '@',
+        chartAggregationName: '@',
+        chartEntityDto: '@',
+        chartOptionsName: '@'
+      },
+      templateUrl: 'graphics/views/charts-directive.html',
+      controller: 'GraphicChartsController'
+    };
+  }])
+
+  .directive('graphicsSelectionCriteria', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        chartType: '@',
+        chartAggregationName: '@',
+        chartEntityDto: '@',
+        chartOptionsName: '@'
+      },
+      templateUrl: 'graphics/views/charts-directive.html',
+      controller: 'GraphicChartsController'
+    };
+  }])
+
+  .directive('graphicsStudyDesign', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        chartType: '@',
+        chartAggregationName: '@',
+        chartEntityDto: '@',
+        chartOptionsName: '@'
+      },
+      templateUrl: 'graphics/views/charts-directive.html',
+      controller: 'GraphicChartsController'
+    };
+  }])
+
+  .directive('graphicsBioSamples', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        chartType: '@',
+        chartAggregationName: '@',
+        chartEntityDto: '@',
+        chartOptionsName: '@'
+      },
+      templateUrl: 'graphics/views/charts-directive.html',
+      controller: 'GraphicChartsController'
+    };
+  }])
+
+  .directive('graphicsAccessPotential', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        chartType: '@',
+        chartAggregationName: '@',
+        chartEntityDto: '@',
+        chartOptionsName: '@'
+      },
+      templateUrl: 'graphics/views/charts-directive.html',
+      controller: 'GraphicChartsController'
+    };
+  }]);;/*
+ * Copyright (c) 2014 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+angular.module('obiba.mica.graphics')
+
+  .controller('GraphicChartsController', [
     '$rootScope',
     '$scope',
     '$filter',
@@ -1170,147 +1261,24 @@ angular.module('obiba.mica.graphics')
               GraphicChartsConfig,
               GraphicChartsUtils,
               GraphicChartsData) {
+      var ChartConfig = GraphicChartsConfig.getOptions();
 
-      var geoChartConfig = GraphicChartsConfig.getOptions();
-      GraphicChartsData.getData(function (StudiesByCountriesData) {
-        if (StudiesByCountriesData) {
-          $scope.ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('populations-selectionCriteria-countriesIso', StudiesByCountriesData.studyResultDto, 'country');
-          $scope.ItemDataJSon.unshift(geoChartConfig.GeoChartOptions.header);
+      GraphicChartsData.getData(function (StudiesData) {
+        if (StudiesData) {
+          $scope.ItemDataJSon = GraphicChartsUtils.getArrayByAggregation($scope.chartAggregationName, StudiesData[$scope.chartEntityDto], $scope.fieldTransformer);
+          $scope.ItemDataJSon.unshift(ChartConfig.ChartsOptions[$scope.chartOptionsName].header);
           if ($scope.ItemDataJSon) {
-            $scope.geoChartObject = {};
-            $scope.geoChartObject.type = 'GeoChart';
-            $scope.geoChartObject.data = $scope.ItemDataJSon;
-            $scope.geoChartObject.options = {backgroundColor: {fill: 'transparent'}};
-            angular.extend($scope.geoChartObject.options, geoChartConfig.GeoChartOptions.options);
+            $scope.chartObject = {};
+            $scope.chartObject.type = $scope.chartType;
+            $scope.chartObject.data = $scope.ItemDataJSon;
+            $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
+            angular.extend($scope.chartObject.options, ChartConfig.ChartsOptions[$scope.chartOptionsName].options);
+            $scope.chartObject.options.title =  ChartConfig.ChartsOptions[$scope.chartOptionsName].options.title + ' (N=' + StudiesData.studyResultDto.totalHits + ')';
+
           }
         }
       });
 
-    }])
-
-  .controller('GraphicRecruitmentResourcesChartsController', [
-    '$rootScope',
-    '$scope',
-    'GraphicChartsConfig',
-    'GraphicChartsUtils',
-    'GraphicChartsData',
-    function ($rootScope,
-              $scope,
-              GraphicChartsConfig,
-              GraphicChartsUtils,
-              GraphicChartsData) {
-
-      var piChartConfig = GraphicChartsConfig.getOptions();
-      GraphicChartsData.getData(function (RecruitmentResourcesData) {
-        if (RecruitmentResourcesData) {
-          var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('populations-recruitment-dataSources', RecruitmentResourcesData.studyResultDto);
-          ItemDataJSon.unshift(piChartConfig.ChartsOptions.recruitmentResources.header);
-          $scope.chartObject = {};
-          $scope.chartObject.options = {};
-          $scope.chartObject.type = 'PieChart';
-          $scope.chartObject.data = ItemDataJSon;
-          $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
-          angular.extend($scope.chartObject.options, piChartConfig.ChartsOptions.recruitmentResources.options);
-          $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + RecruitmentResourcesData.studyResultDto.totalHits + ')';
-
-        } else {
-          $scope.chartObject = {};
-        }
-      });
-
-    }])
-
-  .controller('GraphicStudyDesignChartsController', [
-    '$rootScope',
-    '$scope',
-    'GraphicChartsConfig',
-    'GraphicChartsUtils',
-    'GraphicChartsData',
-    function ($rootScope,
-              $scope,
-              GraphicChartsConfig,
-              GraphicChartsUtils,
-              GraphicChartsData) {
-
-      var piChartConfig = GraphicChartsConfig.getOptions();
-      GraphicChartsData.getData(function (StudiesDesignData) {
-          if (StudiesDesignData) {
-            var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('methods-designs', StudiesDesignData.studyResultDto);
-            ItemDataJSon.unshift(piChartConfig.ChartsOptions.studyDesign.header);
-            $scope.chartObject = {};
-            $scope.chartObject.options = {};
-            $scope.chartObject.type = 'PieChart';
-            $scope.chartObject.data = ItemDataJSon;
-            $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
-            angular.extend($scope.chartObject.options,piChartConfig.ChartsOptions.studyDesign.options );
-            $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + StudiesDesignData.studyResultDto.totalHits + ')';
-
-          } else {
-            $scope.chartObject = {};
-          }
-      });
-    }])
-
-  .controller('GraphicBiologicalSamplesChartsController', [
-    '$rootScope',
-    '$scope',
-    'GraphicChartsConfig',
-    'GraphicChartsUtils',
-    'GraphicChartsData',
-    function ($rootScope,
-              $scope,
-              GraphicChartsConfig,
-              GraphicChartsUtils,
-              GraphicChartsData) {
-
-      var piChartConfig = GraphicChartsConfig.getOptions();
-      GraphicChartsData.getData(function (BiologicalSamples) {
-          if (BiologicalSamples) {
-            var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('populations-dataCollectionEvents-bioSamples', BiologicalSamples.studyResultDto);
-            ItemDataJSon.unshift(piChartConfig.ChartsOptions.biologicalSamples.header);
-            $scope.chartObject = {};
-            $scope.chartObject.options = {};
-            $scope.chartObject.type = 'PieChart';
-            $scope.chartObject.data = ItemDataJSon;
-            $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
-            angular.extend($scope.chartObject.options,piChartConfig.ChartsOptions.biologicalSamples.options );
-            $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + BiologicalSamples.studyResultDto.totalHits + ')';
-
-          } else {
-            $scope.chartObject = {};
-          }
-      });
-    }])
-
-  .controller('GraphicAccessChartsController', [
-    '$rootScope',
-    '$scope',
-    'GraphicChartsConfig',
-    'GraphicChartsUtils',
-    'GraphicChartsData',
-    function ($rootScope,
-              $scope,
-              GraphicChartsConfig,
-              GraphicChartsUtils,
-              GraphicChartsData) {
-
-      var piChartConfig = GraphicChartsConfig.getOptions();
-      GraphicChartsData.getData(function (Access) {
-          if (Access) {
-            var ItemDataJSon = GraphicChartsUtils.getArrayByAggregation('access', Access.studyResultDto);
-            ItemDataJSon.unshift(piChartConfig.ChartsOptions.access.header);
-            $scope.chartObject = {};
-            $scope.chartObject.options = {};
-            $scope.chartObject.type = 'BarChart';
-            $scope.chartObject.data = ItemDataJSon;
-            $scope.chartObject.options = {backgroundColor: {fill: 'transparent'}};
-            angular.extend($scope.chartObject.options,piChartConfig.ChartsOptions.access.options );
-            $scope.chartObject.options.title = $scope.chartObject.options.title + ' (N=' + Access.studyResultDto.totalHits + ')';
-
-          } else {
-            $scope.chartObject = {};
-          }
-      });
     }]);
 ;/*
  * Copyright (c) 2014 OBiBa. All rights reserved.
@@ -1336,6 +1304,13 @@ angular.module('obiba.mica.graphics')
       options: {
         IdNetworks: 'NaN',
         ChartsOptions: {
+          geoChartOptions: {
+            header: null,
+            type: 'GeoChart',
+            options: {
+              title: null
+            }
+          },
           recruitmentResources: {
             header: null,
             options: {
@@ -1372,12 +1347,6 @@ angular.module('obiba.mica.graphics')
               height: 300
             }
           }
-        },
-        GeoChartOptions: {
-          header: null,
-          options: {
-            title: null
-          }
         }
       }
     };
@@ -1403,16 +1372,16 @@ angular.module('obiba.mica.graphics')
     function (CountriesIsoUtils,
               LocalizedStringService) {
 
-      this.getArrayByAggregation = function (AggregationName, EntityDto, specialRetrieve) {
+      this.getArrayByAggregation = function (AggregationName, EntityDto, fieldTransformer) {
         var ArrayData = [];
         angular.forEach(EntityDto.aggs, function (aggragation) {
           var itemName = [];
           if (aggragation.aggregation === AggregationName) {
             var i = 0;
             angular.forEach(aggragation['obiba.mica.TermsAggregationResultDto.terms'], function (term) {
-              switch (specialRetrieve) {
+              switch (fieldTransformer) {
                 case 'country' :
-                  itemName.name = CountriesIsoUtils.findByCode(term.title.toUpperCase(), LocalizedStringService.getLocal()); //todo retrieve country name
+                  itemName.name = CountriesIsoUtils.findByCode(term.title.toUpperCase(), LocalizedStringService.getLocal());
                   break;
                 default :
                   itemName.name = term.title;
@@ -1427,7 +1396,8 @@ angular.module('obiba.mica.graphics')
         });
         return ArrayData;
       };
-    }]);;angular.module('templates-ngObibaMica', ['access/views/data-access-request-form.html', 'access/views/data-access-request-histroy-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html']);
+    }]);
+;angular.module('templates-ngObibaMica', ['access/views/data-access-request-form.html', 'access/views/data-access-request-histroy-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'graphics/views/charts-directive.html']);
 
 angular.module("access/views/data-access-request-form.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("access/views/data-access-request-form.html",
@@ -1786,5 +1756,14 @@ angular.module("attachment/attachment-list-template.html", []).run(["$templateCa
     "  </tr>\n" +
     "  </tbody>\n" +
     "</table>\n" +
+    "");
+}]);
+
+angular.module("graphics/views/charts-directive.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("graphics/views/charts-directive.html",
+    "<div>\n" +
+    "  <div google-chart chart=\"chartObject\">\n" +
+    "  </div>\n" +
+    "</div>\n" +
     "");
 }]);

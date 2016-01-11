@@ -22,6 +22,13 @@ angular.module('obiba.mica.graphics')
       options: {
         IdNetworks: 'NaN',
         ChartsOptions: {
+          geoChartOptions: {
+            header: null,
+            type: 'GeoChart',
+            options: {
+              title: null
+            }
+          },
           recruitmentResources: {
             header: null,
             options: {
@@ -58,12 +65,6 @@ angular.module('obiba.mica.graphics')
               height: 300
             }
           }
-        },
-        GeoChartOptions: {
-          header: null,
-          options: {
-            title: null
-          }
         }
       }
     };
@@ -89,16 +90,16 @@ angular.module('obiba.mica.graphics')
     function (CountriesIsoUtils,
               LocalizedStringService) {
 
-      this.getArrayByAggregation = function (AggregationName, EntityDto, specialRetrieve) {
+      this.getArrayByAggregation = function (AggregationName, EntityDto, fieldTransformer) {
         var ArrayData = [];
         angular.forEach(EntityDto.aggs, function (aggragation) {
           var itemName = [];
           if (aggragation.aggregation === AggregationName) {
             var i = 0;
             angular.forEach(aggragation['obiba.mica.TermsAggregationResultDto.terms'], function (term) {
-              switch (specialRetrieve) {
+              switch (fieldTransformer) {
                 case 'country' :
-                  itemName.name = CountriesIsoUtils.findByCode(term.title.toUpperCase(), LocalizedStringService.getLocal()); //todo retrieve country name
+                  itemName.name = CountriesIsoUtils.findByCode(term.title.toUpperCase(), LocalizedStringService.getLocal());
                   break;
                 default :
                   itemName.name = term.title;

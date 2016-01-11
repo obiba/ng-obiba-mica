@@ -26,7 +26,8 @@ function GraphicChartsDataProvider() {
 
 angular.module('obiba.mica.graphics', [
     'googlechart',
-    'obiba.utils'
+    'obiba.utils',
+    'templates-ngObibaMica'
   ])
   .config(['$provide', function ($provide) {
     $provide.provider('GraphicChartsData', GraphicChartsDataProvider);

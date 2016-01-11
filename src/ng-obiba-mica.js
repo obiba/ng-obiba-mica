@@ -11,7 +11,8 @@ function NgObibaMicaUrlProvider() {
     'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
     'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
     'TempFileUploadResource': 'ws/files/temp',
-    'getStudiesStatistics': 'mica/statistics/get_statistics/:id/ws'
+    'getStudiesStatistics': 'ws/studies/_search'
+
   };
   function UrlProvider(registry) {
     var urlRegistry = registry;
