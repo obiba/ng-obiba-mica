@@ -1417,7 +1417,7 @@ angular.module('obiba.mica.search')
       }
 
       var closeTaxonomies = function () {
-        $('#taxonomies').collapse('hide');
+        angular.element('#taxonomies').collapse('hide');
       };
 
       var filterTaxonomies = function (query) {
@@ -1461,7 +1461,7 @@ angular.module('obiba.mica.search')
 
       var selectTaxonomyTarget = function (target) {
         if (!$scope.taxonomiesShown) {
-          $('#taxonomies').collapse('show');
+          angular.element('#taxonomies').collapse('show');
         }
         if ($scope.taxonomies.target !== target) {
           $scope.taxonomies.target = target;
@@ -1630,11 +1630,10 @@ angular.module('obiba.mica.search')
       $scope.onTypeChanged = onTypeChanged;
       $scope.taxonomiesShown = false;
 
-      //// TODO replace with angular code
-      $('#taxonomies').on('show.bs.collapse', function () {
+      angular.element('#taxonomies').on('show.bs.collapse', function () {
         $scope.taxonomiesShown = true;
       });
-      $('#taxonomies').on('hide.bs.collapse', function () {
+      angular.element('#taxonomies').on('hide.bs.collapse', function () {
         $scope.taxonomiesShown = false;
       });
 
