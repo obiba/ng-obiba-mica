@@ -44,19 +44,19 @@
       <div class="col-xs-3"></div>
       <div class="col-xs-6">
         <ul class="nav nav-pills">
-          <li ng-class="{'active': taxonomies.target === 'variable' && taxonomiesShown}"
+          <li ng-show="settingsDisplay.variables.showVariablesSearchTab" ng-class="{'active': taxonomies.target === 'variable' && taxonomiesShown}"
             title="{{'variable-classifications' | translate}}">
             <a ng-click="selectTaxonomyTarget('variable')" translate>variables</a>
           </li>
-          <li ng-class="{'active': taxonomies.target === 'dataset' && taxonomiesShown}"
+          <li ng-show="settingsDisplay.datasets.showDatasetsSearchTab" ng-class="{'active': taxonomies.target === 'dataset' && taxonomiesShown}"
             title="{{'dataset-classifications' | translate}}">
             <a ng-click="selectTaxonomyTarget('dataset')" translate>datasets</a>
           </li>
-          <li ng-class="{'active': taxonomies.target === 'study' && taxonomiesShown}"
+          <li ng-show="settingsDisplay.studies.showStudiesSearchTab" ng-class="{'active': taxonomies.target === 'study' && taxonomiesShown}"
             title="{{'study-classifications' | translate}}">
             <a ng-click="selectTaxonomyTarget('study')" translate>studies</a>
           </li>
-          <li ng-class="{'active': taxonomies.target === 'network' && taxonomiesShown}"
+          <li ng-show="settingsDisplay.networks.showNetworksSearchTab" ng-class="{'active': taxonomies.target === 'network' && taxonomiesShown}"
             title="{{'network-classifications' | translate}}">
             <a ng-click="selectTaxonomyTarget('network')" translate>networks</a>
           </li>

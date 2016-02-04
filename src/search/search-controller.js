@@ -50,7 +50,9 @@ angular.module('obiba.mica.search')
               ServerErrorUtils,
               LocalizedValues,
               ObibaSearchConfig) {
-      console.log(ObibaSearchConfig.getOptions());
+
+      $scope.settingsDisplay = ObibaSearchConfig.getOptions();
+
       function createCriteria(target, taxonomy, vocabulary, term) {
         var id = taxonomy.name + '::' + vocabulary.name;
         if (term) {
@@ -410,7 +412,13 @@ angular.module('obiba.mica.search')
   .controller('SearchResultController', [
     '$scope',
     'QUERY_TYPES',
-    function ($scope, QUERY_TYPES) {
+    'ObibaSearchConfig',
+    function ($scope,
+              QUERY_TYPES,
+              ObibaSearchConfig) {
+
+      $scope.settingsDisplay = ObibaSearchConfig.getOptions();
+
       var selectTab = function (type) {
         console.log('Type', type);
         $scope.type = type;
