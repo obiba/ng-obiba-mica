@@ -859,31 +859,27 @@ angular.module('obiba.mica.search')
         }
         return false;
       };
-
+      var charOptions = GraphicChartsConfig.getOptions().ChartsOptions;
       $scope.$watch('result', function (result) {
         $scope.chartObjects={};
         if (result) {
           var geoStudies = setChartObject('populations-selectionCriteria-countriesIso',
             result.studyResultDto,
-            [$filter('translate')('graphics.country'), $filter('translate')('graphics.nbr-studies')],
-            $filter('translate')('graphics.geo-chart-title') + ' (N = ' + result.studyResultDto.totalHits + ')',
-            GraphicChartsConfig.getOptions().ChartsOptions.geoChartOptions.options);
-
+            [$filter('translate')(charOptions.geoChartOptions.header[0]), $filter('translate')(charOptions.geoChartOptions.header[1])],
+            $filter('translate')(charOptions.geoChartOptions.title) + ' (N = ' + result.studyResultDto.totalHits + ')',
+            charOptions.geoChartOptions.options);
 
           var methodDesignStudies = setChartObject('methods-designs',
             result.studyResultDto,
-            [$filter('translate')('graphics.study-design'), $filter('translate')('graphics.nbr-studies')],
-            $filter('translate')('graphics.study-design-chart-title') + ' (N = ' + result.studyResultDto.totalHits + ')',
-            GraphicChartsConfig.getOptions().ChartsOptions.studiesDesigns.options);
-
+            [$filter('translate')(charOptions.studiesDesigns.header[0]), $filter('translate')(charOptions.studiesDesigns.header[1])],
+            $filter('translate')(charOptions.studiesDesigns.title) + ' (N = ' + result.studyResultDto.totalHits + ')',
+            charOptions.studiesDesigns.options);
 
           var bioSamplesStudies = setChartObject('populations-dataCollectionEvents-bioSamples',
             result.studyResultDto,
-            [$filter('translate')('graphics.bio-samples'), $filter('translate')('graphics.nbr-studies')],
-            $filter('translate')('graphics.bio-samples-chart-title') + ' (N = ' + result.studyResultDto.totalHits + ')',
-            GraphicChartsConfig.getOptions().ChartsOptions.biologicalSamples.options);
-
-          console.log('=========}}}}}}}}geo', geoStudies);
+            [$filter('translate')(charOptions.biologicalSamples.header[0]), $filter('translate')(charOptions.biologicalSamples.header[1])],
+            $filter('translate')(charOptions.biologicalSamples.title) + ' (N = ' + result.studyResultDto.totalHits + ')',
+            charOptions.biologicalSamples.options);
 
           if (geoStudies) {
             angular.extend($scope.chartObjects,
@@ -920,8 +916,6 @@ angular.module('obiba.mica.search')
               }
             });
           }
-
-          console.log($scope.chartObjects);
         }
       });
 
