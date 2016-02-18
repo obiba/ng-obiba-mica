@@ -818,102 +818,10 @@ angular.module('obiba.mica.search')
   .controller('CoverageResultTableController', [
     '$scope',
     function ($scope) {
-
-      function processCoverageResponse() {
-        var response = $scope.result;
-        var taxonomyHeaders = [];
-        var vocabularyHeaders = [];
-        var termHeaders = [];
-        var rows = {};
-        var footers = {
-          total: []
-        };
-        if (response.taxonomies) {
-          var termsCount = 0;
-          response.taxonomies.forEach(function (taxo) {
-            var taxonomyTermsCount = 0;
-            if (taxo.vocabularies) {
-              taxo.vocabularies.forEach(function (voc) {
-                if (voc.terms) {
-                  voc.terms.forEach(function (trm) {
-                    termsCount++;
-                    taxonomyTermsCount++;
-                    termHeaders.push({
-                      taxonomy: taxo.taxonomy,
-                      vocabulary: voc.vocabulary,
-                      term: trm.term
-                    });
-                    footers.total.push(trm.hits);
-                    if (trm.buckets) {
-                      trm.buckets.forEach(function (bucket) {
-                        if (!(bucket.field in rows)) {
-                          rows[bucket.field] = {};
-                        }
-                        if (!(bucket.value in rows[bucket.field])) {
-                          rows[bucket.field][bucket.value] = {
-                            field: bucket.field,
-                            title: bucket.title,
-                            description: bucket.description,
-                            hits: {}
-                          };
-                        }
-                        // store the hits per field, per value at the position of the term
-                        rows[bucket.field][bucket.value].hits[termsCount] = bucket.hits;
-                      });
-                    }
-                  });
-                  vocabularyHeaders.push({
-                    taxonomy: taxo.taxonomy,
-                    vocabulary: voc.vocabulary,
-                    termsCount: voc.terms.length
-                  });
-                }
-              });
-              taxonomyHeaders.push({
-                taxonomy: taxo.taxonomy,
-                termsCount: taxonomyTermsCount
-              });
-            }
-          });
-        }
-
-        // compute totalHits for each row
-        Object.keys(rows).forEach(function (field) {
-          Object.keys(rows[field]).forEach(function (value) {
-            var hits = rows[field][value].hits;
-            rows[field][value].totalHits = Object.keys(hits).map(function (idx) {
-              return hits[idx];
-            }).reduce(function (a, b) {
-              return a + b;
-            });
-          });
-        });
-
-        $scope.table = {
-          taxonomyHeaders: taxonomyHeaders,
-          vocabularyHeaders: vocabularyHeaders,
-          termHeaders: termHeaders,
-          rows: rows,
-          footers: footers,
-          totalHits: response.totalHits,
-          totalCount: response.totalCount
-        };
-      }
-
-      $scope.$watch('result', function () {
-        if ($scope.result) {
-          processCoverageResponse();
-        } else {
-          $scope.table = null;
-        }
-      });
-
       $scope.showMissing = true;
       $scope.toggleMissing = function (value) {
         $scope.showMissing = value;
       };
-      $scope.keys = Object.keys;
-
     }])
 
   .controller('GraphicsResultController', [
