@@ -3380,102 +3380,10 @@ angular.module('obiba.mica.search')
   .controller('CoverageResultTableController', [
     '$scope',
     function ($scope) {
-
-      function processCoverageResponse() {
-        var response = $scope.result;
-        var taxonomyHeaders = [];
-        var vocabularyHeaders = [];
-        var termHeaders = [];
-        var rows = {};
-        var footers = {
-          total: []
-        };
-        if (response.taxonomies) {
-          var termsCount = 0;
-          response.taxonomies.forEach(function (taxo) {
-            var taxonomyTermsCount = 0;
-            if (taxo.vocabularies) {
-              taxo.vocabularies.forEach(function (voc) {
-                if (voc.terms) {
-                  voc.terms.forEach(function (trm) {
-                    termsCount++;
-                    taxonomyTermsCount++;
-                    termHeaders.push({
-                      taxonomy: taxo.taxonomy,
-                      vocabulary: voc.vocabulary,
-                      term: trm.term
-                    });
-                    footers.total.push(trm.hits);
-                    if (trm.buckets) {
-                      trm.buckets.forEach(function (bucket) {
-                        if (!(bucket.field in rows)) {
-                          rows[bucket.field] = {};
-                        }
-                        if (!(bucket.value in rows[bucket.field])) {
-                          rows[bucket.field][bucket.value] = {
-                            field: bucket.field,
-                            title: bucket.title,
-                            description: bucket.description,
-                            hits: {}
-                          };
-                        }
-                        // store the hits per field, per value at the position of the term
-                        rows[bucket.field][bucket.value].hits[termsCount] = bucket.hits;
-                      });
-                    }
-                  });
-                  vocabularyHeaders.push({
-                    taxonomy: taxo.taxonomy,
-                    vocabulary: voc.vocabulary,
-                    termsCount: voc.terms.length
-                  });
-                }
-              });
-              taxonomyHeaders.push({
-                taxonomy: taxo.taxonomy,
-                termsCount: taxonomyTermsCount
-              });
-            }
-          });
-        }
-
-        // compute totalHits for each row
-        Object.keys(rows).forEach(function (field) {
-          Object.keys(rows[field]).forEach(function (value) {
-            var hits = rows[field][value].hits;
-            rows[field][value].totalHits = Object.keys(hits).map(function (idx) {
-              return hits[idx];
-            }).reduce(function (a, b) {
-              return a + b;
-            });
-          });
-        });
-
-        $scope.table = {
-          taxonomyHeaders: taxonomyHeaders,
-          vocabularyHeaders: vocabularyHeaders,
-          termHeaders: termHeaders,
-          rows: rows,
-          footers: footers,
-          totalHits: response.totalHits,
-          totalCount: response.totalCount
-        };
-      }
-
-      $scope.$watch('result', function () {
-        if ($scope.result) {
-          processCoverageResponse();
-        } else {
-          $scope.table = null;
-        }
-      });
-
       $scope.showMissing = true;
       $scope.toggleMissing = function (value) {
         $scope.showMissing = value;
       };
-      $scope.keys = Object.keys;
-
     }])
 
   .controller('GraphicsResultController', [
@@ -5066,12 +4974,12 @@ angular.module("search/views/classifications/vocabulary-panel-template.html", []
 angular.module("search/views/coverage/coverage-search-result-table-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/coverage/coverage-search-result-table-template.html",
     "<div>\n" +
-    "  <p class=\"help-block\" ng-if=\"!loading && table.taxonomyHeaders.length === 0\" translate>search.no-coverage</p>\n" +
+    "  <p class=\"help-block\" ng-if=\"!loading && result.taxonomyHeaders.length === 0\" translate>search.no-coverage</p>\n" +
     "\n" +
     "  <div ng-if=\"loading\" class=\"loading\"></div>\n" +
     "\n" +
     "\n" +
-    "  <div class=\"table-responsive\" ng-if=\"table.taxonomyHeaders.length > 0\">\n" +
+    "  <div class=\"table-responsive\" ng-if=\"result.taxonomyHeaders.length > 0\">\n" +
     "\n" +
     "    <div class=\"pull-right\">\n" +
     "      <a href ng-click=\"toggleMissing(false)\" ng-if=\"showMissing\" translate>search.coverage-hide-missing</a>\n" +
@@ -5084,43 +4992,36 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "      <thead>\n" +
     "      <tr>\n" +
     "        <th rowspan=\"2\" translate>study.label</th>\n" +
-    "        <th ng-repeat=\"header in table.vocabularyHeaders\" title=\"{{header.vocabulary.descriptions[0].value}}\"\n" +
+    "        <th ng-repeat=\"header in result.vocabularyHeaders\" title=\"{{header.entity.descriptions[0].value}}\"\n" +
     "          colspan=\"{{header.termsCount}}\">\n" +
-    "          {{header.vocabulary.titles[0].value}}\n" +
+    "          {{header.entity.titles[0].value}}\n" +
     "        </th>\n" +
-    "        <th rowspan=\"2\" translate>all</th>\n" +
     "      </tr>\n" +
     "      <tr>\n" +
-    "        <th ng-repeat=\"header in table.termHeaders\" title=\"{{header.term.descriptions[0].value}}\">\n" +
-    "          {{header.term.titles[0].value}}\n" +
+    "        <th ng-repeat=\"header in result.termHeaders\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
+    "          {{header.entity.titles[0].value}}\n" +
     "        </th>\n" +
     "      </tr>\n" +
     "      </thead>\n" +
     "      <tbody>\n" +
     "\n" +
-    "      <tr ng-repeat=\"row in table.rows.studyIds\" ng-if=\"showMissing || table.termHeaders.length == keys(row.hits).length\">\n" +
+    "      <tr ng-repeat=\"row in result.rows\" ng-if=\"showMissing || result.termHeaders.length == keys(row.hits).length\">\n" +
     "        <td>\n" +
     "          <a href title=\"{{row.description}}\">{{row.title}}</a>\n" +
     "          <a href ng-if=\"false\" class=\"pull-right\"><i class=\"fa fa-plus-square\"></i></a>\n" +
     "        </td>\n" +
-    "        <td ng-repeat=\"h in table.termHeaders\">\n" +
-    "          <span class=\"label label-info\" ng-if=\"row.hits[$index + 1]\">{{row.hits[$index + 1]}}</span>\n" +
-    "          <span ng-if=\"!row.hits[$index + 1]\">0</span>\n" +
+    "        <td ng-repeat=\"h in result.termHeaders\">\n" +
+    "          <span class=\"label label-info\" ng-if=\"row.hits[$index]\">{{row.hits[$index]}}</span>\n" +
+    "          <span ng-if=\"!row.hits[$index]\">0</span>\n" +
     "        </td>\n" +
-    "        <th>\n" +
-    "          <a href>{{row.totalHits}}</a>\n" +
-    "        </th>\n" +
     "      </tr>\n" +
     "\n" +
     "      </tbody>\n" +
     "      <tfoot>\n" +
     "      <tr>\n" +
     "        <th translate>all</th>\n" +
-    "        <th ng-repeat=\"hit in table.footers.total\">\n" +
-    "          <a href>{{hit}}</a>\n" +
-    "        </th>\n" +
-    "        <th>\n" +
-    "          <a href>{{table.totalHits}}</a>\n" +
+    "        <th ng-repeat=\"header in result.termHeaders\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
+    "          {{header.hits}}\n" +
     "        </th>\n" +
     "      </tr>\n" +
     "      </tfoot>\n" +
