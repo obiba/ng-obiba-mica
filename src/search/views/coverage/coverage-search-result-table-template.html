@@ -26,6 +26,7 @@
   </div>
 
   <div class="pull-right" ng-if="table.taxonomyHeaders.length > 0">
+    <a href class="btn btn-info" translate ng-if="hasSelected()" ng-click="updateFilterCriteria()">search.filter</a>
     <a target="_self" class="btn btn-info btn-responsive" ng-href="{{downloadUrl()}}">
       <i class="fa fa-download"></i> {{'download' | translate}}
     </a>
@@ -53,6 +54,7 @@
           {{header.entity.titles[0].value}}
             </span>
         </th>
+        <th rowspan="2"></th>
       </tr>
       <tr>
         <th ng-if="bucket === BUCKET_TYPES.DCE" translate>search.coverage-dce-cols.study</th>
@@ -82,6 +84,7 @@
           <a href ng-click="updateCriteria(row.value, 'variables')"><span class="label label-info" ng-if="row.hits[$index]">{{row.hits[$index]}}</span></a>
           <span ng-if="!row.hits[$index]">0</span>
         </td>
+        <td><input type="checkbox" ng-model="row.selected"></td>
       </tr>
       </tbody>
       <tfoot>
