@@ -3289,7 +3289,12 @@ angular.module('obiba.mica.search')
               var target = bundle.target;
               var taxonomy = bundle.taxonomy;
               if (taxonomy.vocabularies) {
-                taxonomy.vocabularies.forEach(function (vocabulary) {
+                taxonomy.vocabularies.filter(function(vocabulary) {
+                  // exclude results which are ids used for relations
+                  return !(['dceIds', 'studyId', 'studyIds', 'networkId', 'datasetId'].filter(function(val) {
+                    return vocabulary.name === val;
+                  }).pop());
+                }).forEach(function (vocabulary) {
                   if (vocabulary.terms) {
                     vocabulary.terms.forEach(function (term) {
                       if (results.length < size) {
