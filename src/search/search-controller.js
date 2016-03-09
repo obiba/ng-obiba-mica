@@ -487,7 +487,7 @@ angular.module('obiba.mica.search')
           onTypeChanged(type);
         }
 
-        onDisplayChanged(DISPLAY_TYPES.LIST);
+        onDisplayChanged($scope.search.display || DISPLAY_TYPES.LIST);
         selectCriteria(item, RQL_NODE.AND, true);
       };
 

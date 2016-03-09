@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-03-08
+ * Date: 2016-03-09
  */
 'use strict';
 
@@ -3374,7 +3374,7 @@ angular.module('obiba.mica.search')
           onTypeChanged(type);
         }
 
-        onDisplayChanged(DISPLAY_TYPES.LIST);
+        onDisplayChanged($scope.search.display || DISPLAY_TYPES.LIST);
         selectCriteria(item, RQL_NODE.AND, true);
       };
 
