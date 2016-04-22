@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-04-21
+ * Date: 2016-04-22
  */
 'use strict';
 
@@ -6238,7 +6238,7 @@ angular.module('obiba.mica.graphics')
     function (LocalizedValues) {
       this.getArrayByAggregation = function (aggregationName, entityDto) {
         var arrayData = [];
-
+        var others = null;
         if (!entityDto) {
           return arrayData;
         }
@@ -6258,6 +6258,7 @@ angular.module('obiba.mica.graphics')
               if (aggregation.aggregation === 'methods-designs') {
                 var numberOfParticipant = 0;
                 i = 0;
+                others = null;
                 angular.forEach(aggregation['obiba.mica.TermsAggregationResultDto.terms'], function (term) {
                   angular.forEach(term.aggs, function (aggBucket) {
                     if (aggBucket.aggregation === 'numberOfParticipants-participant-number') {
@@ -6265,19 +6266,46 @@ angular.module('obiba.mica.graphics')
                     }
                   });
                   if (term.count) {
-                    arrayData[i] = {title: term.title, value: term.count, participantsNbr: numberOfParticipant, key: term.key};
-                    i++;
+                    if(term.key !== 'others') {
+                      arrayData[i] = {
+                        title: term.title,
+                        value: term.count,
+                        participantsNbr: numberOfParticipant,
+                        key: term.key
+                      };
+                      i++;
+                    }
+                    else{
+                      others = {
+                        title: term.title,
+                        value: term.count,
+                        participantsNbr: numberOfParticipant,
+                        key: term.key
+                      };
+                    }
                   }
                 });
+                if(others){
+                  arrayData[i] = others;
+                }
               }
               else {
                 i = 0;
+                others = null;
                 angular.forEach(aggregation['obiba.mica.TermsAggregationResultDto.terms'], function (term) {
                   if (term.count) {
+                    if(term.key !== 'others'){
                     arrayData[i] = {title: term.title, value: term.count, key: term.key};
-                    i++;
+                      i++;
+                    }
+                    else{
+                      others = {title: term.title, value: term.count, key: term.key};
+                    }
                   }
                 });
+                if(others){
+                  arrayData[i] = others;
+                }
               }
             }
           }
