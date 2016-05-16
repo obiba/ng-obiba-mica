@@ -109,6 +109,7 @@ function NgObibaMicaTemplateUrlFactory() {
 
 angular.module('ngObibaMica', [
     'schemaForm',
+    'ngCookies',
     'obiba.mica.utils',
     'obiba.mica.file',
     'obiba.mica.attachment',
@@ -3633,6 +3634,7 @@ angular.module('obiba.mica.search')
     '$routeParams',
     '$location',
     '$translate',
+    '$cookies',
     'TaxonomiesSearchResource',
     'TaxonomiesResource',
     'TaxonomyResource',
@@ -3654,6 +3656,7 @@ angular.module('obiba.mica.search')
               $routeParams,
               $location,
               $translate,
+              $cookies,
               TaxonomiesSearchResource,
               TaxonomiesResource,
               TaxonomyResource,
@@ -3671,6 +3674,27 @@ angular.module('obiba.mica.search')
               CoverageGroupByService) {
 
       $scope.options = ngObibaMicaSearch.getOptions();
+
+      // Retrieve from local cookies if user has disabled the Help Search Box and hide the box if true
+      if ($cookies.get('hideSearchHelpText')) {
+        $scope.options.SearchHelpText = null;
+      }
+      // Close the Help search box and set the local cookies
+      $scope.closeHelpBox = function () {
+        $cookies.put('hideSearchHelpText', true);
+        $scope.options.SearchHelpText = null;
+      };
+
+      // Retrieve from local cookies if user has disabled the Help Classification Box and hide the box if true
+      if ($cookies.get('hideClassificationHelpBox')) {
+        $scope.options.ClassificationHelpText = null;
+      }
+      // Close the Help classification box and set the local cookies
+      $scope.closeClassificationHelpBox = function () {
+        $cookies.put('hideClassificationHelpBox', true);
+        $scope.options.ClassificationHelpText = null;
+      };
+
       $scope.taxonomyTypeMap = { //backwards compatibility for pluralized naming in configs.
         variable: 'variables',
         study: 'studies',
@@ -8442,6 +8466,9 @@ angular.module("search/views/classifications.html", []).run(["$templateCache", f
     "  <div ng-if=\"classificationsHeaderTemplateUrl\" ng-include=\"classificationsHeaderTemplateUrl\"></div>\n" +
     "\n" +
     "  <div ng-if=\"options.ClassificationHelpText\">\n" +
+    "    <button ng-click=\"closeClassificationHelpBox()\" type=\"button\" class=\"help-text close\" title=\"{{search.closeAlert | translate}}\">\n" +
+    "      <span aria-hidden=\"true\">&times;</span>\n" +
+    "    </button>\n" +
     "    <span ng-bind-html=\"options.ClassificationHelpText\"></span>\n" +
     "  </div>\n" +
     "\n" +
@@ -9900,7 +9927,10 @@ angular.module("search/views/search.html", []).run(["$templateCache", function($
   $templateCache.put("search/views/search.html",
     "<div ng-show=\"inSearchMode()\">\n" +
     "\n" +
-    "    <div ng-if=\"options.SearchHelpText\">\n" +
+    "      <div ng-if=\"options.SearchHelpText\">\n" +
+    "        <button ng-click=\"closeHelpBox()\" type=\"button\" class=\"help-text close\" title=\"{{search.closeAlert | translate}}\">\n" +
+    "          <span aria-hidden=\"true\">&times;</span>\n" +
+    "        </button>\n" +
     "      <span  ng-bind-html=\"options.SearchHelpText\"></span>\n" +
     "    </div>\n" +
     "\n" +

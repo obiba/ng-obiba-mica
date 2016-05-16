@@ -289,6 +289,7 @@ angular.module('obiba.mica.search')
     '$routeParams',
     '$location',
     '$translate',
+    '$cookies',
     'TaxonomiesSearchResource',
     'TaxonomiesResource',
     'TaxonomyResource',
@@ -310,6 +311,7 @@ angular.module('obiba.mica.search')
               $routeParams,
               $location,
               $translate,
+              $cookies,
               TaxonomiesSearchResource,
               TaxonomiesResource,
               TaxonomyResource,
@@ -327,6 +329,27 @@ angular.module('obiba.mica.search')
               CoverageGroupByService) {
 
       $scope.options = ngObibaMicaSearch.getOptions();
+
+      // Retrieve from local cookies if user has disabled the Help Search Box and hide the box if true
+      if ($cookies.get('hideSearchHelpText')) {
+        $scope.options.SearchHelpText = null;
+      }
+      // Close the Help search box and set the local cookies
+      $scope.closeHelpBox = function () {
+        $cookies.put('hideSearchHelpText', true);
+        $scope.options.SearchHelpText = null;
+      };
+
+      // Retrieve from local cookies if user has disabled the Help Classification Box and hide the box if true
+      if ($cookies.get('hideClassificationHelpBox')) {
+        $scope.options.ClassificationHelpText = null;
+      }
+      // Close the Help classification box and set the local cookies
+      $scope.closeClassificationHelpBox = function () {
+        $cookies.put('hideClassificationHelpBox', true);
+        $scope.options.ClassificationHelpText = null;
+      };
+
       $scope.taxonomyTypeMap = { //backwards compatibility for pluralized naming in configs.
         variable: 'variables',
         study: 'studies',
