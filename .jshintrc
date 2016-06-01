@@ -36,7 +36,8 @@
     "expect": false,
     "inject": false,
     "RqlParser": false,
-    "RqlQuery": false
+    "RqlQuery": false,
+    "Countable": false
   }
 
 }

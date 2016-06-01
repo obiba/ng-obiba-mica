@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-05-30
+ * Date: 2016-06-01
  */
 'use strict';
 
@@ -165,6 +165,29 @@ angular.module('obiba.mica.utils', [])
         }
       };
     })
+
+  .directive('validMaxWords', [
+    function () {
+      return {
+        restrict: 'A',
+        scope: {
+          maxWordCount: '=wordCount',
+          isSchemaForm: '='
+        },
+        link: function (scope, element) {
+          if (scope.maxWordCount) {
+            Countable.live(element, function (written) {
+              if (scope.isSchemaForm) {
+                // on error when written words exceeds max word count
+                scope.$broadcast('schemaForm.error.' + element[0].name, 'max', written.words <= scope.maxWordCount);
+              } else {
+                scope.form[element[0].name].$error.max = written.words <= scope.maxWordCount;
+              }
+            });
+          }
+        }
+      };
+    }])
 
   .service('GraphicChartsConfigurations', function(){
 

@@ -31,6 +31,29 @@ angular.module('obiba.mica.utils', [])
       };
     })
 
+  .directive('validMaxWords', [
+    function () {
+      return {
+        restrict: 'A',
+        scope: {
+          maxWordCount: '=wordCount',
+          isSchemaForm: '='
+        },
+        link: function (scope, element) {
+          if (scope.maxWordCount) {
+            Countable.live(element, function (written) {
+              if (scope.isSchemaForm) {
+                // on error when written words exceeds max word count
+                scope.$broadcast('schemaForm.error.' + element[0].name, 'max', written.words <= scope.maxWordCount);
+              } else {
+                scope.form[element[0].name].$error.max = written.words <= scope.maxWordCount;
+              }
+            });
+          }
+        }
+      };
+    }])
+
   .service('GraphicChartsConfigurations', function(){
 
     this.getClientConfig = function(){
