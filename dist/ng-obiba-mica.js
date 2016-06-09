@@ -1,9 +1,9 @@
 /*!
- * ng-obiba-mica - v1.1.3
+ * ng-obiba-mica - v1.1.4
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-05-31
+ * Date: 2016-06-09
  */
 'use strict';
 
@@ -242,9 +242,11 @@ angular.module('obiba.mica.utils', [])
             // add missing width to fill the table
             if (totalColumnWidth < elem.offsetWidth) {
               var last = elem.querySelector('tbody tr:first-child td:last-child');
-              last.style.width = (last.offsetWidth + elem.offsetWidth - totalColumnWidth) + 'px';
-              last = elem.querySelector('thead tr:first-child th:last-child');
-              last.style.width = (last.offsetWidth + elem.offsetWidth - totalColumnWidth) + 'px';
+              if (last) {
+                last.style.width = (last.offsetWidth + elem.offsetWidth - totalColumnWidth) + 'px';
+                last = elem.querySelector('thead tr:first-child th:last-child');
+                last.style.width = (last.offsetWidth + elem.offsetWidth - totalColumnWidth) + 'px';
+              }
             }
 
             // reduce width of last column by width of scrollbar
@@ -276,7 +278,6 @@ angular.module('obiba.mica.utils', [])
       }
     };
   }]);
-
 ;'use strict';
 
 angular.module('obiba.mica.file', ['ngResource']);
@@ -6727,6 +6728,9 @@ angular.module('obiba.mica.graphics')
                     $scope.chartObject.data = data;
                     $scope.chartObject.vocabulary = $scope.chartAggregationName;
                     $scope.chartObject.entries = entries;
+                    $scope.chartObject.getTable= function(){
+                      return $scope.chartObject;
+                    };
                   }
                   else {
                     if($scope.chartHeader.length<3){
@@ -8495,16 +8499,14 @@ angular.module("graphics/views/charts-directive.html", []).run(["$templateCache"
 angular.module("graphics/views/tables-directive.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("graphics/views/tables-directive.html",
     "<div>\n" +
-    "    <table style=\"max-height: 400px;\" class=\"table table-bordered table-striped\" >\n" +
+    "    <table style=\"max-height: 400px;\" class=\"table table-bordered table-striped\" fixed-header=\"chartObject.getTable().data\">\n" +
     "        <thead>\n" +
+    "        <tr>\n" +
     "        <th ng-repeat=\"header in chartObject.header\">{{header}}</th>\n" +
-    "        </thead>\n" +
-    "        <tr ng-show=\"chartObject.ordered\" ng-repeat=\"row in chartObject.entries\">\n" +
-    "            <td>{{row.title}}</td>\n" +
-    "            <td><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{row.value}}</a></td>\n" +
-    "            <td ng-if=\"row.participantsNbr\">{{row.participantsNbr}}</td>\n" +
     "        </tr>\n" +
-    "        <tr ng-show=\"chartObject.notOrdered\" ng-repeat=\"row in chartObject.entries\">\n" +
+    "        </thead>\n" +
+    "        <tbody>\n" +
+    "        <tr ng-repeat=\"row in chartObject.entries\">\n" +
     "            <td>{{row.title}}</td>\n" +
     "            <td><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{row.value}}</a></td>\n" +
     "            <td ng-if=\"row.participantsNbr\">{{row.participantsNbr}}</td>\n" +
