@@ -77,8 +77,8 @@ angular.module('obiba.mica.localized')
 
   .service('LocalizedSchemaFormService', ['$filter', function ($filter) {
     this.schemaFormReplaceAndTranslate = function (string) {
-      return string.replace(/"t\((.+)\)"/g, function (match, p1) {
-        return '"' + $filter('translate')(p1) + '"';
+      return string.replace(/t\((\S+)\)/g, function (match, p1) {
+        return $filter('translate')(p1);
       });
     };
   }]);
