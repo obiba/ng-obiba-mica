@@ -169,8 +169,8 @@ angular.module('obiba.mica.utils', ['schemaForm'])
     };
   }])
 
-  .config(['schemaFormProvider',
-    function (schemaFormProvider) {
+  .config(['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfBuilderProvider',
+    function (schemaFormProvider, schemaFormDecoratorsProvider, sfBuilderProvider) {
       schemaFormProvider.postProcess(function (form) {
         form.filter(function (e) {
           return e.hasOwnProperty('wordLimit');
@@ -189,4 +189,41 @@ angular.module('obiba.mica.utils', ['schemaForm'])
         });
         return form;
       });
-    }]);
+      
+      schemaFormDecoratorsProvider.defineAddOn(
+        'bootstrapDecorator',
+        'checkboxgroup',
+        'templates/checkboxgroup-template.html',
+        sfBuilderProvider.stdBuilders
+      );
+  }])
+
+  .run(function ($templateCache) {
+    $templateCache.put('templates/checkboxgroup-template.html', '<div class="checkboxgroup schema-form-checkboxgroup {{form.HtmlClass}}"><div ng-controller="schemaFormCheckboxgroupController"><div class="has-error" ng-show="showMessage"><span class="help-block">{{message}}</span></div></div></div>');
+  })
+
+  .controller('schemaFormCheckboxgroupController', ['$scope', function ($scope) {
+    var keys = $scope.form.items.map(function (val) { return val.key[0]; });
+    var min = $scope.form.minChecked ? parseInt($scope.form.minChecked) : 0;
+    $scope.showMessage = false;
+    $scope.message = 'Minimum ' + min + '.';
+
+    var models = [];
+
+    if ($scope.model) {
+      $scope.$on('schemaFormValidate', function () {
+        models = keys.map(function (k) {
+          return $scope.model[k];
+        });
+
+        var enough = models.filter(function (e) { return e; }).length >= min;
+        if (enough) {
+          $scope.$broadcast('schemaForm.error', 'minimumChecked', true);
+          $scope.showMessage = false;
+        } else {
+          $scope.$broadcast('schemaForm.error', 'minimumChecked', false);
+          $scope.showMessage = true;
+        }
+      });
+    }
+  }]);
