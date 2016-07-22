@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-07-20
+ * Date: 2016-07-22
  */
 'use strict';
 
@@ -665,6 +665,8 @@ angular.module('obiba.mica.access')
       'NOTIFICATION_EVENTS',
       'DataAccessRequestConfig',
       'LocalizedSchemaFormService',
+      'SessionProxy',
+      'USER_ROLES',
 
     function ($rootScope,
               $scope,
@@ -687,7 +689,9 @@ angular.module('obiba.mica.access')
               ServerErrorUtils,
               NOTIFICATION_EVENTS,
               DataAccessRequestConfig,
-              LocalizedSchemaFormService) {
+              LocalizedSchemaFormService,
+              SessionProxy,
+              USER_ROLES) {
 
       var onError = function (response) {
         AlertService.alert({
@@ -766,6 +770,12 @@ angular.module('obiba.mica.access')
           .replace(':id', $scope.dataAccessRequest.id).replace(':attachmentId', attachment.id);
       };
 
+      $scope.canUpdateDocuments = function () {
+        return $scope.dataAccessRequest.applicant === SessionProxy.login() || DataAccessRequestService.hasRole(USER_ROLES.dao);
+      };
+      $scope.canComment = function () {
+        return $scope.dataAccessRequest.applicant === SessionProxy.login() || DataAccessRequestService.hasRole(USER_ROLES.dao);
+      };
       $scope.config = DataAccessRequestConfig.getOptions();
       $scope.actions = DataAccessRequestService.actions;
       $scope.nextStatus = DataAccessRequestService.nextStatus;
@@ -1305,6 +1315,12 @@ angular.module('obiba.mica.access')
 
       var canDoAction = function (request, action) {
         return request.actions ? request.actions.indexOf(action) !== - 1 : null;
+      };
+
+      this.hasRole = function (role) {
+        var currentUserRoles = SessionProxy.roles();
+        if (!role) { return false; }
+        return currentUserRoles.filter(function (userRole) { return userRole === role; }).length > 0;
       };
 
       this.actions = {
@@ -8005,7 +8021,7 @@ angular.module("access/views/data-access-request-documents-view.html", []).run([
     "      </p>\n" +
     "      <attachment-list files=\"dataAccessRequest.attachments\"\n" +
     "                       href-builder=\"getDownloadHref\"></attachment-list>\n" +
-    "      <a ng-click=\"editAttachments()\" type=\"button\" class=\"btn btn-info\">\n" +
+    "      <a ng-if=\"canUpdateDocuments()\" ng-click=\"editAttachments()\" type=\"button\" class=\"btn btn-info\">\n" +
     "        <span translate>data-access-request.edit-documents</span>\n" +
     "      </a>\n" +
     "    </div>\n" +
@@ -8434,7 +8450,7 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "                        on-update=\"updateComment\" on-delete=\"deleteComment\"\n" +
     "                        name-resolver=\"userProfileService.getFullName\"\n" +
     "                        edit-action=\"EDIT\" delete-action=\"DELETE\"></obiba-comments>\n" +
-    "        <obiba-comment-editor on-submit=\"submitComment\"></obiba-comment-editor>\n" +
+    "        <obiba-comment-editor ng-if=\"canComment()\" on-submit=\"submitComment\"></obiba-comment-editor>\n" +
     "      </uib-tab>\n" +
     "      <uib-tab ng-click=\"selectTab('history')\" heading=\"{{'data-access-request.history' | translate}}\">\n" +
     "        <div ng-include=\"'access/views/data-access-request-history-view.html'\"></div>\n" +

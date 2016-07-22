@@ -137,6 +137,12 @@ angular.module('obiba.mica.access')
         return request.actions ? request.actions.indexOf(action) !== - 1 : null;
       };
 
+      this.hasRole = function (role) {
+        var currentUserRoles = SessionProxy.roles();
+        if (!role) { return false; }
+        return currentUserRoles.filter(function (userRole) { return userRole === role; }).length > 0;
+      };
+
       this.actions = {
         canViewProfile: function (role) {
           var found = false;
