@@ -153,6 +153,8 @@ angular.module('obiba.mica.access')
       'NOTIFICATION_EVENTS',
       'DataAccessRequestConfig',
       'LocalizedSchemaFormService',
+      'SessionProxy',
+      'USER_ROLES',
 
     function ($rootScope,
               $scope,
@@ -175,7 +177,9 @@ angular.module('obiba.mica.access')
               ServerErrorUtils,
               NOTIFICATION_EVENTS,
               DataAccessRequestConfig,
-              LocalizedSchemaFormService) {
+              LocalizedSchemaFormService,
+              SessionProxy,
+              USER_ROLES) {
 
       var onError = function (response) {
         AlertService.alert({
@@ -254,6 +258,12 @@ angular.module('obiba.mica.access')
           .replace(':id', $scope.dataAccessRequest.id).replace(':attachmentId', attachment.id);
       };
 
+      $scope.canUpdateDocuments = function () {
+        return $scope.dataAccessRequest.applicant === SessionProxy.login() || DataAccessRequestService.hasRole(USER_ROLES.dao);
+      };
+      $scope.canComment = function () {
+        return $scope.dataAccessRequest.applicant === SessionProxy.login() || DataAccessRequestService.hasRole(USER_ROLES.dao);
+      };
       $scope.config = DataAccessRequestConfig.getOptions();
       $scope.actions = DataAccessRequestService.actions;
       $scope.nextStatus = DataAccessRequestService.nextStatus;

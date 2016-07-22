@@ -93,7 +93,7 @@
                         on-update="updateComment" on-delete="deleteComment"
                         name-resolver="userProfileService.getFullName"
                         edit-action="EDIT" delete-action="DELETE"></obiba-comments>
-        <obiba-comment-editor on-submit="submitComment"></obiba-comment-editor>
+        <obiba-comment-editor ng-if="canComment()" on-submit="submitComment"></obiba-comment-editor>
       </uib-tab>
       <uib-tab ng-click="selectTab('history')" heading="{{'data-access-request.history' | translate}}">
         <div ng-include="'access/views/data-access-request-history-view.html'"></div>
