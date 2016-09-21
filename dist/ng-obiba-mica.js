@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-09-20
+ * Date: 2016-09-21
  */
 'use strict';
 
@@ -8400,8 +8400,13 @@ angular.module("access/views/data-access-request-profile-user-modal.html", []).r
     "        <td>{{getProfileEmail(applicant)}}</td>\n" +
     "      </tr>\n" +
     "      <tr ng-repeat=\"attribute in applicant.attributes | filterProfileAttributes\">\n" +
-    "        <th>{{attribute.key | translate}}</th>\n" +
-    "        <td>{{attribute.value}}</td>\n" +
+    "          <th>{{\n" +
+    "              ('userManagement.' + attribute.key | translate) !== ('userManagement.' + attribute.key) ?\n" +
+    "              ('userManagement.' + attribute.key | translate) :\n" +
+    "              (attribute.key)\n" +
+    "              }}\n" +
+    "          </th>\n" +
+    "          <td>{{attribute.value}}</td>\n" +
     "      </tr>\n" +
     "      </tbody>\n" +
     "    </table>\n" +
