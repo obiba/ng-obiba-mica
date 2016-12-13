@@ -24,6 +24,10 @@
         </span>
       </li>
     </ol>
+
+    <a title="{{'search.refresh-taxonomies' | translate}}" href class="hoffset1" ng-click="refreshTaxonomyCache()">
+      <span class="glyphicon glyphicon-refresh"></span>
+    </a>
   </div>
 
   <div ng-if="taxonomies.search.active" class="loading"></div>

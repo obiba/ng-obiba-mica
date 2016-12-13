@@ -8,6 +8,10 @@
               <li ng-if="taxonomies.taxonomy">
                 <h4 ng-repeat="label in taxonomies.taxonomy.title" ng-if="label.locale === lang">
                   <strong>{{label.text}}</strong>
+
+                  <a title="{{'search.refresh-taxonomies' | translate}}" href class="hoffset1 pull-right" ng-click="refreshTaxonomyCache(target, taxonomies.taxonomy.name)">
+                    <span class="glyphicon glyphicon-refresh"></span>
+                  </a>
                 </h4>
               </li>
             </ol>
