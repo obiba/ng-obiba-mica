@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-12-14
+ * Date: 2016-12-20
  */
 'use strict';
 
@@ -4153,7 +4153,7 @@ angular.module('obiba.mica.search')
         $scope.targets = stuff.filter(function (target) {
           return searchTaxonomyDisplay[target];
         });
-        
+
         function flattenTaxonomies(terms){
           function inner(acc, terms) {
             angular.forEach(terms, function(t) {
@@ -4175,7 +4175,7 @@ angular.module('obiba.mica.search')
 
         $scope.facetedTaxonomies = t.vocabularies.reduce(function(res, target) {
           var taxonomies = flattenTaxonomies(target.terms);
-          
+
           function getTaxonomy(taxonomyName) {
             return taxonomies.filter(function(t) {
               return t.name === taxonomyName;
@@ -4195,9 +4195,9 @@ angular.module('obiba.mica.search')
           } else {
             res[target.name] = ($scope.options[target.name + 'TaxonomiesOrder'] || []).map(getTaxonomy).filter(notNull);
           }
-          
+
           $scope.hasFacetedTaxonomies = $scope.hasFacetedTaxonomies || res[target.name].length;
-          
+
           return res;
         }, {});
       });
@@ -4373,7 +4373,7 @@ angular.module('obiba.mica.search')
           }
         }
       };
-      
+
       function sortCriteriaItems(items) {
         items.sort(function (a, b) {
           if (a.target === 'network' || b.target === 'variable') {
@@ -4476,11 +4476,19 @@ angular.module('obiba.mica.search')
         }
       }
 
-      $scope.setLocale = function (locale) {
-        $scope.lang = locale;
+      $scope.translateTaxonomyNav = function(t, key) {
+        var value = t[key] && t[key].filter(function(item) {
+          return item.locale === $translate.use();
+        }).pop();
+
+        return value ? value.text : key;
+      };
+
+      $rootScope.$on('$translateChangeSuccess', function () {
+        $scope.lang = $translate.use();
         SearchContext.setLocale($scope.lang);
         executeSearchQuery();
-      };
+      });
 
       var showTaxonomy = function (target, name) {
         if ($scope.target === target && $scope.taxonomyName === name && $scope.taxonomiesShown) {
@@ -4645,7 +4653,7 @@ angular.module('obiba.mica.search')
         if (angular.isUndefined(showNotification)) {
           showNotification = true;
         }
-        
+
         if (item.id) {
           var id = CriteriaIdGenerator.generate(item.taxonomy, item.vocabulary);
           var existingItem = $scope.search.criteriaItemMap[id];
@@ -4779,17 +4787,17 @@ angular.module('obiba.mica.search')
       }
 
       var onRemoveCriteria = function(item) {
-        var found = RqlQueryService.findCriterion($scope.search.criteria, item.id); 
+        var found = RqlQueryService.findCriterion($scope.search.criteria, item.id);
         removeCriteriaItem(found);
       };
 
       var onSelectTerm = function (target, taxonomy, vocabulary, args) {
         args = args || {};
-        
+
         if(angular.isString(args)) {
           args = {term: args};
         }
-        
+
         if (vocabulary) {
           var item;
           if (RqlQueryUtils.isNumericVocabulary(vocabulary)) {
@@ -4917,18 +4925,10 @@ angular.module('obiba.mica.search')
       });
 
       function init() {
-        ngObibaMicaSearch.getLocale(function (locales) {
-          if (angular.isArray(locales)) {
-            $scope.tabs = locales;
-            $scope.lang = locales[0];
-          } else {
-            $scope.lang = locales || $scope.lang;
-          }
-
-          SearchContext.setLocale($scope.lang);
-          initSearchTabs();
-          executeSearchQuery();
-        });
+        $scope.lang = $translate.use();
+        SearchContext.setLocale($scope.lang);
+        initSearchTabs();
+        executeSearchQuery();
       }
 
       init();
@@ -7694,7 +7694,17 @@ angular.module('obiba.mica.localized')
 
           if (result && result.length > 0) {
             return result[0][keyValue];
+          } else {
+
+            var langs = values.map(function(value) {
+              return value[keyLang];
+            });
+
+            if (langs.length > 0) {
+              return self.for(values, langs.length === 1 ? langs[0] : 'en', keyLang, keyValue);
+            }
           }
+  
         } else if (angular.isObject(values)) {
           return self.for(Object.keys(values).map(function(k) {
             return {lang: k, value: values[k]};
@@ -10285,7 +10295,7 @@ angular.module("search/views/criteria/criterion-string-terms-template.html", [])
     "              <input ng-model=\"checkboxTerms[term.key]\"\n" +
     "                type=\"checkbox\"\n" +
     "                ng-click=\"updateSelection()\">\n" +
-    "              <span>{{truncate(term.title)}}</span>\n" +
+    "              <span>{{truncate(term.title ? term.title : term.key)}}</span>\n" +
     "            </label>\n" +
     "          </span>\n" +
     "          <span class=\"pull-right\">\n" +
@@ -10827,12 +10837,6 @@ angular.module("search/views/search.html", []).run(["$templateCache", function($
     "\n" +
     "  <div ng-if=\"searchHeaderTemplateUrl\" ng-include=\"searchHeaderTemplateUrl\"></div>\n" +
     "\n" +
-    "  <!-- Lang tabs -->\n" +
-    "  <ul class=\"nav nav-tabs\" role=\"tablist\" ng-if=\"tabs && tabs.length>1\">\n" +
-    "    <li ng-repeat=\"tab in tabs\" role=\"presentation\" ng-class=\"{ active: tab === lang }\"><a href role=\"tab\"\n" +
-    "      ng-click=\"setLocale(tab)\">{{'language.' + tab | translate}}</a></li>\n" +
-    "  </ul>\n" +
-    "\n" +
     "  <div class=\"row voffset2\">\n" +
     "    <div class=\"col-md-3\" ng-if=\"hasFacetedTaxonomies\" >\n" +
     "      <!-- Search Facets region -->\n" +
@@ -10917,17 +10921,17 @@ angular.module("search/views/search.html", []).run(["$templateCache", function($
     "                <li ng-if=\"hasClassificationsTitle\">\n" +
     "                  <label class=\"nav-label\" translate>search.classifications-title</label>\n" +
     "                </li>\n" +
-    "                <li ng-repeat=\"t in taxonomyNav track by $index\" title=\"{{t.locale.description.text}}\">\n" +
-    "                  <a href ng-click=\"showTaxonomy(t.target, t.name)\" ng-if=\"!t.terms\">{{t.locale.title.text}}</a>\n" +
+    "                <li ng-repeat=\"t in taxonomyNav track by $index\" title=\"{{translateTaxonomyNav(t, 'description')}}\">\n" +
+    "                  <a href ng-click=\"showTaxonomy(t.target, t.name)\" ng-if=\"!t.terms\">{{translateTaxonomyNav(t, 'title')}}</a>\n" +
     "            <span uib-dropdown ng-if=\"t.terms\">\n" +
     "              <ul class=\"nav nav-pills\">\n" +
     "                <li>\n" +
-    "                  <a href uib-dropdown-toggle>{{t.locale.title.text}} <span class=\"caret\"></span></a>\n" +
+    "                  <a href uib-dropdown-toggle>{{translateTaxonomyNav(t, 'title')}} <span class=\"caret\"></span></a>\n" +
     "                </li>\n" +
     "              </ul>\n" +
     "              <ul uib-dropdown-menu>\n" +
     "                <li ng-repeat=\"st in t.terms\">\n" +
-    "                  <a href ng-click=\"showTaxonomy(t.target, st.name)\" title=\"{{st.locale.description.text}}\">{{st.locale.title.text}}</a>\n" +
+    "                  <a href ng-click=\"showTaxonomy(t.target, st.name)\" title=\"{{translateTaxonomyNav(st, 'description')}}\">{{translateTaxonomyNav(st, 'title')}}</a>\n" +
     "                </li>\n" +
     "              </ul>\n" +
     "            </span>\n" +

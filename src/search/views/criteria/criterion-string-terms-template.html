@@ -54,7 +54,7 @@
               <input ng-model="checkboxTerms[term.key]"
                 type="checkbox"
                 ng-click="updateSelection()">
-              <span>{{truncate(term.title)}}</span>
+              <span>{{truncate(term.title ? term.title : term.key)}}</span>
             </label>
           </span>
           <span class="pull-right">

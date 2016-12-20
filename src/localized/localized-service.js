@@ -23,7 +23,17 @@ angular.module('obiba.mica.localized')
 
           if (result && result.length > 0) {
             return result[0][keyValue];
+          } else {
+
+            var langs = values.map(function(value) {
+              return value[keyLang];
+            });
+
+            if (langs.length > 0) {
+              return self.for(values, langs.length === 1 ? langs[0] : 'en', keyLang, keyValue);
+            }
           }
+  
         } else if (angular.isObject(values)) {
           return self.for(Object.keys(values).map(function(k) {
             return {lang: k, value: values[k]};
