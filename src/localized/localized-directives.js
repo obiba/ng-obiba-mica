@@ -7,10 +7,14 @@ angular.module('obiba.mica.localized')
       restrict: 'AE',
       scope: {
         value: '=',
-        lang: '='
+        lang: '=',
+        keyLang: '@',
+        keyValue: '@'
       },
       templateUrl: 'localized/localized-template.html',
       link: function(scope) {
+        scope.keyLang = scope.keyLang || 'lang';
+        scope.keyValue = scope.keyValue || 'value';
         scope.LocalizedValues = LocalizedValues;
       }
     };

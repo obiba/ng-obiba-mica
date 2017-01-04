@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2016-12-20
+ * Date: 2017-01-05
  */
 'use strict';
 
@@ -220,7 +220,6 @@ angular.module('obiba.mica.utils', ['schemaForm'])
           // wrap in $timeout to give table a chance to finish rendering
           $timeout(function () {
             $scope.redraw = true;
-            console.log('do redrawTable');
             // set widths of columns
             var totalColumnWidth = 0;
             angular.forEach(elem.querySelectorAll('tr:first-child th'), function (thElem, i) {
@@ -363,18 +362,29 @@ angular.module('obiba.mica.utils', ['schemaForm'])
 
   .service('SfOptionsService', ['$translate', '$q',
     function ($translate, $q) {
-      this.transform = function (result) {
-        return {
-          validationMessage: {
-            302: result.required,
-            'default': result['errors.does-not-validate']
-          }
-        };
+      var validationMessages = [
+        'required',
+        'errors.does-not-validate',
+        'errors.localized.completed'
+      ];
+
+      this.transform = function () {
+        var deferred = $q.defer();
+        $translate(validationMessages).then(function(result){
+          deferred.resolve(
+            {
+              validationMessage: {
+                302: result.required,
+                'default': result['errors.does-not-validate'],
+                'completed': result['errors.localized.completed']
+              }
+            }
+          );
+        });
+
+        return deferred.promise;
       };
-      var deferred = $q.defer();
-      deferred.resolve($translate(['errors.does-not-validate', 'required']));
-      this.sfOptions = deferred.promise;
-    }])  
+    }])
 
   .config(['schemaFormProvider',
     function (schemaFormProvider) {
@@ -790,10 +800,6 @@ angular.module('obiba.mica.access')
         });
       };
 
-      SfOptionsService.sfOptions.then(function(options) {
-        $scope.sfOptions = SfOptionsService.transform(options);
-      });
-
       var retrieveComments = function() {
         $scope.form.comments = DataAccessRequestCommentsResource.query({id: $routeParams.id});
       };
@@ -844,6 +850,43 @@ angular.module('obiba.mica.access')
           $scope.dataAccessRequest = getRequest();
         });
       };
+
+      function initializeForm() {
+        SfOptionsService.transform().then(function(options) {
+          $scope.sfOptions = options;
+        });
+
+        // Retrieve form data
+        DataAccessFormConfigResource.get(
+          function onSuccess(dataAccessForm) {
+            $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
+            $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
+            $scope.form.downloadTemplate = dataAccessForm.pdfDownloadType === 'Template';
+
+            if ($scope.form.definition.length === 0) {
+              $scope.validForm = false;
+              $scope.form.definition = [];
+              AlertService.alert({
+                id: 'DataAccessRequestViewController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.definition'
+              });
+            }
+            if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
+              $scope.validForm = false;
+              $scope.form.schema = {readonly: true};
+              AlertService.alert({
+                id: 'DataAccessRequestViewController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.schema'
+              });
+            }
+            $scope.form.schema.readonly = true;
+            $scope.$broadcast('schemaFormRedraw');
+          },
+          onError
+        );
+      }
 
       function findLastSubmittedDate() {
         var history = $scope.dataAccessRequest.statusChangeHistory || [];
@@ -924,36 +967,7 @@ angular.module('obiba.mica.access')
             });
           }
 
-          // Retrieve form data
-          DataAccessFormConfigResource.get(
-            function onSuccess(dataAccessForm) {
-              $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
-              $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
-              $scope.form.downloadTemplate = dataAccessForm.pdfDownloadType === 'Template';
-
-              if ($scope.form.definition.length === 0) {
-                $scope.validForm = false;
-                $scope.form.definition = [];
-                AlertService.alert({
-                  id: 'DataAccessRequestViewController',
-                  type: 'danger',
-                  msgKey: 'data-access-config.parse-error.definition'
-                });
-              }
-              if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
-                $scope.validForm = false;
-                $scope.form.schema = {readonly: true};
-                AlertService.alert({
-                  id: 'DataAccessRequestViewController',
-                  type: 'danger',
-                  msgKey: 'data-access-config.parse-error.schema'
-                });
-              }
-              $scope.form.schema.readonly = true;
-              $scope.$broadcast('schemaFormRedraw');
-            },
-            onError
-          );
+          initializeForm();
 
           request.attachments = request.attachments || [];
 
@@ -1123,10 +1137,15 @@ angular.module('obiba.mica.access')
         }
       );
 
+      $rootScope.$on('$translateChangeSuccess', function () {
+        initializeForm();
+      });
+
       $scope.forms = {};
     }])
 
-  .controller('DataAccessRequestEditController', ['$log',
+  .controller('DataAccessRequestEditController', ['$rootScope',
+    '$log',
     '$scope',
     '$routeParams',
     '$location',
@@ -1145,7 +1164,13 @@ angular.module('obiba.mica.access')
     'FormDirtyStateObserver',
     'DataAccessRequestDirtyStateService',
 
-    function ($log, $scope, $routeParams, $location, $uibModal, LocalizedSchemaFormService,
+    function ($rootScope,
+              $log,
+              $scope,
+              $routeParams,
+              $location,
+              $uibModal,
+              LocalizedSchemaFormService,
               DataAccessRequestsResource,
               DataAccessRequestResource,
               DataAccessFormConfigResource,
@@ -1173,10 +1198,6 @@ angular.module('obiba.mica.access')
           msg: ServerErrorUtils.buildMessage(response)
         });
       };
-
-      SfOptionsService.sfOptions.then(function(options) {
-        $scope.sfOptions = SfOptionsService.transform(options);
-      });
 
       $scope.getDataAccessListPageUrl = DataAccessRequestService.getListDataAccessRequestPageUrl();
 
@@ -1206,61 +1227,74 @@ angular.module('obiba.mica.access')
         }
       };
 
-      // Retrieve form data
-      DataAccessFormConfigResource.get(
-        function onSuccess(dataAccessForm) {
-          $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
-          $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
-          if ($scope.form.definition.length === 0) {
-            $scope.form.definition = [];
-            $scope.validForm = false;
-            AlertService.alert({
-              id: 'DataAccessRequestEditController',
-              type: 'danger',
-              msgKey: 'data-access-config.parse-error.definition'
-            });
-          }
-          if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
-            $scope.form.schema = {};
-            $scope.validForm = false;
-            AlertService.alert({
-              id: 'DataAccessRequestEditController',
-              type: 'danger',
-              msgKey: 'data-access-config.parse-error.schema'
-            });
-          }
+      function initializeForm() {
+        // Retrieve form data
 
-          if ($scope.validForm) {
-            $scope.dataAccessRequest = $routeParams.id ?
-              DataAccessRequestResource.get({id: $routeParams.id}, function onSuccess(request) {
-                try {
-                  $scope.form.model = request.content ? JSON.parse(request.content) : {};
-                } catch (e) {
-                  $scope.form.model = {};
-                  AlertService.alert({
-                    id: 'DataAccessRequestEditController',
-                    type: 'danger',
-                    msgKey: 'data-access-request.parse-error'
-                  });
-                }
+        SfOptionsService.transform().then(function(options) {
+          $scope.sfOptions = options;
+        });
 
-                $scope.canEdit = DataAccessRequestService.actions.canEdit(request);
-                $scope.form.schema.readonly = !$scope.canEdit;
-                $scope.$broadcast('schemaFormRedraw');
+        DataAccessFormConfigResource.get(
+          function onSuccess(dataAccessForm) {
+            $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
+            $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
+            if ($scope.form.definition.length === 0) {
+              $scope.form.definition = [];
+              $scope.validForm = false;
+              AlertService.alert({
+                id: 'DataAccessRequestEditController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.definition'
+              });
+            }
+            if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
+              $scope.form.schema = {};
+              $scope.validForm = false;
+              AlertService.alert({
+                id: 'DataAccessRequestEditController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.schema'
+              });
+            }
 
-                request.attachments = request.attachments || [];
-                return request;
-              }) : {
-              applicant: SessionProxy.login(),
-              status: DataAccessRequestService.status.OPENED,
-              attachments: []
-            };
-          }
-          
-          $scope.loaded = true;
-        },
-        onError
+            if ($scope.validForm) {
+              $scope.dataAccessRequest = $routeParams.id ?
+                DataAccessRequestResource.get({id: $routeParams.id}, function onSuccess(request) {
+                  try {
+                    $scope.form.model = request.content ? JSON.parse(request.content) : {};
+                  } catch (e) {
+                    $scope.form.model = {};
+                    AlertService.alert({
+                      id: 'DataAccessRequestEditController',
+                      type: 'danger',
+                      msgKey: 'data-access-request.parse-error'
+                    });
+                  }
+
+                  $scope.canEdit = DataAccessRequestService.actions.canEdit(request);
+                  $scope.form.schema.readonly = !$scope.canEdit;
+                  $scope.$broadcast('schemaFormRedraw');
+
+                  request.attachments = request.attachments || [];
+                  return request;
+                }) : {
+                  applicant: SessionProxy.login(),
+                  status: DataAccessRequestService.status.OPENED,
+                  attachments: []
+                };
+            }
+
+            $scope.loaded = true;
+          },
+          onError
         );
+      }
+
+      $rootScope.$on('$translateChangeSuccess', function () {
+        initializeForm();
+      });
+
+      initializeForm();
 
       $scope.loaded = false;
       $scope.config = DataAccessRequestConfig.getOptions();
@@ -7516,10 +7550,14 @@ angular.module('obiba.mica.localized')
       restrict: 'AE',
       scope: {
         value: '=',
-        lang: '='
+        lang: '=',
+        keyLang: '@',
+        keyValue: '@'
       },
       templateUrl: 'localized/localized-template.html',
       link: function(scope) {
+        scope.keyLang = scope.keyLang || 'lang';
+        scope.keyValue = scope.keyValue || 'value';
         scope.LocalizedValues = LocalizedValues;
       }
     };
@@ -8848,7 +8886,7 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
     "      <uib-tabset class=\"voffset5\">\n" +
     "        <uib-tab ng-click=\"selectTab('form')\" heading=\"{{'data-access-request.form' | translate}}\">\n" +
     "          <form id=\"request-form\" name=\"forms.requestForm\">\n" +
-    "            <div sf-model=\"form.model\" sf-form=\"form.definition\" sf-schema=\"form.schema\"></div>\n" +
+    "            <div sf-model=\"form.model\" sf-form=\"form.definition\" sf-schema=\"form.schema\" sf-options=\"sfOptions\"></div>\n" +
     "          </form>\n" +
     "        </uib-tab>\n" +
     "        <uib-tab ng-click=\"selectTab('documents')\">\n" +
@@ -9311,7 +9349,7 @@ angular.module("localized/localized-input-template.html", []).run(["$templateCac
 
 angular.module("localized/localized-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("localized/localized-template.html",
-    "<span>{{LocalizedValues.forLang(value,lang)}}</span>");
+    "<span>{{LocalizedValues.for(value,lang,keyLang,keyValue)}}</span>");
 }]);
 
 angular.module("localized/localized-textarea-template.html", []).run(["$templateCache", function($templateCache) {
@@ -9862,7 +9900,8 @@ angular.module("search/views/classifications/term-panel-template.html", []).run(
     "<div>\n" +
     "  <div class=\"panel panel-default\" ng-if=\"term\">\n" +
     "    <div class=\"panel-heading\">\n" +
-    "      <div ng-repeat=\"label in term.title\" ng-if=\"label.locale === lang\">\n" +
+    "      <div>\n" +
+    "        <localized value=\"term.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "        {{label.text}}\n" +
     "        <small>\n" +
     "          <a href ng-click=\"onSelect(target, taxonomy, vocabulary, {term: term})\">\n" +
@@ -9872,9 +9911,8 @@ angular.module("search/views/classifications/term-panel-template.html", []).run(
     "      </div>\n" +
     "    </div>\n" +
     "    <div class=\"panel-body\">\n" +
-    "      <div ng-repeat=\"label in term.description\" ng-if=\"label.locale === lang\">\n" +
-    "        <span ng-bind-html=\"label.text | dceDescription\" ng-if=\"vocabulary.name === 'dceIds'\"></span>\n" +
-    "        <span ng-bind-html=\"label.text\" ng-if=\"vocabulary.name !== 'dceIds'\"></span>\n" +
+    "      <div>\n" +
+    "        <localized value=\"term.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "      </div>\n" +
     "      <div ng-if=\"!term.description\" class=\"help-block\" translate>search.no-description</div>\n" +
     "    </div>\n" +
@@ -9911,8 +9949,8 @@ angular.module("search/views/classifications/vocabulary-panel-template.html", []
     "      </div>\n" +
     "    </div>\n" +
     "    <div class=\"panel-body\">\n" +
-    "      <div ng-repeat=\"label in vocabulary.description\" ng-if=\"label.locale === lang\">\n" +
-    "        {{label.text}}\n" +
+    "      <div>\n" +
+    "        <localized value=\"vocabulary.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "      </div>\n" +
     "      <div ng-if=\"!vocabulary.description\" class=\"help-block\" translate>search.no-description</div>\n" +
     "    </div>\n" +
@@ -11066,7 +11104,7 @@ angular.module("views/pagination-template.html", []).run(["$templateCache", func
     "\n" +
     "<ul class=\"pagination no-margin pagination-sm\" ng-if=\"1 < pages.length\">\n" +
     "  <li>\n" +
-    "    <a href=\"\" class=\"pagination-total\" ng-if=\"1 < pages.length\" class=\"pagination-total\">{{ range.lower }} - {{ range.upper }} of {{ range.total }}</a>\n" +
+    "    <a href=\"\" class=\"pagination-total\" ng-if=\"1 < pages.length\" class=\"pagination-total\"><span>{{ range.lower }} - {{ range.upper }} </span><span translate>pagination.of</span><span> {{ range.total }}</span></a>\n" +
     "  </li>\n" +
     "</ul>");
 }]);

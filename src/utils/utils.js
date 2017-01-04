@@ -79,7 +79,6 @@ angular.module('obiba.mica.utils', ['schemaForm'])
           // wrap in $timeout to give table a chance to finish rendering
           $timeout(function () {
             $scope.redraw = true;
-            console.log('do redrawTable');
             // set widths of columns
             var totalColumnWidth = 0;
             angular.forEach(elem.querySelectorAll('tr:first-child th'), function (thElem, i) {
@@ -222,18 +221,29 @@ angular.module('obiba.mica.utils', ['schemaForm'])
 
   .service('SfOptionsService', ['$translate', '$q',
     function ($translate, $q) {
-      this.transform = function (result) {
-        return {
-          validationMessage: {
-            302: result.required,
-            'default': result['errors.does-not-validate']
-          }
-        };
+      var validationMessages = [
+        'required',
+        'errors.does-not-validate',
+        'errors.localized.completed'
+      ];
+
+      this.transform = function () {
+        var deferred = $q.defer();
+        $translate(validationMessages).then(function(result){
+          deferred.resolve(
+            {
+              validationMessage: {
+                302: result.required,
+                'default': result['errors.does-not-validate'],
+                'completed': result['errors.localized.completed']
+              }
+            }
+          );
+        });
+
+        return deferred.promise;
       };
-      var deferred = $q.defer();
-      deferred.resolve($translate(['errors.does-not-validate', 'required']));
-      this.sfOptions = deferred.promise;
-    }])  
+    }])
 
   .config(['schemaFormProvider',
     function (schemaFormProvider) {

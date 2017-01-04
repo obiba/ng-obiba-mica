@@ -29,6 +29,6 @@
 
 <ul class="pagination no-margin pagination-sm" ng-if="1 < pages.length">
   <li>
-    <a href="" class="pagination-total" ng-if="1 < pages.length" class="pagination-total">{{ range.lower }} - {{ range.upper }} of {{ range.total }}</a>
+    <a href="" class="pagination-total" ng-if="1 < pages.length" class="pagination-total"><span>{{ range.lower }} - {{ range.upper }} </span><span translate>pagination.of</span><span> {{ range.total }}</span></a>
   </li>
 </ul>

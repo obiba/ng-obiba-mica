@@ -11,8 +11,8 @@
       </div>
     </div>
     <div class="panel-body">
-      <div ng-repeat="label in vocabulary.description" ng-if="label.locale === lang">
-        {{label.text}}
+      <div>
+        <localized value="vocabulary.description" lang="lang" key-lang="locale" key-value="text"></localized>
       </div>
       <div ng-if="!vocabulary.description" class="help-block" translate>search.no-description</div>
     </div>

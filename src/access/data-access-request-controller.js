@@ -207,10 +207,6 @@ angular.module('obiba.mica.access')
         });
       };
 
-      SfOptionsService.sfOptions.then(function(options) {
-        $scope.sfOptions = SfOptionsService.transform(options);
-      });
-
       var retrieveComments = function() {
         $scope.form.comments = DataAccessRequestCommentsResource.query({id: $routeParams.id});
       };
@@ -261,6 +257,43 @@ angular.module('obiba.mica.access')
           $scope.dataAccessRequest = getRequest();
         });
       };
+
+      function initializeForm() {
+        SfOptionsService.transform().then(function(options) {
+          $scope.sfOptions = options;
+        });
+
+        // Retrieve form data
+        DataAccessFormConfigResource.get(
+          function onSuccess(dataAccessForm) {
+            $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
+            $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
+            $scope.form.downloadTemplate = dataAccessForm.pdfDownloadType === 'Template';
+
+            if ($scope.form.definition.length === 0) {
+              $scope.validForm = false;
+              $scope.form.definition = [];
+              AlertService.alert({
+                id: 'DataAccessRequestViewController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.definition'
+              });
+            }
+            if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
+              $scope.validForm = false;
+              $scope.form.schema = {readonly: true};
+              AlertService.alert({
+                id: 'DataAccessRequestViewController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.schema'
+              });
+            }
+            $scope.form.schema.readonly = true;
+            $scope.$broadcast('schemaFormRedraw');
+          },
+          onError
+        );
+      }
 
       function findLastSubmittedDate() {
         var history = $scope.dataAccessRequest.statusChangeHistory || [];
@@ -341,36 +374,7 @@ angular.module('obiba.mica.access')
             });
           }
 
-          // Retrieve form data
-          DataAccessFormConfigResource.get(
-            function onSuccess(dataAccessForm) {
-              $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
-              $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
-              $scope.form.downloadTemplate = dataAccessForm.pdfDownloadType === 'Template';
-
-              if ($scope.form.definition.length === 0) {
-                $scope.validForm = false;
-                $scope.form.definition = [];
-                AlertService.alert({
-                  id: 'DataAccessRequestViewController',
-                  type: 'danger',
-                  msgKey: 'data-access-config.parse-error.definition'
-                });
-              }
-              if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
-                $scope.validForm = false;
-                $scope.form.schema = {readonly: true};
-                AlertService.alert({
-                  id: 'DataAccessRequestViewController',
-                  type: 'danger',
-                  msgKey: 'data-access-config.parse-error.schema'
-                });
-              }
-              $scope.form.schema.readonly = true;
-              $scope.$broadcast('schemaFormRedraw');
-            },
-            onError
-          );
+          initializeForm();
 
           request.attachments = request.attachments || [];
 
@@ -540,10 +544,15 @@ angular.module('obiba.mica.access')
         }
       );
 
+      $rootScope.$on('$translateChangeSuccess', function () {
+        initializeForm();
+      });
+
       $scope.forms = {};
     }])
 
-  .controller('DataAccessRequestEditController', ['$log',
+  .controller('DataAccessRequestEditController', ['$rootScope',
+    '$log',
     '$scope',
     '$routeParams',
     '$location',
@@ -562,7 +571,13 @@ angular.module('obiba.mica.access')
     'FormDirtyStateObserver',
     'DataAccessRequestDirtyStateService',
 
-    function ($log, $scope, $routeParams, $location, $uibModal, LocalizedSchemaFormService,
+    function ($rootScope,
+              $log,
+              $scope,
+              $routeParams,
+              $location,
+              $uibModal,
+              LocalizedSchemaFormService,
               DataAccessRequestsResource,
               DataAccessRequestResource,
               DataAccessFormConfigResource,
@@ -590,10 +605,6 @@ angular.module('obiba.mica.access')
           msg: ServerErrorUtils.buildMessage(response)
         });
       };
-
-      SfOptionsService.sfOptions.then(function(options) {
-        $scope.sfOptions = SfOptionsService.transform(options);
-      });
 
       $scope.getDataAccessListPageUrl = DataAccessRequestService.getListDataAccessRequestPageUrl();
 
@@ -623,61 +634,74 @@ angular.module('obiba.mica.access')
         }
       };
 
-      // Retrieve form data
-      DataAccessFormConfigResource.get(
-        function onSuccess(dataAccessForm) {
-          $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
-          $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
-          if ($scope.form.definition.length === 0) {
-            $scope.form.definition = [];
-            $scope.validForm = false;
-            AlertService.alert({
-              id: 'DataAccessRequestEditController',
-              type: 'danger',
-              msgKey: 'data-access-config.parse-error.definition'
-            });
-          }
-          if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
-            $scope.form.schema = {};
-            $scope.validForm = false;
-            AlertService.alert({
-              id: 'DataAccessRequestEditController',
-              type: 'danger',
-              msgKey: 'data-access-config.parse-error.schema'
-            });
-          }
+      function initializeForm() {
+        // Retrieve form data
 
-          if ($scope.validForm) {
-            $scope.dataAccessRequest = $routeParams.id ?
-              DataAccessRequestResource.get({id: $routeParams.id}, function onSuccess(request) {
-                try {
-                  $scope.form.model = request.content ? JSON.parse(request.content) : {};
-                } catch (e) {
-                  $scope.form.model = {};
-                  AlertService.alert({
-                    id: 'DataAccessRequestEditController',
-                    type: 'danger',
-                    msgKey: 'data-access-request.parse-error'
-                  });
-                }
+        SfOptionsService.transform().then(function(options) {
+          $scope.sfOptions = options;
+        });
 
-                $scope.canEdit = DataAccessRequestService.actions.canEdit(request);
-                $scope.form.schema.readonly = !$scope.canEdit;
-                $scope.$broadcast('schemaFormRedraw');
+        DataAccessFormConfigResource.get(
+          function onSuccess(dataAccessForm) {
+            $scope.form.definition = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.definition, []));
+            $scope.form.schema = LocalizedSchemaFormService.translate(JsonUtils.parseJsonSafely(dataAccessForm.schema, {}));
+            if ($scope.form.definition.length === 0) {
+              $scope.form.definition = [];
+              $scope.validForm = false;
+              AlertService.alert({
+                id: 'DataAccessRequestEditController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.definition'
+              });
+            }
+            if (Object.getOwnPropertyNames($scope.form.schema).length === 0) {
+              $scope.form.schema = {};
+              $scope.validForm = false;
+              AlertService.alert({
+                id: 'DataAccessRequestEditController',
+                type: 'danger',
+                msgKey: 'data-access-config.parse-error.schema'
+              });
+            }
 
-                request.attachments = request.attachments || [];
-                return request;
-              }) : {
-              applicant: SessionProxy.login(),
-              status: DataAccessRequestService.status.OPENED,
-              attachments: []
-            };
-          }
-          
-          $scope.loaded = true;
-        },
-        onError
+            if ($scope.validForm) {
+              $scope.dataAccessRequest = $routeParams.id ?
+                DataAccessRequestResource.get({id: $routeParams.id}, function onSuccess(request) {
+                  try {
+                    $scope.form.model = request.content ? JSON.parse(request.content) : {};
+                  } catch (e) {
+                    $scope.form.model = {};
+                    AlertService.alert({
+                      id: 'DataAccessRequestEditController',
+                      type: 'danger',
+                      msgKey: 'data-access-request.parse-error'
+                    });
+                  }
+
+                  $scope.canEdit = DataAccessRequestService.actions.canEdit(request);
+                  $scope.form.schema.readonly = !$scope.canEdit;
+                  $scope.$broadcast('schemaFormRedraw');
+
+                  request.attachments = request.attachments || [];
+                  return request;
+                }) : {
+                  applicant: SessionProxy.login(),
+                  status: DataAccessRequestService.status.OPENED,
+                  attachments: []
+                };
+            }
+
+            $scope.loaded = true;
+          },
+          onError
         );
+      }
+
+      $rootScope.$on('$translateChangeSuccess', function () {
+        initializeForm();
+      });
+
+      initializeForm();
 
       $scope.loaded = false;
       $scope.config = DataAccessRequestConfig.getOptions();
