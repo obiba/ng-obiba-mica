@@ -114,7 +114,15 @@ angular.module('obiba.mica.search')
       };
   }])
 
-  .directive('datasetsResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'TaxonomyResource', 'RqlQueryService', function (PageUrlService, ngObibaMicaSearch, TaxonomyResource, RqlQueryService) {
+  .directive('datasetsResultTable', ['$log',
+    'PageUrlService',
+    'ngObibaMicaSearch',
+    'TaxonomyResource',
+    'RqlQueryService', function ($log,
+                                 PageUrlService,
+                                 ngObibaMicaSearch,
+                                 TaxonomyResource,
+                                 RqlQueryService) {
     return {
       restrict: 'EA',
       replace: true,
@@ -130,15 +138,20 @@ angular.module('obiba.mica.search')
           target: 'dataset',
           taxonomy: 'Mica_dataset'
         }).$promise.then(function (taxonomy) {
+
+          if (taxonomy.vocabularies) {
             scope.classNames = taxonomy.vocabularies.filter(function (v) {
               return v.name === 'className';
             })[0].terms.reduce(function (prev, t) {
-                prev[t.name] = t.title.map(function (t) {
-                  return {lang: t.locale, value: t.text};
-                });
-                return prev;
-              }, {});
-          });
+              prev[t.name] = t.title.map(function (t) {
+                return {lang: t.locale, value: t.text};
+              });
+              return prev;
+            }, {});
+          } else {
+            $log.warn('Taxonomy has no vocabularies');
+          }
+        });
 
         scope.updateCriteria = function (id, type) {
           RqlQueryService.createCriteriaItem('dataset', 'Mica_dataset', 'id', id).then(function(item) {
@@ -171,7 +184,7 @@ angular.module('obiba.mica.search')
         scope.datasourceTitles = {};
 
         function getDatasourceTitles() {
-          if (Object.keys(scope.taxonomy) < 1 || Object.keys(scope.datasourceTitles) > 0) {
+          if (Object.keys(scope.taxonomy).length < 1 || Object.keys(scope.datasourceTitles).length > 0) {
             return;
           }
 
@@ -443,7 +456,7 @@ angular.module('obiba.mica.search')
         var onDocumentClick = function (event) {
           var isChild = document.querySelector('#'+$scope.criterion.id.replace('.','-')+'-dropdown-'+$scope.timestamp)
             .contains(event.target);
-          
+
           if (!isChild) {
             $timeout(function() {
               $scope.$apply('closeDropdown()');
@@ -521,7 +534,7 @@ angular.module('obiba.mica.search')
       templateUrl: 'search/views/classifications/taxonomies-facets-view.html'
     };
   }])
-  
+
   .directive('taxonomiesPanel',[function() {
     return {
     restrict: 'EA',
