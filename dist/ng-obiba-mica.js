@@ -1,9 +1,9 @@
 /*!
- * ng-obiba-mica - v2.0.0
+ * ng-obiba-mica - v1.3.0
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-01-30
+ * Date: 2017-01-27
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -6607,18 +6607,8 @@ angular.module('obiba.mica.search')
     };
   }])
 
-  .directive('studiesResultTable', ['$log',
-    'PageUrlService',
-    'ngObibaMicaSearch',
-    'TaxonomyResource',
-    'RqlQueryService',
-    'LocalizedValues',
-    function ($log,
-              PageUrlService,
-              ngObibaMicaSearch,
-              TaxonomyResource,
-              RqlQueryService,
-              LocalizedValues) {
+  .directive('studiesResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'TaxonomyResource', 'RqlQueryService', 'LocalizedValues',
+    function (PageUrlService, ngObibaMicaSearch, TaxonomyResource, RqlQueryService, LocalizedValues) {
     return {
       restrict: 'EA',
       replace: true,
@@ -6635,9 +6625,7 @@ angular.module('obiba.mica.search')
         scope.datasourceTitles = {};
 
         function getDatasourceTitles() {
-          if (Object.keys(scope.taxonomy).length < 1 ||
-            !scope.taxonomy.vocabularies ||
-            Object.keys(scope.datasourceTitles).length > 0) {
+          if (Object.keys(scope.taxonomy).length < 1 || Object.keys(scope.datasourceTitles).length > 0) {
             return;
           }
 
@@ -6660,18 +6648,14 @@ angular.module('obiba.mica.search')
         }).$promise.then(function (taxonomy) {
           scope.taxonomy = taxonomy;
           getDatasourceTitles();
-          if (taxonomy.vocabularies) {
-            scope.designs = taxonomy.vocabularies.filter(function (v) {
-              return v.name === 'methods-design';
-            })[0].terms.reduce(function (prev, t) {
+          scope.designs = taxonomy.vocabularies.filter(function (v) {
+            return v.name === 'methods-design';
+          })[0].terms.reduce(function (prev, t) {
               prev[t.name] = t.title.map(function (t) {
                 return {lang: t.locale, value: t.text};
               });
               return prev;
             }, {});
-          } else {
-            $log.warn('Taxonomy has no vocabularies');
-          }
         });
 
         scope.hasDatasource = function (datasources, id) {
