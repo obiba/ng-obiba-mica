@@ -6625,7 +6625,9 @@ angular.module('obiba.mica.search')
         scope.datasourceTitles = {};
 
         function getDatasourceTitles() {
-          if (Object.keys(scope.taxonomy).length < 1 || Object.keys(scope.datasourceTitles).length > 0) {
+          if (Object.keys(scope.taxonomy).length < 1 ||
+            !scope.taxonomy.vocabularies ||
+            Object.keys(scope.datasourceTitles).length > 0) {
             return;
           }
 
