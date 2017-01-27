@@ -166,8 +166,18 @@ angular.module('obiba.mica.search')
     };
   }])
 
-  .directive('studiesResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'TaxonomyResource', 'RqlQueryService', 'LocalizedValues',
-    function (PageUrlService, ngObibaMicaSearch, TaxonomyResource, RqlQueryService, LocalizedValues) {
+  .directive('studiesResultTable', ['$log',
+    'PageUrlService',
+    'ngObibaMicaSearch',
+    'TaxonomyResource',
+    'RqlQueryService',
+    'LocalizedValues',
+    function ($log,
+              PageUrlService,
+              ngObibaMicaSearch,
+              TaxonomyResource,
+              RqlQueryService,
+              LocalizedValues) {
     return {
       restrict: 'EA',
       replace: true,
@@ -209,14 +219,18 @@ angular.module('obiba.mica.search')
         }).$promise.then(function (taxonomy) {
           scope.taxonomy = taxonomy;
           getDatasourceTitles();
-          scope.designs = taxonomy.vocabularies.filter(function (v) {
-            return v.name === 'methods-design';
-          })[0].terms.reduce(function (prev, t) {
+          if (taxonomy.vocabularies) {
+            scope.designs = taxonomy.vocabularies.filter(function (v) {
+              return v.name === 'methods-design';
+            })[0].terms.reduce(function (prev, t) {
               prev[t.name] = t.title.map(function (t) {
                 return {lang: t.locale, value: t.text};
               });
               return prev;
             }, {});
+          } else {
+            $log.warn('Taxonomy has no vocabularies');
+          }
         });
 
         scope.hasDatasource = function (datasources, id) {
