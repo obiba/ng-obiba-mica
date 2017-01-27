@@ -632,7 +632,7 @@ angular.module('obiba.mica.access')
       };
 
       var save = function() {
-        $scope.dataAccessRequest.content = JSON.stringify($scope.form.model);
+        $scope.dataAccessRequest.content = angular.toJson($scope.form.model);
 
         if ($scope.newRequest) {
           DataAccessRequestsResource.save($scope.dataAccessRequest, onSuccess, onError);
