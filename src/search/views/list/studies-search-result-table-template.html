@@ -14,7 +14,7 @@
               ng-if="optionsCols.showStudiesQuestionnaireColumn || optionsCols.showStudiesPmColumn || optionsCols.showStudiesBioColumn || optionsCols.showStudiesOtherColumn">
             search.study.dataSources
           </th>
-          <th rowspan="2" translate>search.study.participants</th>
+          <th rowspan="2" translate ng-if="optionsCols.showStudiesParticipantsColumn">search.study.participants</th>
           <th rowspan="2" translate ng-if="optionsCols.showStudiesNetworksColumn">networks</th>
           <th translate
               ng-attr-colspan="{{optionsCols.showStudiesStudyDatasetsColumn + optionsCols.showStudiesHarmonizationDatasetsColumn}}"
@@ -54,26 +54,26 @@
           <td>
             <localized value="summary.name" lang="lang"></localized>
           </td>
-          <td>
+          <td ng-if="optionsCols.showStudiesDesignColumn">
             <localized ng-repeat="d in summary.designs" value="designs[d]" lang="lang"></localized>
           </td>
-          <td>
+          <td ng-if="optionsCols.showStudiesQuestionnaireColumn">
             <i class="fa fa-check" ng-if="hasDatasource(summary.dataSources, 'questionnaires')"></i><span
               ng-if="!hasDatasource(summary.dataSources, 'questionnaires')">-</span>
           </td>
-          <td>
+          <td ng-if="optionsCols.showStudiesPmColumn">
             <i class="fa fa-check" ng-if="hasDatasource(summary.dataSources, 'physical_measures')"></i><span
               ng-if="!hasDatasource(summary.dataSources, 'physical_measures')">-</span>
           </td>
-          <td>
+          <td ng-if="optionsCols.showStudiesBioColumn">
             <i class="fa fa-check" ng-if="hasDatasource(summary.dataSources, 'biological_samples')"></i><span
               ng-if="!hasDatasource(summary.dataSources, 'biological_samples')">-</span>
           </td>
-          <td>
+          <td ng-if="optionsCols.showStudiesOtherColumn">
             <i class="fa fa-check" ng-if="hasDatasource(summary.dataSources, 'others')"></i><span
               ng-if="!hasDatasource(summary.dataSources, 'others')">-</span>
           </td>
-          <td>
+          <td ng-if="optionsCols.showStudiesParticipantsColumn">
             <span ng-if="summary.targetNumber.number">
               <localized-number value="summary.targetNumber.number"></localized-number>
             </span>
