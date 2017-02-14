@@ -21,6 +21,8 @@
 /* global typeToTarget */
 /* global SORT_FIELDS */
 
+var SORT_TAXONOMY = ['populations-selectionCriteria-countriesIso'];
+
 /**
  * State shared between Criterion DropDown and its content directives
  *
@@ -63,11 +65,23 @@ function CriterionState() {
  * @param TaxonomyResource
  * @param TaxonomiesResource
  * @param ngObibaMicaSearch
+ * @param RqlQueryUtils
+ * @param $cacheFactory
  * @constructor
  */
 function BaseTaxonomiesController($scope, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
   $scope.options = ngObibaMicaSearch.getOptions();
   $scope.RqlQueryUtils = RqlQueryUtils;
+  $scope.SORT_TAXONOMY = SORT_TAXONOMY;
+  $scope.vocabularyTerms = function (vocabulary) {
+    return vocabulary.terms.map(function (term) {
+      term.transformedTitle = term.title.reduce(function (acc, curr) { acc[curr.locale] = curr.text; return acc; }, {});
+      return term;
+    });
+  };
+  $scope.vocabularyCompare = function (v1, v2) {
+    return v1.value[$scope.lang] >= v2.value[$scope.lang] ? 1 : -1;
+  };
   $scope.metaTaxonomy = TaxonomyResource.get({
     target: 'taxonomy',
     taxonomy: 'Mica_taxonomy'
@@ -174,6 +188,8 @@ function BaseTaxonomiesController($scope, $location, TaxonomyResource, Taxonomie
  * @param TaxonomyResource
  * @param TaxonomiesResource
  * @param ngObibaMicaSearch
+ * @param RqlQueryUtils
+ * @param $cacheFactory
  * @constructor
  */
 function TaxonomiesPanelController($scope, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
@@ -219,6 +235,8 @@ function TaxonomiesPanelController($scope, $location, TaxonomyResource, Taxonomi
  * @param TaxonomyResource
  * @param TaxonomiesResource
  * @param ngObibaMicaSearch
+ * @param RqlQueryUtils
+ * @param $cacheFactory
  * @constructor
  */
 function ClassificationPanelController($scope, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {

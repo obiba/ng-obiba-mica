@@ -6,9 +6,7 @@
           <div class="col-md-8">
             <ol class="breadcrumb no-margin no-padding pull-left">
               <li ng-if="taxonomies.taxonomy">
-                <h4 ng-repeat="label in taxonomies.taxonomy.title" ng-if="label.locale === lang" class="pull-left">
-                  <strong>{{label.text}}</strong>
-                </h4>
+                <h4 localized value="taxonomies.taxonomy.title" lang="lang" key-lang="locale" key-value="text" class="pull-left"></h4>
                 <a ng-if="options.showSearchRefreshButton" title="{{'search.refresh-taxonomies' | translate}}"
                    href class="hoffset1 voffset2 pull-right" ng-click="refreshTaxonomyCache(target, taxonomies.taxonomy.name)">
                   <span class="fa fa-refresh"></span>
@@ -53,36 +51,25 @@
           <div ng-if="taxonomies.taxonomy">
             <div class="row">
               <div class="col-md-4 height3" scroll-to-top="taxonomies.taxonomy">
-                <h5 ng-repeat="label in taxonomies.taxonomy.title" ng-if="label.locale === lang">
-                  {{label.text}}
-                </h5>
-                <p class="help-block" ng-repeat="label in taxonomies.taxonomy.description"
-                   ng-if="label.locale === lang">
-                  {{label.text}}
-                </p>
+                <h5 localized value="taxonomies.taxonomy.title" lang="lang" key-lang="locale" key-value="text"></h5>
+                <p class="help-block" localized value="taxonomies.taxonomy.description" lang="lang" key-lang="locale" key-value="text"></p>
                 <ul class="nav nav-pills nav-stacked" ng-if="taxonomies.taxonomy.vocabularies">
                   <li ng-repeat="vocabulary in taxonomies.taxonomy.vocabularies | filter:canNavigate"
                       class="{{taxonomies.vocabulary.name === vocabulary.name ? 'active' : ''}}">
                     <a class="clearfix" id="search-navigate-taxonomy" href
                        ng-click="navigateTaxonomy(taxonomies.taxonomy, vocabulary)">
                       <i class="pull-right {{taxonomies.vocabulary.name !== vocabulary.name ? 'hidden' : ''}} hidden-sm hidden-xs fa fa-chevron-circle-right"></i>
-                      <span ng-repeat="label in vocabulary.title" ng-if="label.locale === lang">
-                        {{label.text}}
-                      </span>
+                      <span localized value="vocabulary.title" lang="lang" key-lang="locale" key-value="text"></span>
                       <span ng-if="!vocabulary.title">
                         {{vocabulary.name}}
                       </span>
-
-
                     </a>
                   </li>
                 </ul>
               </div>
               <div class="col-md-4 height3" scroll-to-top="taxonomies.vocabulary">
                 <div ng-if="taxonomies.vocabulary">
-                  <h5 ng-repeat="label in taxonomies.vocabulary.title" ng-if="label.locale === lang">
-                    {{label.text}}
-                  </h5>
+                  <h5 localized value="taxonomies.vocabulary.title" lang="lang" key-lang="locale" key-value="text"></h5>
                   <div class="form-group" ng-if="!taxonomies.isNumericVocabulary && !taxonomies.isMatchVocabulary">
                     <a href class="btn btn-default btn-xs"
                        ng-click="selectTerm(taxonomies.target, taxonomies.taxonomy, taxonomies.vocabulary)">
@@ -90,10 +77,7 @@
                       <span translate>add-query</span>
                     </a>
                   </div>
-                  <p class="help-block" ng-repeat="label in taxonomies.vocabulary.description"
-                     ng-if="label.locale === lang">
-                    {{label.text}}
-                  </p>
+                  <p class="help-block" localized value="taxonomies.vocabulary.description" lang="lang" key-lang="locale" key-value="text"></p>
                   <div ng-if="taxonomies.isMatchVocabulary" ng-controller="MatchVocabularyPanelController">
                     <div class="form-group">
                       <a href class="btn btn-default btn-xs"
@@ -133,14 +117,12 @@
                     </form>
                   </div>
                   <ul class="nav nav-pills nav-stacked" ng-if="taxonomies.vocabulary.terms">
-                    <li ng-repeat="term in taxonomies.vocabulary.terms"
+                    <li ng-repeat="term in vocabularyTerms(taxonomies.vocabulary) | orderBy:'transformedTitle':false:(SORT_TAXONOMY.indexOf(taxonomies.vocabulary.name) > -1 ? vocabularyCompare: null)"
                         class="{{taxonomies.term.name === term.name ? 'active' : ''}}">
                       <a class="clearfix" id="search-navigate-vocabulary" href
                          ng-click="navigateTaxonomy(taxonomies.taxonomy, taxonomies.vocabulary, term)">
                         <i class="pull-right {{taxonomies.term.name !== term.name ? 'hidden' : ''}} hidden-sm hidden-xs fa fa-chevron-circle-right"></i>
-                        <span ng-repeat="label in term.title" ng-if="label.locale === lang">
-                          {{label.text}}
-                        </span>
+                        <span localized value="term.title" lang="lang" key-lang="locale" key-value="text"></span>
                         <span ng-if="!term.title">
                           {{term.name}}
                         </span>

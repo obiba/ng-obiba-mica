@@ -9,19 +9,13 @@
           translate}}</a>
       </li>
       <li ng-if="taxonomies.taxonomy">
-        <span ng-repeat="label in taxonomies.taxonomy.title" ng-if="!taxonomies.vocabulary && label.locale === lang">
-          {{label.text}}
-        </span>
+        <span localized value="taxonomies.taxonomy.title" lang="lang" key-lang="locale" key-value="text" ng-if="!taxonomies.vocabulary"></span>
         <a href ng-click="navigateTaxonomy(taxonomies.taxonomy)" ng-if="taxonomies.vocabulary">
-          <span ng-repeat="label in taxonomies.taxonomy.title" ng-if="label.locale === lang">
-            {{label.text}}
-          </span>
+          <span localized value="taxonomies.taxonomy.title" lang="lang" key-lang="locale" key-value="text"></span>
         </a>
       </li>
       <li ng-if="taxonomies.vocabulary">
-        <span ng-repeat="label in taxonomies.vocabulary.title" ng-if="label.locale === lang">
-          {{label.text}}
-        </span>
+        <span localized value="taxonomies.vocabulary.title" lang="lang" key-lang="locale" key-value="text"></span>
       </li>
       <a ng-if="options.showSearchRefreshButton" title="{{'search.refresh-taxonomies' | translate}}"
          href class="hoffset1" ng-click="refreshTaxonomyCache()">
@@ -58,14 +52,9 @@
     </div>
 
     <div ng-if="taxonomies.taxonomy && !taxonomies.vocabulary">
-      <h3 ng-repeat="label in taxonomies.taxonomy.title"
-          ng-if="label.locale === lang">
-        {{label.text}}
-      </h3>
+      <h3 localized value="taxonomies.taxonomy.title" lang="lang" key-lang="locale" key-value="text"></h3>
 
-      <p class="help-block" ng-repeat="label in taxonomies.taxonomy.description" ng-if="label.locale === lang">
-        {{label.text}}
-      </p>
+      <p class="help-block" localized value="taxonomies.taxonomy.description" lang="lang" key-lang="locale" key-value="text"></p>
 
       <div ng-repeat="vocabulary in taxonomies.taxonomy.vocabularies" ng-if="$index % 3 == 0" class="row">
         <div class="col-md-4">
@@ -84,15 +73,9 @@
     </div>
 
     <div ng-if="taxonomies.taxonomy && taxonomies.vocabulary && !taxonomies.term">
-      <h3 ng-repeat="label in taxonomies.vocabulary.title"
-          ng-if="label.locale === lang">
-        {{label.text}}
-      </h3>
+      <h3 localized value="taxonomies.vocabulary.title" lang="lang" key-lang="locale" key-value="text"></h3>
 
-      <p class="help-block" ng-repeat="label in taxonomies.vocabulary.description"
-         ng-if="label.locale === lang">
-        {{label.text}}
-      </p>
+      <p class="help-block" localized value="taxonomies.vocabulary.description" lang="lang" key-lang="locale" key-value="text"></p>
 
       <div ng-repeat="term in taxonomies.vocabulary.terms" ng-if="$index % 3 == 0" class="row">
         <div class="col-md-4">
@@ -111,9 +94,7 @@
     </div>
 
     <div ng-if="taxonomies.taxonomy && taxonomies.vocabulary && taxonomies.term">
-      <h5 ng-repeat="label in taxonomies.term.title" ng-if="label.locale === lang">
-        {{label.text}}
-      </h5>
+      <h5 localized value="taxonomies.term.title" lang="lang" key-lang="locale" key-value="text"></h5>
       <p ng-repeat="label in taxonomies.term.description" ng-if="label.locale === lang">
         <span class="help-block" ng-bind-html="label.text | dceDescription" ng-if="taxonomies.vocabulary.name === 'dceIds'"></span>
         <span class="help-block" ng-bind-html="label.text" ng-if="taxonomies.vocabulary.name !== 'dceIds'"></span>

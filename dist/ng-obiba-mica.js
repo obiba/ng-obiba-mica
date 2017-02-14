@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-02-01
+ * Date: 2017-02-14
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -3854,6 +3854,8 @@ angular.module('obiba.mica.search')
 /* global typeToTarget */
 /* global SORT_FIELDS */
 
+var SORT_TAXONOMY = ['populations-selectionCriteria-countriesIso'];
+
 /**
  * State shared between Criterion DropDown and its content directives
  *
@@ -3896,11 +3898,23 @@ function CriterionState() {
  * @param TaxonomyResource
  * @param TaxonomiesResource
  * @param ngObibaMicaSearch
+ * @param RqlQueryUtils
+ * @param $cacheFactory
  * @constructor
  */
 function BaseTaxonomiesController($scope, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
   $scope.options = ngObibaMicaSearch.getOptions();
   $scope.RqlQueryUtils = RqlQueryUtils;
+  $scope.SORT_TAXONOMY = SORT_TAXONOMY;
+  $scope.vocabularyTerms = function (vocabulary) {
+    return vocabulary.terms.map(function (term) {
+      term.transformedTitle = term.title.reduce(function (acc, curr) { acc[curr.locale] = curr.text; return acc; }, {});
+      return term;
+    });
+  };
+  $scope.vocabularyCompare = function (v1, v2) {
+    return v1.value[$scope.lang] >= v2.value[$scope.lang] ? 1 : -1;
+  };
   $scope.metaTaxonomy = TaxonomyResource.get({
     target: 'taxonomy',
     taxonomy: 'Mica_taxonomy'
@@ -4007,6 +4021,8 @@ function BaseTaxonomiesController($scope, $location, TaxonomyResource, Taxonomie
  * @param TaxonomyResource
  * @param TaxonomiesResource
  * @param ngObibaMicaSearch
+ * @param RqlQueryUtils
+ * @param $cacheFactory
  * @constructor
  */
 function TaxonomiesPanelController($scope, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
@@ -4052,6 +4068,8 @@ function TaxonomiesPanelController($scope, $location, TaxonomyResource, Taxonomi
  * @param TaxonomyResource
  * @param TaxonomiesResource
  * @param ngObibaMicaSearch
+ * @param RqlQueryUtils
+ * @param $cacheFactory
  * @constructor
  */
 function ClassificationPanelController($scope, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
@@ -9694,19 +9712,13 @@ angular.module("search/views/classifications/classifications-view.html", []).run
     "          translate}}</a>\n" +
     "      </li>\n" +
     "      <li ng-if=\"taxonomies.taxonomy\">\n" +
-    "        <span ng-repeat=\"label in taxonomies.taxonomy.title\" ng-if=\"!taxonomies.vocabulary && label.locale === lang\">\n" +
-    "          {{label.text}}\n" +
-    "        </span>\n" +
+    "        <span localized value=\"taxonomies.taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\" ng-if=\"!taxonomies.vocabulary\"></span>\n" +
     "        <a href ng-click=\"navigateTaxonomy(taxonomies.taxonomy)\" ng-if=\"taxonomies.vocabulary\">\n" +
-    "          <span ng-repeat=\"label in taxonomies.taxonomy.title\" ng-if=\"label.locale === lang\">\n" +
-    "            {{label.text}}\n" +
-    "          </span>\n" +
+    "          <span localized value=\"taxonomies.taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></span>\n" +
     "        </a>\n" +
     "      </li>\n" +
     "      <li ng-if=\"taxonomies.vocabulary\">\n" +
-    "        <span ng-repeat=\"label in taxonomies.vocabulary.title\" ng-if=\"label.locale === lang\">\n" +
-    "          {{label.text}}\n" +
-    "        </span>\n" +
+    "        <span localized value=\"taxonomies.vocabulary.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></span>\n" +
     "      </li>\n" +
     "      <a ng-if=\"options.showSearchRefreshButton\" title=\"{{'search.refresh-taxonomies' | translate}}\"\n" +
     "         href class=\"hoffset1\" ng-click=\"refreshTaxonomyCache()\">\n" +
@@ -9743,14 +9755,9 @@ angular.module("search/views/classifications/classifications-view.html", []).run
     "    </div>\n" +
     "\n" +
     "    <div ng-if=\"taxonomies.taxonomy && !taxonomies.vocabulary\">\n" +
-    "      <h3 ng-repeat=\"label in taxonomies.taxonomy.title\"\n" +
-    "          ng-if=\"label.locale === lang\">\n" +
-    "        {{label.text}}\n" +
-    "      </h3>\n" +
+    "      <h3 localized value=\"taxonomies.taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></h3>\n" +
     "\n" +
-    "      <p class=\"help-block\" ng-repeat=\"label in taxonomies.taxonomy.description\" ng-if=\"label.locale === lang\">\n" +
-    "        {{label.text}}\n" +
-    "      </p>\n" +
+    "      <p class=\"help-block\" localized value=\"taxonomies.taxonomy.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></p>\n" +
     "\n" +
     "      <div ng-repeat=\"vocabulary in taxonomies.taxonomy.vocabularies\" ng-if=\"$index % 3 == 0\" class=\"row\">\n" +
     "        <div class=\"col-md-4\">\n" +
@@ -9769,17 +9776,11 @@ angular.module("search/views/classifications/classifications-view.html", []).run
     "    </div>\n" +
     "\n" +
     "    <div ng-if=\"taxonomies.taxonomy && taxonomies.vocabulary && !taxonomies.term\">\n" +
-    "      <h3 ng-repeat=\"label in taxonomies.vocabulary.title\"\n" +
-    "          ng-if=\"label.locale === lang\">\n" +
-    "        {{label.text}}\n" +
-    "      </h3>\n" +
+    "      <h3 localized value=\"taxonomies.vocabulary.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></h3>\n" +
     "\n" +
-    "      <p class=\"help-block\" ng-repeat=\"label in taxonomies.vocabulary.description\"\n" +
-    "         ng-if=\"label.locale === lang\">\n" +
-    "        {{label.text}}\n" +
-    "      </p>\n" +
+    "      <p class=\"help-block\" localized value=\"taxonomies.vocabulary.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></p>\n" +
     "\n" +
-    "      <div ng-repeat=\"term in taxonomies.vocabulary.terms\" ng-if=\"$index % 3 == 0\" class=\"row\">\n" +
+    "      <div ng-repeat=\"term in vocabularyTerms(taxonomies.vocabulary) | orderBy:'transformedTitle':false:(SORT_TAXONOMY.indexOf(taxonomies.vocabulary.name) > -1 ? vocabularyCompare: null)\" ng-if=\"$index % 3 == 0\" class=\"row\">\n" +
     "        <div class=\"col-md-4\">\n" +
     "          <div term-panel target=\"taxonomies.target\" taxonomy=\"taxonomies.taxonomy\" vocabulary=\"taxonomies.vocabulary\" term=\"taxonomies.vocabulary.terms[$index]\"\n" +
     "               lang=\"lang\" on-navigate=\"navigateTaxonomy\" on-select=\"selectTerm\"></div>\n" +
@@ -9796,9 +9797,7 @@ angular.module("search/views/classifications/classifications-view.html", []).run
     "    </div>\n" +
     "\n" +
     "    <div ng-if=\"taxonomies.taxonomy && taxonomies.vocabulary && taxonomies.term\">\n" +
-    "      <h5 ng-repeat=\"label in taxonomies.term.title\" ng-if=\"label.locale === lang\">\n" +
-    "        {{label.text}}\n" +
-    "      </h5>\n" +
+    "      <h5 localized value=\"taxonomies.term.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></h5>\n" +
     "      <p ng-repeat=\"label in taxonomies.term.description\" ng-if=\"label.locale === lang\">\n" +
     "        <span class=\"help-block\" ng-bind-html=\"label.text | dceDescription\" ng-if=\"taxonomies.vocabulary.name === 'dceIds'\"></span>\n" +
     "        <span class=\"help-block\" ng-bind-html=\"label.text\" ng-if=\"taxonomies.vocabulary.name !== 'dceIds'\"></span>\n" +
@@ -9929,9 +9928,7 @@ angular.module("search/views/classifications/taxonomies-view.html", []).run(["$t
     "          <div class=\"col-md-8\">\n" +
     "            <ol class=\"breadcrumb no-margin no-padding pull-left\">\n" +
     "              <li ng-if=\"taxonomies.taxonomy\">\n" +
-    "                <h4 ng-repeat=\"label in taxonomies.taxonomy.title\" ng-if=\"label.locale === lang\" class=\"pull-left\">\n" +
-    "                  <strong>{{label.text}}</strong>\n" +
-    "                </h4>\n" +
+    "                <h4 localized value=\"taxonomies.taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\" class=\"pull-left\"></h4>\n" +
     "                <a ng-if=\"options.showSearchRefreshButton\" title=\"{{'search.refresh-taxonomies' | translate}}\"\n" +
     "                   href class=\"hoffset1 voffset2 pull-right\" ng-click=\"refreshTaxonomyCache(target, taxonomies.taxonomy.name)\">\n" +
     "                  <span class=\"fa fa-refresh\"></span>\n" +
@@ -9976,36 +9973,25 @@ angular.module("search/views/classifications/taxonomies-view.html", []).run(["$t
     "          <div ng-if=\"taxonomies.taxonomy\">\n" +
     "            <div class=\"row\">\n" +
     "              <div class=\"col-md-4 height3\" scroll-to-top=\"taxonomies.taxonomy\">\n" +
-    "                <h5 ng-repeat=\"label in taxonomies.taxonomy.title\" ng-if=\"label.locale === lang\">\n" +
-    "                  {{label.text}}\n" +
-    "                </h5>\n" +
-    "                <p class=\"help-block\" ng-repeat=\"label in taxonomies.taxonomy.description\"\n" +
-    "                   ng-if=\"label.locale === lang\">\n" +
-    "                  {{label.text}}\n" +
-    "                </p>\n" +
+    "                <h5 localized value=\"taxonomies.taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></h5>\n" +
+    "                <p class=\"help-block\" localized value=\"taxonomies.taxonomy.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></p>\n" +
     "                <ul class=\"nav nav-pills nav-stacked\" ng-if=\"taxonomies.taxonomy.vocabularies\">\n" +
     "                  <li ng-repeat=\"vocabulary in taxonomies.taxonomy.vocabularies | filter:canNavigate\"\n" +
     "                      class=\"{{taxonomies.vocabulary.name === vocabulary.name ? 'active' : ''}}\">\n" +
     "                    <a class=\"clearfix\" id=\"search-navigate-taxonomy\" href\n" +
     "                       ng-click=\"navigateTaxonomy(taxonomies.taxonomy, vocabulary)\">\n" +
     "                      <i class=\"pull-right {{taxonomies.vocabulary.name !== vocabulary.name ? 'hidden' : ''}} hidden-sm hidden-xs fa fa-chevron-circle-right\"></i>\n" +
-    "                      <span ng-repeat=\"label in vocabulary.title\" ng-if=\"label.locale === lang\">\n" +
-    "                        {{label.text}}\n" +
-    "                      </span>\n" +
+    "                      <span localized value=\"vocabulary.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></span>\n" +
     "                      <span ng-if=\"!vocabulary.title\">\n" +
     "                        {{vocabulary.name}}\n" +
     "                      </span>\n" +
-    "\n" +
-    "\n" +
     "                    </a>\n" +
     "                  </li>\n" +
     "                </ul>\n" +
     "              </div>\n" +
     "              <div class=\"col-md-4 height3\" scroll-to-top=\"taxonomies.vocabulary\">\n" +
     "                <div ng-if=\"taxonomies.vocabulary\">\n" +
-    "                  <h5 ng-repeat=\"label in taxonomies.vocabulary.title\" ng-if=\"label.locale === lang\">\n" +
-    "                    {{label.text}}\n" +
-    "                  </h5>\n" +
+    "                  <h5 localized value=\"taxonomies.vocabulary.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></h5>\n" +
     "                  <div class=\"form-group\" ng-if=\"!taxonomies.isNumericVocabulary && !taxonomies.isMatchVocabulary\">\n" +
     "                    <a href class=\"btn btn-default btn-xs\"\n" +
     "                       ng-click=\"selectTerm(taxonomies.target, taxonomies.taxonomy, taxonomies.vocabulary)\">\n" +
@@ -10013,10 +9999,7 @@ angular.module("search/views/classifications/taxonomies-view.html", []).run(["$t
     "                      <span translate>add-query</span>\n" +
     "                    </a>\n" +
     "                  </div>\n" +
-    "                  <p class=\"help-block\" ng-repeat=\"label in taxonomies.vocabulary.description\"\n" +
-    "                     ng-if=\"label.locale === lang\">\n" +
-    "                    {{label.text}}\n" +
-    "                  </p>\n" +
+    "                  <p class=\"help-block\" localized value=\"taxonomies.vocabulary.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></p>\n" +
     "                  <div ng-if=\"taxonomies.isMatchVocabulary\" ng-controller=\"MatchVocabularyPanelController\">\n" +
     "                    <div class=\"form-group\">\n" +
     "                      <a href class=\"btn btn-default btn-xs\"\n" +
@@ -10056,14 +10039,12 @@ angular.module("search/views/classifications/taxonomies-view.html", []).run(["$t
     "                    </form>\n" +
     "                  </div>\n" +
     "                  <ul class=\"nav nav-pills nav-stacked\" ng-if=\"taxonomies.vocabulary.terms\">\n" +
-    "                    <li ng-repeat=\"term in taxonomies.vocabulary.terms\"\n" +
+    "                    <li ng-repeat=\"term in vocabularyTerms(taxonomies.vocabulary) | orderBy:'transformedTitle':false:(SORT_TAXONOMY.indexOf(taxonomies.vocabulary.name) > -1 ? vocabularyCompare: null)\"\n" +
     "                        class=\"{{taxonomies.term.name === term.name ? 'active' : ''}}\">\n" +
     "                      <a class=\"clearfix\" id=\"search-navigate-vocabulary\" href\n" +
     "                         ng-click=\"navigateTaxonomy(taxonomies.taxonomy, taxonomies.vocabulary, term)\">\n" +
     "                        <i class=\"pull-right {{taxonomies.term.name !== term.name ? 'hidden' : ''}} hidden-sm hidden-xs fa fa-chevron-circle-right\"></i>\n" +
-    "                        <span ng-repeat=\"label in term.title\" ng-if=\"label.locale === lang\">\n" +
-    "                          {{label.text}}\n" +
-    "                        </span>\n" +
+    "                        <span localized value=\"term.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></span>\n" +
     "                        <span ng-if=\"!term.title\">\n" +
     "                          {{term.name}}\n" +
     "                        </span>\n" +
