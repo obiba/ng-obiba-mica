@@ -63,7 +63,6 @@ angular.module('obiba.mica.access')
         $scope.REQUEST_STATUS  = translated;
       });
 
-
       $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
       $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
       $scope.config = DataAccessRequestConfig.getOptions();

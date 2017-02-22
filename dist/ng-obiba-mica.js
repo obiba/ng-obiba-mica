@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-02-06
+ * Date: 2017-02-23
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -725,7 +725,6 @@ angular.module('obiba.mica.access')
       DataAccessRequestService.getStatusFilterData(function(translated) {
         $scope.REQUEST_STATUS  = translated;
       });
-
 
       $scope.headerTemplateUrl = ngObibaMicaAccessTemplateUrl.getHeaderUrl('list');
       $scope.footerTemplateUrl = ngObibaMicaAccessTemplateUrl.getFooterUrl('list');
@@ -1587,7 +1586,7 @@ angular.module('obiba.mica.access')
         if (userCallback) {
           $translate(Object.keys(statusList)).then(function (translation) {
             userCallback(Object.keys(translation).map(function (key) {
-              return translation[key];
+              return {key: key, translation: translation[key]};
             }));
           });
         }
@@ -8713,10 +8712,10 @@ angular.module("access/views/data-access-request-list.html", []).run(["$template
     "              ng-model=\"searchStatus.filter\" reset-search-input=\"true\">\n" +
     "            <ui-select-match allow-clear=\"true\"\n" +
     "                placeholder=\"{{'data-access-request.status-placeholder' | translate}}\">\n" +
-    "              <span ng-bind-html=\"$select.selected\"></span>\n" +
+    "              <span ng-bind-html=\"$select.selected.translation\"></span>\n" +
     "            </ui-select-match>\n" +
     "            <ui-select-choices repeat=\"data in REQUEST_STATUS\">\n" +
-    "              {{data}}\n" +
+    "              {{data.translation}}\n" +
     "            </ui-select-choices>\n" +
     "          </ui-select>\n" +
     "        </div>\n" +
@@ -8741,7 +8740,7 @@ angular.module("access/views/data-access-request-list.html", []).run(["$template
     "        </thead>\n" +
     "        <tbody>\n" +
     "        <tr\n" +
-    "            dir-paginate=\"request in requests | filter:{status: searchStatus.filter} | filter:searchText | itemsPerPage: 20\">\n" +
+    "            dir-paginate=\"request in requests | filter:{status: searchStatus.filter.key} : true | filter:searchText | itemsPerPage: 20\">\n" +
     "          <td>\n" +
     "            <a ng-href=\"{{getDataAccessRequestPageUrl()}}#/data-access-request/{{request.id}}\"\n" +
     "                ng-if=\"actions.canView(request)\" translate>{{request.id}}</a>\n" +
