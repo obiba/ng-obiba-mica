@@ -49,10 +49,10 @@
               ng-model="searchStatus.filter" reset-search-input="true">
             <ui-select-match allow-clear="true"
                 placeholder="{{'data-access-request.status-placeholder' | translate}}">
-              <span ng-bind-html="$select.selected"></span>
+              <span ng-bind-html="$select.selected.translation"></span>
             </ui-select-match>
             <ui-select-choices repeat="data in REQUEST_STATUS">
-              {{data}}
+              {{data.translation}}
             </ui-select-choices>
           </ui-select>
         </div>
@@ -77,7 +77,7 @@
         </thead>
         <tbody>
         <tr
-            dir-paginate="request in requests | filter:{status: searchStatus.filter} | filter:searchText | itemsPerPage: 20">
+            dir-paginate="request in requests | filter:{status: searchStatus.filter.key} : true | filter:searchText | itemsPerPage: 20">
           <td>
             <a ng-href="{{getDataAccessRequestPageUrl()}}#/data-access-request/{{request.id}}"
                 ng-if="actions.canView(request)" translate>{{request.id}}</a>

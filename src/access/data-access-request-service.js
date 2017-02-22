@@ -148,7 +148,7 @@ angular.module('obiba.mica.access')
         if (userCallback) {
           $translate(Object.keys(statusList)).then(function (translation) {
             userCallback(Object.keys(translation).map(function (key) {
-              return translation[key];
+              return {key: key, translation: translation[key]};
             }));
           });
         }
