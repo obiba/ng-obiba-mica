@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-02-28
+ * Date: 2017-03-01
  */
 'use strict';
 
@@ -8967,13 +8967,13 @@ angular.module("file-browser/views/documents-table-template.html", []).run(["$te
     "              <i class=\"fa {{getDocumentIcon(document)}}\"></i>\n" +
     "              <a ng-if=\"fileDocument\" target=\"{{downloadTarget}}\"\n" +
     "                 style=\"text-decoration: none\" ng-click=\"$event.stopPropagation();\" ng-href=\"{{getDownloadUrl(document.path)}}\"\n" +
-    "                  title=\"{{document.name}}\" download>\n" +
+    "                  title=\"{{document.name}}\">\n" +
     "                {{document.name}}\n" +
     "              </a>\n" +
     "            </span>\n" +
     "            <span ng-if=\"!fileDocument\">\n" +
     "              <i class=\"fa {{getDocumentIcon(document)}}\"></i>\n" +
-    "              <a href style=\"text-decoration: none\" ng-click=\"navigateTo($event, document)\" download>\n" +
+    "              <a href style=\"text-decoration: none\" ng-click=\"navigateTo($event, document)\">\n" +
     "                {{document.name}}\n" +
     "              </a>\n" +
     "            </span>\n" +
@@ -8993,7 +8993,7 @@ angular.module("file-browser/views/documents-table-template.html", []).run(["$te
     "                </a>\n" +
     "              </li>\n" +
     "              <li role=\"menuitem\">\n" +
-    "                <a target=\"{{downloadTarget}}\" ng-href=\"{{getDownloadUrl(document.path)}}\" download>\n" +
+    "                <a target=\"{{downloadTarget}}\" ng-href=\"{{getDownloadUrl(document.path, data.document.keyToken)}}\" download>\n" +
     "                  <span><i class=\"fa fa-download\"></i><span class=\"hoffset2\">{{'download' | translate}}</span></span>\n" +
     "                </a>\n" +
     "              </li>\n" +
@@ -9018,7 +9018,7 @@ angular.module("file-browser/views/documents-table-template.html", []).run(["$te
     "          </span>\n" +
     "        </td>\n" +
     "        <td ng-if=\"data.search.active\">\n" +
-    "          <a href class=\"no-text-decoration\" ng-click=\"navigateToParent($event, document)\">\n" +
+    "          <a href class=\"no-text-decoration\" ng-click=\"navigateToParent($event, document, data.document.keyToken)\">\n" +
     "            {{document.attachment.path === data.rootPath ? '/' : document.attachment.path.replace(data.rootPath, '')}}\n" +
     "          </a>\n" +
     "        </td>\n" +

@@ -46,13 +46,13 @@
               <i class="fa {{getDocumentIcon(document)}}"></i>
               <a ng-if="fileDocument" target="{{downloadTarget}}"
                  style="text-decoration: none" ng-click="$event.stopPropagation();" ng-href="{{getDownloadUrl(document.path)}}"
-                  title="{{document.name}}" download>
+                  title="{{document.name}}">
                 {{document.name}}
               </a>
             </span>
             <span ng-if="!fileDocument">
               <i class="fa {{getDocumentIcon(document)}}"></i>
-              <a href style="text-decoration: none" ng-click="navigateTo($event, document)" download>
+              <a href style="text-decoration: none" ng-click="navigateTo($event, document)">
                 {{document.name}}
               </a>
             </span>
@@ -72,7 +72,7 @@
                 </a>
               </li>
               <li role="menuitem">
-                <a target="{{downloadTarget}}" ng-href="{{getDownloadUrl(document.path)}}" download>
+                <a target="{{downloadTarget}}" ng-href="{{getDownloadUrl(document.path, data.document.keyToken)}}" download>
                   <span><i class="fa fa-download"></i><span class="hoffset2">{{'download' | translate}}</span></span>
                 </a>
               </li>
@@ -97,7 +97,7 @@
           </span>
         </td>
         <td ng-if="data.search.active">
-          <a href class="no-text-decoration" ng-click="navigateToParent($event, document)">
+          <a href class="no-text-decoration" ng-click="navigateToParent($event, document, data.document.keyToken)">
             {{document.attachment.path === data.rootPath ? '/' : document.attachment.path.replace(data.rootPath, '')}}
           </a>
         </td>
