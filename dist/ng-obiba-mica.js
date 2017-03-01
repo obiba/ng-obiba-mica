@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-02-28
+ * Date: 2017-03-01
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -599,7 +599,7 @@ angular.module('obiba.mica.attachment')
             );
           }).
         error(function(data){
-            attachment.errors = 'file.errors.' + data.message;
+            attachment.errors = data.message;
             attachment.showProgressBar = false;
         });
       };
@@ -4968,7 +4968,12 @@ angular.module('obiba.mica.search')
       };
 
       var onSelectTerm = function (target, taxonomy, vocabulary, args) {
+
         args = args || {};
+
+        if (args.text) {
+          args.text = args.text.replace(/[^a-zA-Z0-9 _-]/g, '');
+        }
 
         if(angular.isString(args)) {
           args = {term: args};
@@ -9366,7 +9371,7 @@ angular.module("file-browser/views/documents-table-template.html", []).run(["$te
     "      <span ng-if=\"!data.search.recursively\">{{'file.search-results.current' | translate}}</span>\n" +
     "      ({{data.document.children.length}})\n" +
     "  </div>\n" +
-    "  <div ng-if=\"data.document.children.length > 0\">\n" +
+    "  <div ng-if=\"data.document.children.length > 0\" test-ref=\"file-search-result-list\">\n" +
     "    <table class=\"table table-bordered table-striped no-padding no-margin\">\n" +
     "      <thead>\n" +
     "      <tr>\n" +
@@ -9393,7 +9398,7 @@ angular.module("file-browser/views/documents-table-template.html", []).run(["$te
     "          <span>\n" +
     "            <span ng-if=\"fileDocument\">\n" +
     "              <i class=\"fa {{getDocumentIcon(document)}}\"></i>\n" +
-    "              <a ng-if=\"fileDocument\" target=\"{{downloadTarget}}\"\n" +
+    "              <a ng-if=\"fileDocument\" target=\"{{downloadTarget}}\" test-ref=\"file-name\"\n" +
     "                 style=\"text-decoration: none\" ng-click=\"$event.stopPropagation();\" ng-href=\"{{getDownloadUrl(document.path, data.document.keyToken)}}\"\n" +
     "                  title=\"{{document.name}}\">\n" +
     "                {{document.name}}\n" +
@@ -9431,22 +9436,22 @@ angular.module("file-browser/views/documents-table-template.html", []).run(["$te
     "\n" +
     "        <td>\n" +
     "          <span ng-repeat=\"t in getTypeParts(document) track by $index\"\n" +
-    "            class=\"label label-info\"\n" +
+    "            class=\"label label-info\" test-ref=\"file-type\"\n" +
     "            ng-class=\"{'hoffset1' : !$first}\">{{t}}</span>\n" +
     "        </td>\n" +
-    "        <td class=\"no-wrap\" ng-if=\"fileDocument\">\n" +
+    "        <td class=\"no-wrap\" ng-if=\"fileDocument\" test-ref=\"file-size\">\n" +
     "          {{document.size | bytes}}\n" +
     "        </td>\n" +
     "        <td class=\"no-wrap\" ng-if=\"!fileDocument\">\n" +
     "          {{document.size}} {{document.size === 1 ? 'item' : 'items' | translate}}\n" +
     "        </td>\n" +
     "        <td>\n" +
-    "          <span title=\"{{document.timestamps.lastUpdate | amDateFormat: 'lll'}}\">\n" +
+    "          <span title=\"{{document.timestamps.lastUpdate | amDateFormat: 'lll'}}\" test-ref=\"file-lastModification\">\n" +
     "            {{document.timestamps.lastUpdate | amTimeAgo}}\n" +
     "          </span>\n" +
     "        </td>\n" +
     "        <td ng-if=\"data.search.active\">\n" +
-    "          <a href class=\"no-text-decoration\" ng-click=\"navigateToParent($event, document, data.document.keyToken)\">\n" +
+    "          <a href class=\"no-text-decoration\" ng-click=\"navigateToParent($event, document, data.document.keyToken)\" test-ref=\"file-parent\">\n" +
     "            {{document.attachment.path === data.rootPath ? '/' : document.attachment.path.replace(data.rootPath, '')}}\n" +
     "          </a>\n" +
     "        </td>\n" +
@@ -9531,11 +9536,12 @@ angular.module("file-browser/views/toolbar-template.html", []).run(["$templateCa
     "              <span class=\"input-group input-group-sm no-padding-top no-padding-right\">\n" +
     "               <span class=\"input-group-addon\"><i class=\"glyphicon glyphicon-search\"></i></span>\n" +
     "               <input ng-keyup=\"searchKeyUp($event)\"\n" +
-    "                   ng-model=\"data.search.text\"\n" +
-    "                   type=\"text\"\n" +
-    "                   class=\"form-control ng-pristine ng-untouched ng-valid\"\n" +
-    "                   aria-describedby=\"study-search\"\n" +
-    "                   style=\"max-width: 200px;\">\n" +
+    "                      ng-model=\"data.search.text\"\n" +
+    "                      type=\"text\"\n" +
+    "                      class=\"form-control ng-pristine ng-untouched ng-valid\"\n" +
+    "                      aria-describedby=\"study-search\"\n" +
+    "                      style=\"max-width: 200px;\"\n" +
+    "                      test-ref=\"file-search-input\">\n" +
     "               <span ng-show=\"data.search.text\" title=\"{{'search-tooltip.clear' | translate}}\" ng-click=\"clearSearch()\"\n" +
     "                  class=\"input-group-addon\">\n" +
     "                <i class=\"fa fa-times\"></i>\n" +

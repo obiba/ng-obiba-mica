@@ -98,7 +98,7 @@ angular.module('obiba.mica.attachment')
             );
           }).
         error(function(data){
-            attachment.errors = 'file.errors.' + data.message;
+            attachment.errors = data.message;
             attachment.showProgressBar = false;
         });
       };
