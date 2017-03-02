@@ -597,7 +597,11 @@ angular.module('obiba.mica.attachment')
                 $timeout(function () { attachment.showProgressBar = false; }, 1000);
               }
             );
-          });
+          }).
+        error(function(data){
+            attachment.errors = data.message;
+            attachment.showProgressBar = false;
+        });
       };
 
       $scope.onFileSelect = function (file) {
@@ -9194,10 +9198,15 @@ angular.module("attachment/attachment-input-template.html", []).run(["$templateC
     "  <tbody>\n" +
     "  <tr ng-repeat=\"file in files\">\n" +
     "    <td>\n" +
-    "      {{file.fileName}}\n" +
+    "      <span ng-if=\"!file.errors\">{{file.fileName}}\n" +
+    "      </span>\n" +
     "      <uib-progressbar ng-show=\"file.showProgressBar\" class=\"progress-striped\" value=\"file.progress\">\n" +
     "        {{file.progress}}%\n" +
     "      </uib-progressbar>\n" +
+    "       <span ng-if=\"file.errors\" class=\"text-danger\" >{{file.errors | translate}}\n" +
+    "         <button ng-hide=\"{{disabled}}\" type=\"button\" class=\"btn btn-primary btn-xs\" aria-hidden=\"true\" ngf-multiple=\"{{multiple}}\" ngf-select\n" +
+    "                                                                                       ngf-change=\"onFileSelect($files)\" translate>file.upload.button\n" +
+    "       </button></span>\n" +
     "    </td>\n" +
     "    <td>\n" +
     "      <span class=\"pull-right\" ng-if=\"file.timestamps\" title=\"{{ file.timestamps.created | amDateFormat: 'lll' }}\">{{file.timestamps.created | amCalendar }}</span>\n" +

@@ -96,7 +96,11 @@ angular.module('obiba.mica.attachment')
                 $timeout(function () { attachment.showProgressBar = false; }, 1000);
               }
             );
-          });
+          }).
+        error(function(data){
+            attachment.errors = data.message;
+            attachment.showProgressBar = false;
+        });
       };
 
       $scope.onFileSelect = function (file) {

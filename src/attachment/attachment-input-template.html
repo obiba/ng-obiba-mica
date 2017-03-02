@@ -24,10 +24,15 @@
   <tbody>
   <tr ng-repeat="file in files">
     <td>
-      {{file.fileName}}
+      <span ng-if="!file.errors">{{file.fileName}}
+      </span>
       <uib-progressbar ng-show="file.showProgressBar" class="progress-striped" value="file.progress">
         {{file.progress}}%
       </uib-progressbar>
+       <span ng-if="file.errors" class="text-danger" >{{file.errors | translate}}
+         <button ng-hide="{{disabled}}" type="button" class="btn btn-primary btn-xs" aria-hidden="true" ngf-multiple="{{multiple}}" ngf-select
+                                                                                       ngf-change="onFileSelect($files)" translate>file.upload.button
+       </button></span>
     </td>
     <td>
       <span class="pull-right" ng-if="file.timestamps" title="{{ file.timestamps.created | amDateFormat: 'lll' }}">{{file.timestamps.created | amCalendar }}</span>
