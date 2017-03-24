@@ -119,7 +119,8 @@ angular.module('obiba.mica.graphics')
                   if ($scope.chartObject.options && $scope.chartObject.options.colorAxis && $scope.chartObject.options.colorAxis.colors) {
                     $scope.chartObject.d3Config.withColor($scope.chartObject.options.colorAxis.colors);
                   }
-                } else {                  
+                } else {
+
                   $scope.chartObject.d3Config = new D3ChartConfig($scope.chartAggregationName).withType($scope.chartType === 'PieChart' ? 'pieChart' : 'multiBarHorizontalChart')
                       .withData(entries, $scope.chartType === 'PieChart', $filter('translate')('graphics.nbr-studies'))
                       .withTitle($filter('translate')($scope.chartTitleGraph) + ' (N=' + StudiesData.studyResultDto.totalHits + ')');
@@ -131,6 +132,13 @@ angular.module('obiba.mica.graphics')
                   if ($scope.chartObject.options && $scope.chartObject.options.colors) {
                     $scope.chartObject.d3Config.options.chart.color = $scope.chartOptions.colors;
                   }
+                  $scope.chartObject.d3Config.options.chart.legendPosition = 'right';
+                  $scope.chartObject.d3Config.options.chart.legend = {margin : {
+                    top: 0,
+                    right:10,
+                    bottom: 0,
+                    left: 0
+                  }};
                 }
               });
           }

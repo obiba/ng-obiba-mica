@@ -2476,7 +2476,7 @@ angular.module('obiba.mica.search')
                     .withTitle($filter('translate')(charOptions.studiesDesigns.title) + ' (N = ' + result.studyResultDto.totalHits + ')')
                     .withData(angular.copy(methodDesignStudies.entries), false, $filter('translate')('graphics.nbr-studies'));
                 d3Config.options.chart.showLegend = false;
-
+                d3Config.options.chart.color = charOptions.numberParticipants.options.colors;
                 var chartObject= {
                   studiesDesigns: {
                     //directiveTitle: methodDesignStudies.options.title ,
@@ -2521,13 +2521,18 @@ angular.module('obiba.mica.search')
               angular.extend($scope.chartObjects.studiesDesigns, chartObject);
             }
           });
-
           setChartObject('model-numberOfParticipants-participant-range',
             result.studyResultDto,
             [$filter('translate')(charOptions.numberParticipants.header[0]), $filter('translate')(charOptions.numberParticipants.header[1])],
             $filter('translate')(charOptions.numberParticipants.title) + ' (N = ' + result.studyResultDto.totalHits + ')',
             charOptions.numberParticipants.options).then(function(numberParticipant) {
               if (numberParticipant) {
+                var chartConfig = new D3ChartConfig(numberParticipant.vocabulary)
+                  .withType('pieChart')
+                  .withTitle($filter('translate')(charOptions.numberParticipants.title) + ' (N = ' + result.studyResultDto.totalHits + ')')
+                  .withData(angular.copy(numberParticipant.entries), true);
+                chartConfig.options.chart.legendPosition = 'right';
+                chartConfig.options.chart.color = charOptions.numberParticipants.options.colors;
                 var chartObject = {
                   numberParticipants: {
                     headerTitle: $filter('translate')('graphics.number-participants'),
@@ -2537,10 +2542,7 @@ angular.module('obiba.mica.search')
                       data: numberParticipant.data,
                       vocabulary: numberParticipant.vocabulary,
                       entries: numberParticipant.entries,
-                      d3Config: new D3ChartConfig(numberParticipant.vocabulary)
-                          .withType('pieChart')
-                          .withTitle($filter('translate')(charOptions.numberParticipants.title) + ' (N = ' + result.studyResultDto.totalHits + ')')
-                          .withData(angular.copy(numberParticipant.entries), true)
+                      d3Config: chartConfig
                     }
                   }
                 };
@@ -2562,7 +2564,7 @@ angular.module('obiba.mica.search')
                     .withTitle($filter('translate')(charOptions.biologicalSamples.title) + ' (N = ' + result.studyResultDto.totalHits + ')')
                     .withData(angular.copy(bioSamplesStudies.entries), false, $filter('translate')('graphics.nbr-studies'));
                 d3Config.options.chart.showLegend = false;
-
+                d3Config.options.chart.color = charOptions.numberParticipants.options.colors;
                 var chartObject = {
                   biologicalSamples: {
                     headerTitle: $filter('translate')('graphics.bio-samples'),
