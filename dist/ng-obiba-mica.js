@@ -1,9 +1,9 @@
 /*!
- * ng-obiba-mica - v2.1.1
+ * ng-obiba-mica - v1.3.0
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-03-24
+ * Date: 2017-04-05
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -3047,6 +3047,22 @@ angular.module('obiba.mica.search')
         network: null
       };
 
+      function hasCriteriaNode(parent, id) {
+        if (parent && parent.children) {
+          return parent.children.some(function(child) {
+            return child.id && child.id === id ? true : hasCriteriaNode(child, id);
+          });
+        }
+
+        return false;
+      }
+
+      function findTargetCriteria(target, rootCriteria) {
+        return rootCriteria.children.filter(function (child) {
+          return child.target === target;
+        }).pop();
+      }
+
       function findTargetQuery(target, query) {
         return query.args.filter(function (arg) {
           return arg.name === target;
@@ -3183,6 +3199,52 @@ angular.module('obiba.mica.search')
         } else {
           deleteNode(item);
         }
+      };
+
+      /**
+       * Ensures the criteria by adding and AND criterion containing a child criterion based on the input
+       * taxonomy/vocabulary/term. This is made possible by finding the target (VARIABLE, NETWORK, ...) and replacing
+       * the first child by the AND criterion.
+       *
+       * TODO: this method needs to be refactored into smaller node-management methods and also used for NETWORK target.
+       * OK for the urgent for a Maelstrom demo
+       *
+       * @param rootCriteria
+       * @param target
+       * @param taxonomy
+       * @param vocabulary
+       * @param term
+       * @returns {*}
+       */
+      this.ensureCriteria = function(rootCriteria, target, taxonomy, vocabulary, term) {
+        var deferred = $q.defer();
+        var targetCriteria = findTargetCriteria(target, rootCriteria);
+
+        this.createCriteriaItem(QUERY_TARGETS.VARIABLE, taxonomy, vocabulary, term).then(function(criteria) {
+          if (!hasCriteriaNode(targetCriteria, CriteriaIdGenerator.generate(criteria.taxonomy, criteria.vocabulary))) {
+
+            criteria.rqlQuery = RqlQueryUtils.buildRqlQuery(criteria);
+            var targetCriteriaChild = targetCriteria.children[0];
+            var targetQueryChild = targetCriteriaChild.rqlQuery;
+            var andCriteria = new CriteriaItemBuilder().parent(targetCriteria).type(RQL_NODE.AND).build();
+            var andQuery = new RqlQuery(RQL_NODE.AND);
+
+            andCriteria.rqlQuery = andQuery;
+            andCriteria.children = [];
+            andCriteria.children.push(criteria);
+            andCriteria.children.push(targetCriteriaChild);
+            andQuery.args.push(criteria.rqlQuery);
+            andQuery.args.push(targetQueryChild );
+
+            targetCriteria.children[0] = andCriteria;
+            targetCriteria.rqlQuery.args = [andQuery];
+            targetCriteriaChild.parent = andCriteria;
+          }
+
+          deferred.resolve();
+        });
+
+        return deferred.promise;
       };
 
       /**
@@ -6193,8 +6255,13 @@ angular.module('obiba.mica.search')
         }
 
         $q.all(criteria).then(function (criteria) {
-
-          $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+          if ($scope.bucket === BUCKET_TYPES.STUDY || $scope.bucket === BUCKET_TYPES.DCE) {
+            RqlQueryService.ensureCriteria($scope.criteria, QUERY_TARGETS.VARIABLE, 'Mica_variable', 'variableType', 'Study').then(function () {
+              $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+            });
+          } else {
+            $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+          }
 
           if (criteria.item) {
             var consume = $scope.$on('ngObibaMicaQueryUpdated', function() {
@@ -6832,6 +6899,7 @@ angular.module('obiba.mica.search')
         loading: '=',
         bucket: '=',
         query: '=',
+        criteria: '=',
         onUpdateCriteria: '=',
         onRemoveCriteria: '='
       },
@@ -6885,6 +6953,7 @@ angular.module('obiba.mica.search')
         type: '=',
         bucket: '=',
         query: '=',
+        criteria: '=',
         display: '=',
         result: '=',
         lang: '=',
@@ -11223,6 +11292,7 @@ angular.module("search/views/search-result-coverage-template.html", []).run(["$t
     "    loading=\"loading\"\n" +
     "    bucket=\"bucket\"\n" +
     "    query=\"query\"\n" +
+    "    criteria=\"criteria\"\n" +
     "    class=\"voffset2\"\n" +
     "    on-update-criteria=\"onUpdateCriteria\"\n" +
     "    on-remove-criteria=\"onRemoveCriteria\"></coverage-result-table>\n" +
@@ -11563,6 +11633,7 @@ angular.module("search/views/search.html", []).run(["$templateCache", function($
     "        <result-panel display=\"search.display\"\n" +
     "                      type=\"search.type\"\n" +
     "                      bucket=\"search.bucket\"\n" +
+    "                      criteria=\"search.criteria\"\n" +
     "                      query=\"search.executedQuery\"\n" +
     "                      result=\"search.result\"\n" +
     "                      loading=\"search.loading\"\n" +

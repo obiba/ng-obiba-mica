@@ -300,6 +300,7 @@ angular.module('obiba.mica.search')
         loading: '=',
         bucket: '=',
         query: '=',
+        criteria: '=',
         onUpdateCriteria: '=',
         onRemoveCriteria: '='
       },
@@ -353,6 +354,7 @@ angular.module('obiba.mica.search')
         type: '=',
         bucket: '=',
         query: '=',
+        criteria: '=',
         display: '=',
         result: '=',
         lang: '=',

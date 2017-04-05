@@ -2301,8 +2301,13 @@ angular.module('obiba.mica.search')
         }
 
         $q.all(criteria).then(function (criteria) {
-
-          $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+          if ($scope.bucket === BUCKET_TYPES.STUDY || $scope.bucket === BUCKET_TYPES.DCE) {
+            RqlQueryService.ensureCriteria($scope.criteria, QUERY_TARGETS.VARIABLE, 'Mica_variable', 'variableType', 'Study').then(function () {
+              $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+            });
+          } else {
+            $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+          }
 
           if (criteria.item) {
             var consume = $scope.$on('ngObibaMicaQueryUpdated', function() {
