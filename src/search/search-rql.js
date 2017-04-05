@@ -975,6 +975,8 @@ angular.module('obiba.mica.search')
         network: null
       };
 
+      var self = this;
+
       function hasCriteriaNode(parent, id) {
         if (parent && parent.children) {
           return parent.children.some(function(child) {
@@ -985,11 +987,28 @@ angular.module('obiba.mica.search')
         return false;
       }
 
+      this.findItemNode = function(root, item, result) {
+        if (root && root.children && result) {
+          return root.children.some(function(child) {
+            if (item.id.indexOf(child.id) > -1) {
+              result.item = child;
+              return true;
+            }
+
+            return self.findItemNode(child, item, result);
+          });
+        }
+
+        return false;
+      };
+
       function findTargetCriteria(target, rootCriteria) {
         return rootCriteria.children.filter(function (child) {
           return child.target === target;
         }).pop();
       }
+
+      this.findTargetCriteria = findTargetCriteria;
 
       function findTargetQuery(target, query) {
         return query.args.filter(function (arg) {

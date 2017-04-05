@@ -968,7 +968,7 @@ angular.module('obiba.mica.search')
 
         if (item.id) {
           var id = CriteriaIdGenerator.generate(item.taxonomy, item.vocabulary);
-          var existingItem = $scope.search.criteriaItemMap[id];
+          var existingItem = findCriteriaItemFromTree(item);
           var growlMsgKey;
 
           if (existingItem && id.indexOf('dceIds') !== -1 && fullCoverage) {
@@ -1081,7 +1081,7 @@ angular.module('obiba.mica.search')
         }
 
         if (replaceTarget) {
-          var criteriaItem = criteriaItemFromMap(item);
+          var criteriaItem = findCriteriaItemFromTree(item);
           if (criteriaItem) {
             reduce(criteriaItem.parent, criteriaItem);
           }
@@ -1091,11 +1091,14 @@ angular.module('obiba.mica.search')
         selectCriteria(item, RQL_NODE.AND, true, showNotification, fullCoverage);
       };
 
-      function criteriaItemFromMap(item) {
-        var key = Object.keys($scope.search.criteriaItemMap).filter(function (k) {
-          return item.id.indexOf(k) !== -1;
-        })[0];
-        return $scope.search.criteriaItemMap[key];
+      function findCriteriaItemFromTree(item) {
+        var targetItem = RqlQueryService.findTargetCriteria(item.target, $scope.search.criteria);
+        var result = {};
+        if (RqlQueryService.findItemNode(targetItem, item, result)) {
+          return result.item;
+        }
+
+        return null;
       }
 
       var onRemoveCriteria = function(item) {
@@ -2304,17 +2307,15 @@ angular.module('obiba.mica.search')
           if ($scope.bucket === BUCKET_TYPES.STUDY || $scope.bucket === BUCKET_TYPES.DCE) {
             RqlQueryService.ensureCriteria($scope.criteria, QUERY_TARGETS.VARIABLE, 'Mica_variable', 'variableType', 'Study').then(function () {
               $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+              if (criteria.item) {
+                $scope.onUpdateCriteria(criteria.item, type);
+              }
             });
           } else {
             $scope.onUpdateCriteria(criteria.varItem, type, false, true);
-          }
-
-          if (criteria.item) {
-            var consume = $scope.$on('ngObibaMicaQueryUpdated', function() {
-              // do not initiate the next query until all search parts, namely, the item map is updated
-              consume();
+            if (criteria.item) {
               $scope.onUpdateCriteria(criteria.item, type);
-            });
+            }
           }
         });
       };
