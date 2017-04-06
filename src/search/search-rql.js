@@ -977,29 +977,23 @@ angular.module('obiba.mica.search')
 
       var self = this;
 
-      function hasCriteriaNode(parent, id) {
-        if (parent && parent.children) {
-          return parent.children.some(function(child) {
-            return child.id && child.id === id ? true : hasCriteriaNode(child, id);
-          });
-        }
-
-        return false;
-      }
-
-      this.findItemNode = function(root, item, result) {
+      this.findItemNodeById = function(root, targetId, result) {
         if (root && root.children && result) {
           return root.children.some(function(child) {
-            if (item.id.indexOf(child.id) > -1) {
+            if (targetId.indexOf(child.id) > -1) {
               result.item = child;
               return true;
             }
 
-            return self.findItemNode(child, item, result);
+            return self.findItemNodeById(child, targetId, result);
           });
         }
 
         return false;
+      };
+
+      this.findItemNode = function(root, item, result) {
+        return self.findItemNodeById(root, item.id, result);
       };
 
       function findTargetCriteria(target, rootCriteria) {
@@ -1008,6 +1002,28 @@ angular.module('obiba.mica.search')
         }).pop();
       }
 
+      function findCriteriaItemFromTreeById(target, targetId, rootCriteria) {
+        var targetItem = findTargetCriteria(target, rootCriteria);
+        var result = {};
+        if (self.findItemNodeById(targetItem, targetId, result)) {
+          return result.item;
+        }
+
+        return null;
+      }
+
+      function findCriteriaItemFromTree(item, rootCriteria) {
+        var targetItem = findTargetCriteria(item.target, rootCriteria);
+        var result = {};
+        if (self.findItemNode(targetItem, item, result)) {
+          return result.item;
+        }
+
+        return null;
+      }
+
+      this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
+      this.findCriteriaItemFromTree = findCriteriaItemFromTree;
       this.findTargetCriteria = findTargetCriteria;
 
       function findTargetQuery(target, query) {
@@ -1146,52 +1162,6 @@ angular.module('obiba.mica.search')
         } else {
           deleteNode(item);
         }
-      };
-
-      /**
-       * Ensures the criteria by adding and AND criterion containing a child criterion based on the input
-       * taxonomy/vocabulary/term. This is made possible by finding the target (VARIABLE, NETWORK, ...) and replacing
-       * the first child by the AND criterion.
-       *
-       * TODO: this method needs to be refactored into smaller node-management methods and also used for NETWORK target.
-       * OK for the urgent for a Maelstrom demo
-       *
-       * @param rootCriteria
-       * @param target
-       * @param taxonomy
-       * @param vocabulary
-       * @param term
-       * @returns {*}
-       */
-      this.ensureCriteria = function(rootCriteria, target, taxonomy, vocabulary, term) {
-        var deferred = $q.defer();
-        var targetCriteria = findTargetCriteria(target, rootCriteria);
-
-        this.createCriteriaItem(QUERY_TARGETS.VARIABLE, taxonomy, vocabulary, term).then(function(criteria) {
-          if (!hasCriteriaNode(targetCriteria, CriteriaIdGenerator.generate(criteria.taxonomy, criteria.vocabulary))) {
-
-            criteria.rqlQuery = RqlQueryUtils.buildRqlQuery(criteria);
-            var targetCriteriaChild = targetCriteria.children[0];
-            var targetQueryChild = targetCriteriaChild.rqlQuery;
-            var andCriteria = new CriteriaItemBuilder().parent(targetCriteria).type(RQL_NODE.AND).build();
-            var andQuery = new RqlQuery(RQL_NODE.AND);
-
-            andCriteria.rqlQuery = andQuery;
-            andCriteria.children = [];
-            andCriteria.children.push(criteria);
-            andCriteria.children.push(targetCriteriaChild);
-            andQuery.args.push(criteria.rqlQuery);
-            andQuery.args.push(targetQueryChild );
-
-            targetCriteria.children[0] = andCriteria;
-            targetCriteria.rqlQuery.args = [andQuery];
-            targetCriteriaChild.parent = andCriteria;
-          }
-
-          deferred.resolve();
-        });
-
-        return deferred.promise;
       };
 
       /**
