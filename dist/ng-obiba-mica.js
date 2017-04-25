@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-04-07
+ * Date: 2017-04-25
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -3259,8 +3259,12 @@ angular.module('obiba.mica.search')
             target: target,
             taxonomy: taxonomy
           }).$promise.then(function (taxonomy) {
-            vocabulary = taxonomy.vocabularies.filter(function (v) {return v.name === vocabulary || RqlQueryUtils.vocabularyAlias(v) === vocabulary; })[0];
-            term = vocabulary.terms.filter(function (t) {return t.name === term; })[0];
+            vocabulary = taxonomy.vocabularies.filter(function (v) {
+              return v.name === vocabulary || RqlQueryUtils.vocabularyAlias(v) === vocabulary;
+            })[0];
+            term = vocabulary && vocabulary.terms ?
+              vocabulary.terms.filter(function (t) {return t.name === term; })[0] :
+              null;
 
             return createBuilder(taxonomy, vocabulary, term).build();
           });

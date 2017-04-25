@@ -1187,8 +1187,12 @@ angular.module('obiba.mica.search')
             target: target,
             taxonomy: taxonomy
           }).$promise.then(function (taxonomy) {
-            vocabulary = taxonomy.vocabularies.filter(function (v) {return v.name === vocabulary || RqlQueryUtils.vocabularyAlias(v) === vocabulary; })[0];
-            term = vocabulary.terms.filter(function (t) {return t.name === term; })[0];
+            vocabulary = taxonomy.vocabularies.filter(function (v) {
+              return v.name === vocabulary || RqlQueryUtils.vocabularyAlias(v) === vocabulary;
+            })[0];
+            term = vocabulary && vocabulary.terms ?
+              vocabulary.terms.filter(function (t) {return t.name === term; })[0] :
+              null;
 
             return createBuilder(taxonomy, vocabulary, term).build();
           });
