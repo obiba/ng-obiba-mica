@@ -1,5 +1,5 @@
 /*!
- * ng-obiba-mica - v2.1.3
+ * ng-obiba-mica - v2.1.4
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
