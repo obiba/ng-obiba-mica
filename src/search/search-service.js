@@ -230,6 +230,35 @@ angular.module('obiba.mica.search')
 
   }])
 
+  .service('TaxonomyUtils', [ function() {
+
+    function visibleVocabulary(vocabulary) {
+      if (!vocabulary) {
+        return false;
+      }
+
+      var hidden = vocabulary.attributes ? vocabulary.attributes.filter(function(a) {
+        return a.key === 'hidden';
+      }).pop() : null;
+
+      var result = !hidden || hidden.value === 'false';
+      if (vocabulary.name === 'dceIds') {
+        console.log('###', hidden, vocabulary.name, result);
+      }
+
+      return result;
+    }
+
+    function visibleVocabularies(vocabularies) {
+      return (vocabularies || []).filter(visibleVocabulary);
+    }
+
+    this.visibleVocabulary = visibleVocabulary;
+    this.visibleVocabularies = visibleVocabularies;
+
+    return this;
+  }])
+
   .factory('CriteriaNodeCompileService', ['$templateCache', '$compile', function($templateCache, $compile){
 
     return {

@@ -65,7 +65,16 @@ function CriterionState() {
  * @param ngObibaMicaSearch
  * @constructor
  */
-function BaseTaxonomiesController($rootScope, $scope, $translate, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
+function BaseTaxonomiesController($rootScope,
+                                  $scope,
+                                  $translate,
+                                  $location,
+                                  TaxonomyResource,
+                                  TaxonomiesResource,
+                                  ngObibaMicaSearch,
+                                  RqlQueryUtils,
+                                  $cacheFactory) {
+
   $scope.options = ngObibaMicaSearch.getOptions();
   $scope.RqlQueryUtils = RqlQueryUtils;
   $scope.metaTaxonomy = TaxonomyResource.get({
@@ -199,8 +208,26 @@ function BaseTaxonomiesController($rootScope, $scope, $translate, $location, Tax
  * @param ngObibaMicaSearch
  * @constructor
  */
-function TaxonomiesPanelController($rootScope, $scope, $translate, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
-  BaseTaxonomiesController.call(this, $rootScope, $scope, $translate, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory);
+function TaxonomiesPanelController($rootScope,
+                                   $scope,
+                                   $translate,
+                                   $location,
+                                   TaxonomyResource,
+                                   TaxonomiesResource,
+                                   ngObibaMicaSearch,
+                                   RqlQueryUtils,
+                                   $cacheFactory) {
+  BaseTaxonomiesController.call(this,
+    $rootScope,
+    $scope,
+    $translate,
+    $location,
+    TaxonomyResource,
+    TaxonomiesResource,
+    ngObibaMicaSearch,
+    RqlQueryUtils,
+    $cacheFactory);
+
   function getPanelTaxonomies(target, taxonomyName) {
     TaxonomyResource.get({
       target: target,
@@ -246,10 +273,30 @@ function TaxonomiesPanelController($rootScope, $scope, $translate, $location, Ta
  * @param ngObibaMicaSearch
  * @constructor
  */
-function ClassificationPanelController($rootScope, $scope, $translate, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory) {
-  BaseTaxonomiesController.call(this, $rootScope, $scope, $translate, $location, TaxonomyResource, TaxonomiesResource, ngObibaMicaSearch, RqlQueryUtils, $cacheFactory);
+function ClassificationPanelController($rootScope,
+                                       $scope,
+                                       $translate,
+                                       $location,
+                                       TaxonomyResource,
+                                       TaxonomiesResource,
+                                       ngObibaMicaSearch,
+                                       RqlQueryUtils,
+                                       $cacheFactory,
+                                       TaxonomyUtils) {
+  BaseTaxonomiesController.call(this,
+    $rootScope,
+    $scope,
+    $translate,
+    $location,
+    TaxonomyResource,
+    TaxonomiesResource,
+    ngObibaMicaSearch,
+    RqlQueryUtils,
+    $cacheFactory);
+
   var groupTaxonomies = function (taxonomies, target) {
     var res = taxonomies.reduce(function (res, t) {
+      t.vocabularies = TaxonomyUtils.visibleVocabularies(t.vocabularies);
       res[t.name] = t;
       return res;
     }, {});
@@ -363,6 +410,7 @@ angular.module('obiba.mica.search')
     'RqlQueryUtils',
     'SearchContext',
     'CoverageGroupByService',
+    'TaxonomyUtils',
     function ($scope,
               $rootScope,
               $timeout,
@@ -385,7 +433,8 @@ angular.module('obiba.mica.search')
               RqlQueryService,
               RqlQueryUtils,
               SearchContext,
-              CoverageGroupByService) {
+              CoverageGroupByService,
+              TaxonomyUtils) {
 
       $scope.options = ngObibaMicaSearch.getOptions();
       var cookiesSearchHelp = 'micaHideSearchHelpText';
@@ -873,7 +922,7 @@ angular.module('obiba.mica.search')
           var taxonomy = bundle.taxonomy;
           if (taxonomy.vocabularies) {
             taxonomy.vocabularies.filter(function (vocabulary) {
-              return canSearch(vocabulary, $scope.options.hideSearch);
+              return TaxonomyUtils.visibleVocabulary(vocabulary) && canSearch(vocabulary, $scope.options.hideSearch);
             }).forEach(function (vocabulary) {
               if (vocabulary.terms) {
                 vocabulary.terms.filter(function (term) {
@@ -940,7 +989,7 @@ angular.module('obiba.mica.search')
           AlertService.alert({
             id: 'SearchController',
             type: 'danger',
-            msg: response.data && response.data.message ? response.data.message : $translate.instant('search.error'),
+            msg: ServerErrorUtils.buildMessage(response),
             delay: 5000
           });
         });
@@ -1440,14 +1489,43 @@ angular.module('obiba.mica.search')
       });
   }])
 
-  .controller('TaxonomiesPanelController', ['$rootScope', '$scope', '$translate', '$location', 'TaxonomyResource',
-    'TaxonomiesResource', 'ngObibaMicaSearch', 'RqlQueryUtils', '$cacheFactory', TaxonomiesPanelController])
+  .controller('TaxonomiesPanelController', ['$rootScope',
+    '$scope',
+    '$translate',
+    '$location',
+    'TaxonomyResource',
+    'TaxonomiesResource',
+    'ngObibaMicaSearch',
+    'RqlQueryUtils',
+    '$cacheFactory',
+    TaxonomiesPanelController])
 
-  .controller('ClassificationPanelController', ['$rootScope', '$scope', '$translate', '$location', 'TaxonomyResource',
-    'TaxonomiesResource', 'ngObibaMicaSearch', 'RqlQueryUtils', '$cacheFactory', ClassificationPanelController])
+  .controller('ClassificationPanelController', ['$rootScope',
+    '$scope',
+    '$translate',
+    '$location',
+    'TaxonomyResource',
+    'TaxonomiesResource',
+    'ngObibaMicaSearch',
+    'RqlQueryUtils',
+    '$cacheFactory',
+    'TaxonomyUtils',
+    ClassificationPanelController])
 
-  .controller('TaxonomiesFacetsController', ['$scope', '$timeout', 'TaxonomyResource', 'TaxonomiesResource', 'LocalizedValues', 'ngObibaMicaSearch',
-    'RqlQueryUtils', function ($scope, $timeout, TaxonomyResource, TaxonomiesResource, LocalizedValues, ngObibaMicaSearch, RqlQueryUtils) {
+  .controller('TaxonomiesFacetsController', ['$scope',
+    '$timeout',
+    'TaxonomyResource',
+    'TaxonomiesResource',
+    'LocalizedValues',
+    'ngObibaMicaSearch',
+    'RqlQueryUtils', function ($scope,
+                               $timeout,
+                               TaxonomyResource,
+                               TaxonomiesResource,
+                               LocalizedValues,
+                               ngObibaMicaSearch,
+                               RqlQueryUtils) {
+
       $scope.options = ngObibaMicaSearch.getOptions();
       $scope.taxonomies = {};
       $scope.targets = [];
@@ -2517,7 +2595,7 @@ angular.module('obiba.mica.search')
               angular.extend($scope.chartObjects.studiesDesigns, chartObject);
             }
           });
-          setChartObject('model-numberOfParticipants-participant-range',
+          setChartObject('model-numberOfParticipants-participant-number-range',
             result.studyResultDto,
             [$filter('translate')(charOptions.numberParticipants.header[0]), $filter('translate')(charOptions.numberParticipants.header[1])],
             $filter('translate')(charOptions.numberParticipants.title) + ' (N = ' + result.studyResultDto.totalHits + ')',

@@ -61,6 +61,12 @@ angular.module('obiba.mica.search')
     };
   })
 
+  .filter('visibleVocabularies', ['TaxonomyUtils', function(TaxonomyUtils) {
+    return function(vocabularies) {
+      return TaxonomyUtils.visibleVocabularies(vocabularies);
+    };
+  }])
+
   .filter('dceDescription', function() {
     return function(input) {
       return input.split(':<p>').map(function(d){
