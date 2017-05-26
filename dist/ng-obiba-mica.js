@@ -1,9 +1,9 @@
 /*!
- * ng-obiba-mica - v2.1.4
+ * ng-obiba-mica - v2.2.x
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-04-25
+ * Date: 2017-05-26
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
