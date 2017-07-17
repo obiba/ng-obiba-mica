@@ -2102,7 +2102,7 @@ angular.module('obiba.mica.search')
         }
 
         var groupBy = $scope.bucket.split('-')[0];
-        var isStudy = 'study' === groupBy;
+        var isStudy = 'study' === groupBy || 'dce' === groupBy;
 
         if (val) {
           if ($scope.bucketSelection.variableTypeDataschemaSelected) {
@@ -2121,7 +2121,7 @@ angular.module('obiba.mica.search')
       $scope.$watch('bucketSelection.variableTypeDataschemaSelected', updateBucket);
 
       $scope.selectBucket = function (bucket) {
-        if (bucket === BUCKET_TYPES.STUDY && $scope.bucketSelection.dceBucketSelected) {
+        if (bucket === (BUCKET_TYPES.STUDY || BUCKET_TYPES.STUDY_INDIVIDUAL) && $scope.bucketSelection.dceBucketSelected) {
           bucket = BUCKET_TYPES.DCE;
         }
 
