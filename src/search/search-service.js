@@ -174,9 +174,18 @@ angular.module('obiba.mica.search')
 
   .service('CoverageGroupByService', ['ngObibaMicaSearch', function(ngObibaMicaSearch) {
     var groupByOptions = ngObibaMicaSearch.getOptions().coverage.groupBy;
+    console.log('groupByOptions', groupByOptions);
     return {
       canShowStudy: function() {
-        return groupByOptions.study || groupByOptions.dce;
+        return groupByOptions.study || groupByOptions.harmonizationStudy || groupByOptions.dce;
+      },
+
+      canShowIndividualStudy: function (bucket) {
+        return bucket.indexOf('individual') > -1 && groupByOptions.study;
+      },
+
+      canShowHarmonizationStudy: function (bucket) {
+        return bucket.indexOf('harmonization') > -1 && groupByOptions.harmonizationStudy;
       },
 
       canShowDce: function(bucket) {
@@ -188,19 +197,27 @@ angular.module('obiba.mica.search')
       },
 
       canShowVariableTypeFilter: function(bucket) {
-        return (bucket !== BUCKET_TYPES.NETWORK) && (groupByOptions.dataset || groupByOptions.study || groupByOptions.dce) && groupByOptions.dataschema;
-      },
+        var forStudy = bucket.indexOf('study') > -1 && (groupByOptions.study && groupByOptions.harmonizationStudy);
+        var forDce = bucket.indexOf('dce') > -1;
+        var forDataset = bucket.indexOf('dataset') > -1 && groupByOptions.dataset && groupByOptions.dataschema;
 
-      canShowNetwork: function() {
-        return groupByOptions.network;
+        return (bucket !== BUCKET_TYPES.NETWORK) && (forStudy || forDce || forDataset);
       },
 
       studyTitle: function() {
-        return groupByOptions.study ? 'search.coverage-buckets.study' : (groupByOptions.dce ? 'search.coverage-buckets.dce' : '');
+        return groupByOptions.study || groupByOptions.harmonizationStudy ? 'search.coverage-buckets.study' : (groupByOptions.dce ? 'search.coverage-buckets.dce' : '');
       },
 
       studyBucket: function() {
-        return groupByOptions.study ? BUCKET_TYPES.STUDY : BUCKET_TYPES.DCE;
+        if (groupByOptions.study && groupByOptions.harmonizationStudy) {
+          return BUCKET_TYPES.STUDY;
+        } else if (groupByOptions.study && !groupByOptions.harmonizationStudy) {
+          return BUCKET_TYPES.STUDY_INDIVIDUAL;
+        } else if (groupByOptions.harmonizationStudy && !groupByOptions.study) {
+          return BUCKET_TYPES.STUDY_HARMONIZATION;
+        } else {
+          return BUCKET_TYPES.DCE;
+        }
       },
 
       datasetTitle: function() {

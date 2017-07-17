@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-07-13
+ * Date: 2017-07-17
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -4023,9 +4023,18 @@ angular.module('obiba.mica.search')
 
   .service('CoverageGroupByService', ['ngObibaMicaSearch', function(ngObibaMicaSearch) {
     var groupByOptions = ngObibaMicaSearch.getOptions().coverage.groupBy;
+    console.log('groupByOptions', groupByOptions);
     return {
       canShowStudy: function() {
-        return groupByOptions.study || groupByOptions.dce;
+        return groupByOptions.study || groupByOptions.harmonizationStudy || groupByOptions.dce;
+      },
+
+      canShowIndividualStudy: function (bucket) {
+        return bucket.indexOf('individual') > -1 && groupByOptions.study;
+      },
+
+      canShowHarmonizationStudy: function (bucket) {
+        return bucket.indexOf('harmonization') > -1 && groupByOptions.harmonizationStudy;
       },
 
       canShowDce: function(bucket) {
@@ -4037,19 +4046,27 @@ angular.module('obiba.mica.search')
       },
 
       canShowVariableTypeFilter: function(bucket) {
-        return (bucket !== BUCKET_TYPES.NETWORK) && (groupByOptions.dataset || groupByOptions.study || groupByOptions.dce) && groupByOptions.dataschema;
-      },
+        var forStudy = bucket.indexOf('study') > -1 && (groupByOptions.study && groupByOptions.harmonizationStudy);
+        var forDce = bucket.indexOf('dce') > -1;
+        var forDataset = bucket.indexOf('dataset') > -1 && groupByOptions.dataset && groupByOptions.dataschema;
 
-      canShowNetwork: function() {
-        return groupByOptions.network;
+        return (bucket !== BUCKET_TYPES.NETWORK) && (forStudy || forDce || forDataset);
       },
 
       studyTitle: function() {
-        return groupByOptions.study ? 'search.coverage-buckets.study' : (groupByOptions.dce ? 'search.coverage-buckets.dce' : '');
+        return groupByOptions.study || groupByOptions.harmonizationStudy ? 'search.coverage-buckets.study' : (groupByOptions.dce ? 'search.coverage-buckets.dce' : '');
       },
 
       studyBucket: function() {
-        return groupByOptions.study ? BUCKET_TYPES.STUDY : BUCKET_TYPES.DCE;
+        if (groupByOptions.study && groupByOptions.harmonizationStudy) {
+          return BUCKET_TYPES.STUDY;
+        } else if (groupByOptions.study && !groupByOptions.harmonizationStudy) {
+          return BUCKET_TYPES.STUDY_INDIVIDUAL;
+        } else if (groupByOptions.harmonizationStudy && !groupByOptions.study) {
+          return BUCKET_TYPES.STUDY_HARMONIZATION;
+        } else {
+          return BUCKET_TYPES.DCE;
+        }
       },
 
       datasetTitle: function() {
@@ -6227,7 +6244,7 @@ angular.module('obiba.mica.search')
         }
 
         var groupBy = $scope.bucket.split('-')[0];
-        var isStudy = 'study' === groupBy;
+        var isStudy = 'study' === groupBy || 'dce' === groupBy;
 
         if (val) {
           if ($scope.bucketSelection.variableTypeDataschemaSelected) {
@@ -6246,7 +6263,7 @@ angular.module('obiba.mica.search')
       $scope.$watch('bucketSelection.variableTypeDataschemaSelected', updateBucket);
 
       $scope.selectBucket = function (bucket) {
-        if (bucket === BUCKET_TYPES.STUDY && $scope.bucketSelection.dceBucketSelected) {
+        if (bucket === (BUCKET_TYPES.STUDY || BUCKET_TYPES.STUDY_INDIVIDUAL) && $scope.bucketSelection.dceBucketSelected) {
           bucket = BUCKET_TYPES.DCE;
         }
 
@@ -10817,9 +10834,6 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "        ng-class=\"{'active': bucket.startsWith('dataset')}\">\n" +
     "        <a href ng-click=\"selectBucket(groupByOptions.datasetBucket())\" translate>{{groupByOptions.datasetTitle()}}</a>\n" +
     "      </li>\n" +
-    "      <!--li ng-if=\"groupByOptions.canShowNetwork()\" ng-class=\"{'active': bucket.startsWith('network')}\">\n" +
-    "        <a href ng-click=\"selectBucket(BUCKET_TYPES.NETWORK)\" translate>search.coverage-buckets.network</a>\n" +
-    "      </li-->\n" +
     "    </ul>\n" +
     "\n" +
     "    <div class=\"pull-right\">\n" +
@@ -10840,7 +10854,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "\n" +
     "    <div class=\"clearfix\"></div>\n" +
     "\n" +
-    "    <div class=\"voffset2 pull-right\" ng-if=\"groupByOptions.canShowDce(bucket)\">\n" +
+    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}\" ng-if=\"groupByOptions.canShowDce(bucket)\">\n" +
     "      <label class=\"checkbox-inline\">\n" +
     "        <input type=\"checkbox\" ng-model=\"bucketSelection.dceBucketSelected\">\n" +
     "        <span translate>search.coverage-buckets.dce</span>\n" +
