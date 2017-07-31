@@ -6269,8 +6269,7 @@ angular.module('obiba.mica.search')
       function validateBucket(bucket) {
         if (bucket &&
           (!BUCKET_TYPES[bucket.replace('-', '_').toUpperCase()] || !CoverageGroupByService.canGroupBy(bucket))) {
-          var defaultBucket = CoverageGroupByService.defaultBucket();
-          $location.search('bucket', defaultBucket ? defaultBucket : null) ;
+          throw new Error('Invalid bucket ' + bucket);
         }
       }
 
@@ -6284,12 +6283,20 @@ angular.module('obiba.mica.search')
             $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
           }
         });
+
+        $scope.bucketSelection._dceBucketSelected = $location.search().bucket === BUCKET_TYPES.DCE; // don't trigger the watch callback
       }
 
       function onLocationChange() {
         var search = $location.search();
         if (search.display && search.display === DISPLAY_TYPES.COVERAGE) {
-          validateBucket(search.bucket);
+          try {
+            validateBucket(search.bucket);
+          } catch (error) {
+            var defaultBucket = CoverageGroupByService.defaultBucket();
+            $location.search('bucket', defaultBucket).replace();
+          }
+
           setInitialFilter();
         }
       }
@@ -6298,7 +6305,7 @@ angular.module('obiba.mica.search')
         if ($scope.groupByOptions.canShowVariableTypeFilter(groupBy)) {
           $scope.selectBucket(groupBy);
         } else if (BUCKET_TYPES.STUDY !== groupBy) {
-            $scope.selectBucket(BUCKET_TYPES.DCE);
+          $scope.selectBucket(BUCKET_TYPES.DCE);
         }
       }
 
@@ -6587,7 +6594,12 @@ angular.module('obiba.mica.search')
 
           updateStudyClassNameFilter(value);
         },
-        dceBucketSelected: $location.search().bucket === BUCKET_TYPES.DCE
+        get dceBucketSelected() {
+          return this._dceBucketSelected;
+        },
+        set dceBucketSelected(value) {
+          this._dceBucketSelected = value;
+        }
       };
 
       $scope.isStudyBucket = isStudyBucket;
