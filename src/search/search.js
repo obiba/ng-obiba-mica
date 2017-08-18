@@ -31,6 +31,7 @@ angular.module('obiba.mica.search', [
       {
         search: {header: null, footer: null},
         searchStudiesResultTable: {template: null},
+        searchNetworksResultTable: {template: null},
         searchResultList: {template: null},
         searchResultCoverage: {template: null},
         searchResultGraphics: {template: null},
@@ -93,7 +94,14 @@ angular.module('obiba.mica.search', [
             showStudiesVariablesColumn: false,
             showStudiesStudyVariablesColumn: true,
             showStudiesDataschemaVariablesColumn: true
-          }
+          },
+          fields: [
+            'acronym.*',
+            'name.*',
+            'model.methods.design',
+            'populations.dataCollectionEvents.model.dataSources',
+            'model.numberOfParticipants.participant'
+          ]
         },
         networks: {
           showSearchTab: true,
@@ -104,7 +112,12 @@ angular.module('obiba.mica.search', [
             showNetworksVariablesColumn: false,
             showNetworksStudyVariablesColumn: true,
             showNetworksDataschemaVariablesColumn: true
-          }
+          },
+          fields: [
+            'acronym.*',
+            'name.*',
+            'studyIds'
+          ]
         },
         coverage: {
           groupBy: {

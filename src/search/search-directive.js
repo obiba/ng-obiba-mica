@@ -67,8 +67,8 @@ angular.module('obiba.mica.search')
     };
   }])
 
-  .directive('networksResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'RqlQueryService', 'StudyFilterShortcutService',
-    function (PageUrlService, ngObibaMicaSearch, RqlQueryService, StudyFilterShortcutService) {
+  .directive('networksResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'RqlQueryService', 'StudyFilterShortcutService', 'ngObibaMicaSearchTemplateUrl',
+    function (PageUrlService, ngObibaMicaSearch, RqlQueryService, StudyFilterShortcutService, ngObibaMicaSearchTemplateUrl) {
       return {
         restrict: 'EA',
         replace: true,
@@ -77,7 +77,7 @@ angular.module('obiba.mica.search')
           loading: '=',
           onUpdateCriteria: '='
         },
-        templateUrl: 'search/views/list/networks-search-result-table-template.html',
+        templateUrl: ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchNetworksResultTable'),
         link: function(scope) {
           function setInitialStudyFilterSelection() {
             StudyFilterShortcutService.getStudyClassNameChoices().then(function (result) {

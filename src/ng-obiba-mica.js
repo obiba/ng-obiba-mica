@@ -76,6 +76,7 @@ function NgObibaMicaUrlProvider() {
 function NgObibaMicaTemplateUrlFactory() {
   var templates = {
     'searchStudiesResultTable' :'search/views/list/studies-search-result-table-template.html',
+    'searchNetworksResultTable' :'search/views/list/networks-search-result-table-template.html',
     'searchResultList' :'search/views/search-result-list-template.html',
     'searchResultCoverage' :'search/views/search-result-coverage-template.html',
     'searchResultGraphics' :'search/views/search-result-graphics-template.html'

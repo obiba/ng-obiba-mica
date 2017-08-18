@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-09-05
+ * Date: 2017-09-08
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -83,6 +83,7 @@ function NgObibaMicaUrlProvider() {
 function NgObibaMicaTemplateUrlFactory() {
   var templates = {
     'searchStudiesResultTable' :'search/views/list/studies-search-result-table-template.html',
+    'searchNetworksResultTable' :'search/views/list/networks-search-result-table-template.html',
     'searchResultList' :'search/views/search-result-list-template.html',
     'searchResultCoverage' :'search/views/search-result-coverage-template.html',
     'searchResultGraphics' :'search/views/search-result-graphics-template.html'
@@ -1885,6 +1886,7 @@ angular.module('obiba.mica.search', [
       {
         search: {header: null, footer: null},
         searchStudiesResultTable: {template: null},
+        searchNetworksResultTable: {template: null},
         searchResultList: {template: null},
         searchResultCoverage: {template: null},
         searchResultGraphics: {template: null},
@@ -1947,7 +1949,14 @@ angular.module('obiba.mica.search', [
             showStudiesVariablesColumn: false,
             showStudiesStudyVariablesColumn: true,
             showStudiesDataschemaVariablesColumn: true
-          }
+          },
+          fields: [
+            'acronym.*',
+            'name.*',
+            'model.methods.design',
+            'populations.dataCollectionEvents.model.dataSources',
+            'model.numberOfParticipants.participant'
+          ]
         },
         networks: {
           showSearchTab: true,
@@ -1958,7 +1967,12 @@ angular.module('obiba.mica.search', [
             showNetworksVariablesColumn: false,
             showNetworksStudyVariablesColumn: true,
             showNetworksDataschemaVariablesColumn: true
-          }
+          },
+          fields: [
+            'acronym.*',
+            'name.*',
+            'studyIds'
+          ]
         },
         coverage: {
           groupBy: {
@@ -3120,7 +3134,8 @@ angular.module('obiba.mica.search')
     'TaxonomyResource',
     'LocalizedValues',
     'RqlQueryUtils',
-    function ($q, $log, TaxonomiesResource, TaxonomyResource, LocalizedValues, RqlQueryUtils) {
+    'ngObibaMicaSearch',
+    function ($q, $log, TaxonomiesResource, TaxonomyResource, LocalizedValues, RqlQueryUtils, ngObibaMicaSearch) {
       var taxonomiesCache = {
         variable: null,
         dataset: null,
@@ -3129,7 +3144,7 @@ angular.module('obiba.mica.search')
       };
 
       var self = this;
-
+      var searchOptions = ngObibaMicaSearch.getOptions();
       this.findItemNodeById = function(root, targetId, result) {
         if (root && root.children && result) {
           return root.children.some(function(child) {
@@ -3186,14 +3201,7 @@ angular.module('obiba.mica.search')
           case DISPLAY_TYPES.LIST:
             switch (target) {
               case QUERY_TARGETS.STUDY:
-                return RqlQueryUtils.fields(
-                  [
-                    'acronym.*',
-                    'name.*',
-                    'model.methods.design',
-                    'populations.dataCollectionEvents.model.dataSources',
-                    'model.numberOfParticipants.participant'
-                  ]);
+                return RqlQueryUtils.fields(searchOptions.studies.fields);
 
               case QUERY_TARGETS.VARIABLE:
                 return RqlQueryUtils.fields(
@@ -3223,12 +3231,7 @@ angular.module('obiba.mica.search')
                   ]);
 
               case QUERY_TARGETS.NETWORK:
-                return RqlQueryUtils.fields(
-                  [
-                    'acronym.*',
-                    'name.*',
-                    'studyIds'
-                  ]);
+                return RqlQueryUtils.fields(searchOptions.networks.fields);
             }
             break;
         }
@@ -3607,7 +3610,7 @@ angular.module('obiba.mica.search')
         return sort;
       };
 
-      this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
+      function prepareSearchQueryInternal(context, type, query, pagination, lang, sort, addFieldsQuery) {
         var rqlQuery = angular.copy(query);
         var target = typeToTarget(type);
         RqlQueryUtils.addLocaleQuery(rqlQuery, lang);
@@ -3620,17 +3623,27 @@ angular.module('obiba.mica.search')
 
         var limit = pagination[target] || {from: 0, size: 10};
         RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
-        
-        var fieldsQuery = getSourceFields(context, target);
-        if (fieldsQuery) {
-          RqlQueryUtils.addFields(targetQuery, fieldsQuery);
+
+        if(addFieldsQuery){
+          var fieldsQuery = getSourceFields(context, target);
+          if (fieldsQuery) {
+            RqlQueryUtils.addFields(targetQuery, fieldsQuery);
+          }
         }
-        
+
         if (sort) {
           RqlQueryUtils.addSort(targetQuery, sort);
         }
 
         return rqlQuery;
+      }
+
+      this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
+        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, true);
+      };
+
+      this.prepareSearchQueryNoFields = function (context, type, query, pagination, lang, sort) {
+        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, false);
       };
 
       this.prepareSearchQueryAndSerialize = function (context, type, query, pagination, lang, sort) {
@@ -5602,7 +5615,7 @@ angular.module('obiba.mica.search')
       });
       
       $rootScope.$on('ngObibaMicaSearch.sortChange', function(obj, sort) {
-        $scope.search.rqlQuery = RqlQueryService.prepareSearchQuery(
+        $scope.search.rqlQuery = RqlQueryService.prepareSearchQueryNoFields(
           $scope.search.display,
           $scope.search.type,
           $scope.search.rqlQuery,
@@ -7277,8 +7290,8 @@ angular.module('obiba.mica.search')
     };
   }])
 
-  .directive('networksResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'RqlQueryService', 'StudyFilterShortcutService',
-    function (PageUrlService, ngObibaMicaSearch, RqlQueryService, StudyFilterShortcutService) {
+  .directive('networksResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'RqlQueryService', 'StudyFilterShortcutService', 'ngObibaMicaSearchTemplateUrl',
+    function (PageUrlService, ngObibaMicaSearch, RqlQueryService, StudyFilterShortcutService, ngObibaMicaSearchTemplateUrl) {
       return {
         restrict: 'EA',
         replace: true,
@@ -7287,7 +7300,7 @@ angular.module('obiba.mica.search')
           loading: '=',
           onUpdateCriteria: '='
         },
-        templateUrl: 'search/views/list/networks-search-result-table-template.html',
+        templateUrl: ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchNetworksResultTable'),
         link: function(scope) {
           function setInitialStudyFilterSelection() {
             StudyFilterShortcutService.getStudyClassNameChoices().then(function (result) {
