@@ -29,6 +29,6 @@ angular.module('obiba.mica.lists.search.widget',['obiba.mica.lists'])
         searchItm: '='
       },
       controller: 'listSearchWidgetController',
-      templateUrl: 'lists/component/input-search-widget/list-search-widget-template'
+      templateUrl: 'lists/component/input-search-widget/list-search-widget-template.html'
     };
   }]);
