@@ -45,6 +45,12 @@ angular.module('obiba.mica.search', [
       var localeResolver = ['LocalizedValues', function (LocalizedValues) {
         return LocalizedValues.getLocal();
       }], options = {
+        obibaListOptions: {
+          countCaption: true,
+          searchForm: true,
+          supplInfoDetails: true,
+          trimedDescrition: true
+        },
         targetTabsOrder: [QUERY_TARGETS.VARIABLE, QUERY_TARGETS.DATASET, QUERY_TARGETS.STUDY, QUERY_TARGETS.NETWORK],
         searchTabsOrder: [DISPLAY_TYPES.LIST, DISPLAY_TYPES.COVERAGE, DISPLAY_TYPES.GRAPHICS],
         resultTabsOrder: [QUERY_TARGETS.VARIABLE, QUERY_TARGETS.DATASET, QUERY_TARGETS.STUDY, QUERY_TARGETS.NETWORK],
@@ -163,7 +169,12 @@ angular.module('obiba.mica.search', [
         options.studies.fields = value.studies && value.studies.fields || options.studies.fields;
         options.networks.fields = value.networks && value.networks.fields || options.networks.fields;
         options.datasets.fields = value.datasets && value.datasets.fields || options.datasets.fields;
-        options.studies.obibaListOptions = value.obibaListOptions && value.obibaListOptions.studies ||  null;
+        if(value.studies && value.studies.obibaListOptions){
+          options.obibaListOptions.countCaption = value.studies.obibaListOptions.studiesCountCaption === 0  ? value.studies.obibaListOptions.studiesCountCaption : true;
+          options.obibaListOptions.searchForm = value.studies.obibaListOptions.studiesSearchForm === 0 ? value.studies.obibaListOptions.studiesSearchForm : true;
+          options.obibaListOptions.supplInfoDetails = value.studies.obibaListOptions.studiesSupplInfoDetails === 0 ? value.studies.obibaListOptions.studiesSupplInfoDetails : true;
+          options.obibaListOptions.trimedDescrition = value.studies.obibaListOptions.studiesTrimedDescrition === 0 ? value.studies.obibaListOptions.studiesTrimedDescrition : true;
+        }
       };
 
       this.$get = ['$q', '$injector', function ngObibaMicaSearchFactory($q, $injector) {
