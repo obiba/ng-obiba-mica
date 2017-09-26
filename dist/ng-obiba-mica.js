@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-09-14
+ * Date: 2017-09-26
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -8056,6 +8056,393 @@ angular.module('obiba.mica.search')
           reloadOnSearch: false
         });
     }]);
+;/*
+ * Copyright (c) 2017 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+
+angular.module('obiba.mica.lists.search.widget',['obiba.mica.lists'])
+  .controller('listSearchWidgetController', ['$scope', '$rootScope',
+    function ($scope, $rootScope) {
+      var emitter = $rootScope.$new();
+      $scope.onKeypress = function (ev) {
+        if(ev.keyCode === 13){
+          emitter.$emit('ngObibaMicaSearch.searchChange', $scope.searchFilter);
+        }
+      };
+      $scope.search = function(){
+        emitter.$emit('ngObibaMicaSearch.searchChange', $scope.searchFilter);
+      };
+    }])
+  .directive('listSearchWidget', [function () {
+    return {
+      restrict: 'EA',
+      scope: {
+        searchItm: '='
+      },
+      controller: 'listSearchWidgetController',
+      templateUrl: 'lists/component/input-search-widget/list-search-widget-template'
+    };
+  }]);
+;/*
+ * Copyright (c) 2017 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+
+/* global QUERY_TYPES */
+
+function SortWidgetOptionsFactory() {
+  var defaultOptions = {
+    sortField: null,
+    orderField: null
+  };
+
+  function OptionsProvider(){
+    this.getOptions = function() {
+      return defaultOptions;
+    };
+  }
+
+  this.$get = function () {
+    return new OptionsProvider();
+  };
+
+  this.setOptions = function (value) {
+    Object.keys(value).forEach(function (option) {
+      if(option in defaultOptions){
+        defaultOptions[option] = value[option];
+      }
+    });
+  };
+}
+
+angular.module('obiba.mica.lists.sort.widget',['obiba.mica.lists'])
+  .controller('listSortWidgetController', ['$scope', '$rootScope', 'sortWidgetService',
+    function ($scope, $rootScope, sortWidgetService) {
+
+      var emitter = $rootScope.$new();
+      $scope.selectSort = sortWidgetService.getSortOptions();
+      $scope.selectOrder = sortWidgetService.getOrderOptions();
+      $scope.selectedSort =  $scope.selectSort.options[0].value;
+      $scope.selectedOrder = $scope.selectOrder.options[0].value;
+
+      var selectedOptions = sortWidgetService.getSortArg();
+      if (selectedOptions) {
+        $scope.selectedSort = selectedOptions.selectedSort ? selectedOptions.selectedSort.value : $scope.selectSort.options[0].value;
+        $scope.selectedOrder = selectedOptions.slectedOrder ? selectedOptions.slectedOrder.value : $scope.selectOrder.options[0].value;
+      }
+      $scope.radioCheked = function(){
+        var sortParam = {
+          sort: $scope.selectedSort,
+          order: $scope.selectedOrder
+        };
+        emitter.$emit('ngObibaMicaSearch.sortChange', sortParam);
+      };
+    }])
+  // .provider('sortWidgetOptions', SortWidgetOptionsFactory)
+  .directive('listSortWidget', [function () {
+    return {
+      restrict: 'EA',
+      controller: 'listSortWidgetController',
+      templateUrl: 'lists/component/sort-widget/list-sort-widget-template'
+    };
+  }])
+  .service('sortWidgetService', ['$filter', '$location', 'RqlQueryService', 'sortWidgetOptionsProvider', function ($filter, $location, RqlQueryService, sortWidgetOptionsProvider) {
+    var newOptions = sortWidgetOptionsProvider.getOptions();
+    var self = this;
+    this.getOrderOptions = function () {
+      newOptions.orderField.options.map(function (option) {
+        return $filter('translate')(option.label);
+      });
+      return {
+        options: newOptions.orderField.options
+      };
+    };
+    this.getSortOptions = function () {
+      newOptions.sortField.options.map(function (option) {
+
+        return $filter('translate')(option.label);
+      });
+      return {
+        options: newOptions.sortField.options
+      };
+    };
+    this.getSelectedSort = function (rqlSort) {
+      var selectedSortOption = null;
+      var sortBy = rqlSort ? rqlSort : newOptions.sortField.default;
+      angular.forEach(self.getSortOptions().options, function (option) {
+        if (option.value === sortBy) {
+          selectedSortOption = option;
+        }
+      });
+      return selectedSortOption;
+    };
+
+    this.getSelectedOrder = function (order) {
+      var selectedOption = '';
+      var orderBy = order ? order : newOptions.orderField.default;
+      angular.forEach(self.getOrderOptions().options, function (option) {
+        if (option.value === orderBy) {
+          selectedOption = option;
+        }
+      });
+      return selectedOption;
+    };
+
+    this.getSortArg = function () {
+      var order = null;
+      var search = $location.search();
+      var rqlQuery = RqlQueryService.parseQuery(search.query);
+      if (rqlQuery) {
+        var rqlSort = RqlQueryService.getTargetQuerySort(QUERY_TYPES.STUDIES, rqlQuery);
+        if (rqlSort) {
+          order = rqlSort.args[0].substring(0, 1) === '-' ? '-' :  self.getSelectedOrder(null);
+          rqlSort = rqlSort.args[0].substring(0, 1) === '-' ? rqlSort.args[0].substring(1) : rqlSort.args[0];
+          return {slectedOrder: self.getSelectedOrder(order), selectedSort: self.getSelectedSort(rqlSort)};
+        }
+      }
+      return {
+        slectedOrder: self.getSelectedOrder(null),
+        selectedSort: self.getSelectedSort(null)
+      };
+    };
+
+  }])
+.config(['$provide', function($provide){
+  $provide.provider('sortWidgetOptions', SortWidgetOptionsFactory);
+}])
+;
+;/*
+ * Copyright (c) 2017 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+function NgObibaMicaListsOptionsFactory() {
+  var defaultOptions = {
+    networks: {
+      networksListSearchOptions: {
+        fields: ['studyIds', 'acronym.*', 'name.*', 'description.*', 'logo']
+      },
+      networksListOptions: {
+        sortField: {
+          options: [
+            {
+              value: 'name',
+              label: 'name'
+            },
+            {
+              value: 'acronym',
+              label: 'acronym'
+            },
+            {
+              value: 'numberOfStudies',
+              label: 'studies'
+            }
+          ],
+          default: 'name'
+        },
+        orderField: {
+          options: [
+            {
+              value: '',
+              label: 'asc'
+            },
+            {
+              value: '-',
+              label: 'desc'
+            }
+          ],
+          default: ''
+        }
+      }
+    },
+    studies: {
+      studiesListSearchOptions: {
+        fields: ['logo', 'objectives.*', 'acronym.*', 'name.*', 'model.methods.design', 'model.numberOfParticipants.participant']
+      },
+      studiesListOptions: {
+        studiesCountCaption: true,
+        studiesSearchForm: true,
+        studiesSupplInfoDetails: true,
+        studiesTrimedDescrition: true,
+        sortField: {
+          options: [
+            {
+              value: 'name',
+              label: 'name'
+            },
+            {
+              value: 'acronym',
+              label: 'acronym'
+            },
+            {
+              value: 'numberOfParticipants-participant-number',
+              label: 'study_taxonomy.vocabulary.numberOfParticipants-participant-number.title'
+            }
+          ],
+          default: 'name'
+        },
+        orderField: {
+          options: [
+            {
+              value: '',
+              label: 'asc'
+            },
+            {
+              value: '-',
+              label: 'desc'
+            }
+          ],
+          default: ''
+        }
+      }
+    },
+    datasets: {
+      datasetsListSearchOptions: {
+        fields: ['acronym.*', 'name.*', 'description.*', 'variableType',
+          'studyTable.studyId',
+          'studyTable.project',
+          'studyTable.table',
+          'studyTable.populationId',
+          'studyTable.dataCollectionEventId',
+          'harmonizationTable.studyId',
+          'harmonizationTable.project',
+          'harmonizationTable.table',
+          'harmonizationTable.populationId'
+        ],
+        datasetsListOptions: {
+          sortField: {
+            options: [
+              {
+                value: 'name',
+                label: 'name'
+              },
+              {
+                value: 'acronym',
+                label: 'acronym'
+              },
+              {
+                value: 'studyTable.studyId,studyTable.populationWeight,studyTable.dataCollectionEventWeight,acronym',
+                label: 'global.chronological'
+              }
+            ],
+            default: 'name'
+          },
+          orderField: {
+            options: [
+              {
+                value: '',
+                label: 'asc'
+              },
+              {
+                value: '-',
+                label: 'desc'
+              }
+            ],
+            default: 'asc'
+          }
+        }
+      }
+    }
+  };
+
+  function NgObibaMicaListsOptions() {
+    this.getOptions = function () {
+      return defaultOptions;
+    };
+  }
+
+  this.$get = function () {
+    return new NgObibaMicaListsOptions();
+  };
+
+  this.setOptions = function (value) {
+    Object.keys(value).forEach(function (option) {
+      if(option in defaultOptions){
+        defaultOptions[option] = value[option];
+      }
+    });
+  };
+
+}
+
+angular.module('obiba.mica.lists', [
+  'obiba.mica.lists.search.widget',
+  'obiba.mica.lists.sort.widget',
+  'obiba.mica.search'
+])
+  // .run()
+  .config(['$provide', function($provide){
+    $provide.provider('ngObibaMicaLists', NgObibaMicaListsOptionsFactory);
+  }])
+  .config(['ngObibaMicaSearchProvider', 'markedProvider', 'sortWidgetOptionsProvider', 'ngObibaMicaListsProvider',
+    function (ngObibaMicaSearchProvider, markedProvider, sortWidgetOptionsProvider, ngObibaMicaListsProvider) {
+      console.log(sortWidgetOptionsProvider);
+      var clientOptions = sortWidgetOptionsProvider.getOptions();
+      sortWidgetOptionsProvider.setOptions(clientOptions.studies ? clientOptions.studies : null);
+      sortWidgetOptionsProvider.setOptions(clientOptions.networks ? clientOptions.networks : null);
+      sortWidgetOptionsProvider.setOptions(clientOptions.datasets ? clientOptions.datasets : null);
+
+    markedProvider.setOptions({
+      gfm: true,
+      tables: true,
+      sanitize: false
+    });
+   var searchOption = ngObibaMicaSearchProvider.getOptions();
+   var listsOption = ngObibaMicaListsProvider.getOptions();
+    var mergedOptions = angular.extend({},
+      searchOption,
+      listsOption);
+    ngObibaMicaSearchProvider.setOptions(mergedOptions);
+  }])
+  .config(['ngObibaMicaSearchTemplateUrlProvider',
+    function (ngObibaMicaSearchTemplateUrlProvider) {
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchStudiesResultTable', 'lists/views/list/studies-search-result-table-template');
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchNetworksResultTable', 'lists/views/list/networks-search-result-table-template');
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchDatasetsResultTable', 'lists/views/list/datasets-search-result-table-template');
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchResultList', 'lists/views/search-result-list-template');
+    }])
+  // .filter('getBaseUrl', function () {
+  //   return function (param) {
+  //     return Drupal.settings.basePath + 'mica/' + param;
+  //   }
+  // }).filter('doSearchQuery', function () {
+  //   return function (type, query) {
+  //     return Drupal.settings.basePath + 'mica/repository#/search?type=' + type + '&query=' + query + '&display=list'
+  //   }
+  // })
+  // .filter('getLabel', function () {
+  //   return function (SelectSort, valueSort) {
+  //     var result = null;
+  //     angular.forEach(SelectSort.options, function (value, key) {
+  //       if (value.value.indexOf(valueSort) !== -1) {
+  //         result = value.label;
+  //       }
+  //     });
+  //     return result;
+  //   }
+  // })
+  //.provide('ngObibaMicaLists', NgObibaMicaListsOptionsFactory)
+ ;
 ;/*
  * Copyright (c) 2017 OBiBa. All rights reserved.
  *

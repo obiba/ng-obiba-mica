@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2017 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+ */
+
+.blackwidget {
+    position: relative;
+    background-color: #2a2825;
+    color: #d1d3d4;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: "Montserrat";
+    font-weight: lighter;
+}
+
+#search-criteria-region {
+    display: none;
+}
+
+.sortwidget {
+    color: #000;
+    padding-top: 5px;
+}
+div.sortwidget > .dropdown > .dropdown-menu {
+    min-width: 250px;
+    margin-top: 10px;
+}
+list-search-widget, list-sort-widget{
+    position: relative;
+}
+list-sort-widget{
+    /*float: right;*/
+}
+span.search-help {
+    background-color: #444240;
+    font-size: 30px;
+    line-height: 21px;
+}
