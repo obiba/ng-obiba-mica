@@ -171,7 +171,6 @@ angular.module('obiba.mica.lists', [
   .config(['ngObibaMicaSearchProvider', 'markedProvider', 'sortWidgetOptionsProvider', 'ngObibaMicaListsProvider',
     function (ngObibaMicaSearchProvider, markedProvider, sortWidgetOptionsProvider, ngObibaMicaListsProvider) {
       console.log(sortWidgetOptionsProvider);
-      var clientOptions = sortWidgetOptionsProvider.getOptions();
       sortWidgetOptionsProvider.setOptions(clientOptions.studies ? clientOptions.studies : null);
       sortWidgetOptionsProvider.setOptions(clientOptions.networks ? clientOptions.networks : null);
       sortWidgetOptionsProvider.setOptions(clientOptions.datasets ? clientOptions.datasets : null);

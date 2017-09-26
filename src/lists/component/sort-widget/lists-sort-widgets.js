@@ -11,20 +11,26 @@
 
 /* global QUERY_TYPES */
 
-function SortWidgetOptionsFactory() {
+function SortWidgetOptionsProvider() {
   var defaultOptions = {
     sortField: null,
     orderField: null
   };
 
-  function OptionsProvider(){
+  var self = this;
+
+  function SortWidgetOptions(){
     this.getOptions = function() {
       return defaultOptions;
     };
   }
 
+  this.getDefaultOptions = function(){
+    return self.defaultOptions;
+  };
+
   this.$get = function () {
-    return new OptionsProvider();
+    return new SortWidgetOptions();
   };
 
   this.setOptions = function (value) {
@@ -59,7 +65,7 @@ angular.module('obiba.mica.lists.sort.widget',['obiba.mica.lists'])
         emitter.$emit('ngObibaMicaSearch.sortChange', sortParam);
       };
     }])
-  // .provider('sortWidgetOptions', SortWidgetOptionsFactory)
+  // .provider('sortWidgetOptions', SortWidgetOptionsProvider)
   .directive('listSortWidget', [function () {
     return {
       restrict: 'EA',
@@ -129,6 +135,6 @@ angular.module('obiba.mica.lists.sort.widget',['obiba.mica.lists'])
 
   }])
 .config(['$provide', function($provide){
-  $provide.provider('sortWidgetOptions', SortWidgetOptionsFactory);
+  $provide.provider('sortWidgetOptions', SortWidgetOptionsProvider);
 }])
 ;
