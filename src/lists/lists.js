@@ -164,55 +164,55 @@ angular.module('obiba.mica.lists', [
   'obiba.mica.lists.sort.widget',
   'obiba.mica.search'
 ])
-  // .run()
+   .run()
   .config(['$provide', function($provide){
     $provide.provider('ngObibaMicaLists', NgObibaMicaListsOptionsFactory);
   }])
-  .config(['ngObibaMicaSearchProvider', 'markedProvider', 'sortWidgetOptionsProvider', 'ngObibaMicaListsProvider',
-    function (ngObibaMicaSearchProvider, markedProvider, sortWidgetOptionsProvider, ngObibaMicaListsProvider) {
-      console.log(sortWidgetOptionsProvider);
-      sortWidgetOptionsProvider.setOptions(clientOptions.studies ? clientOptions.studies : null);
-      sortWidgetOptionsProvider.setOptions(clientOptions.networks ? clientOptions.networks : null);
-      sortWidgetOptionsProvider.setOptions(clientOptions.datasets ? clientOptions.datasets : null);
+  // .config(['ngObibaMicaSearchProvider', 'markedProvider', 'sortWidgetOptionsProvider', 'ngObibaMicaListsProvider',
+  //   function (ngObibaMicaSearchProvider, markedProvider, sortWidgetOptionsProvider, ngObibaMicaListsProvider) {
+  //     console.log(sortWidgetOptionsProvider);
+      // sortWidgetOptionsProvider.setOptions(clientOptions.studies ? clientOptions.studies : null);
+      // sortWidgetOptionsProvider.setOptions(clientOptions.networks ? clientOptions.networks : null);
+      // sortWidgetOptionsProvider.setOptions(clientOptions.datasets ? clientOptions.datasets : null);
 
-    markedProvider.setOptions({
-      gfm: true,
-      tables: true,
-      sanitize: false
-    });
-   var searchOption = ngObibaMicaSearchProvider.getOptions();
-   var listsOption = ngObibaMicaListsProvider.getOptions();
-    var mergedOptions = angular.extend({},
-      searchOption,
-      listsOption);
-    ngObibaMicaSearchProvider.setOptions(mergedOptions);
-  }])
+  //   markedProvider.setOptions({
+  //     gfm: true,
+  //     tables: true,
+  //     sanitize: false
+  //   });
+  //  var searchOption = ngObibaMicaSearchProvider.getOptions();
+  //  var listsOption = ngObibaMicaListsProvider.getOptions();
+  //   var mergedOptions = angular.extend({},
+  //     searchOption,
+  //     listsOption);
+  //   ngObibaMicaSearchProvider.setOptions(mergedOptions);
+  // }])
   .config(['ngObibaMicaSearchTemplateUrlProvider',
     function (ngObibaMicaSearchTemplateUrlProvider) {
-      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchStudiesResultTable', 'lists/views/list/studies-search-result-table-template');
-      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchNetworksResultTable', 'lists/views/list/networks-search-result-table-template');
-      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchDatasetsResultTable', 'lists/views/list/datasets-search-result-table-template');
-      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchResultList', 'lists/views/search-result-list-template');
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchStudiesResultTable', 'lists/views/list/studies-search-result-table-template.html');
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchNetworksResultTable', 'lists/views/list/networks-search-result-table-template.html');
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchDatasetsResultTable', 'lists/views/list/datasets-search-result-table-template.html');
+      ngObibaMicaSearchTemplateUrlProvider.setTemplateUrl('searchResultList', 'lists/views/search-result-list-template.html');
     }])
-  // .filter('getBaseUrl', function () {
-  //   return function (param) {
-  //     return Drupal.settings.basePath + 'mica/' + param;
-  //   }
-  // }).filter('doSearchQuery', function () {
-  //   return function (type, query) {
-  //     return Drupal.settings.basePath + 'mica/repository#/search?type=' + type + '&query=' + query + '&display=list'
-  //   }
-  // })
-  // .filter('getLabel', function () {
-  //   return function (SelectSort, valueSort) {
-  //     var result = null;
-  //     angular.forEach(SelectSort.options, function (value, key) {
-  //       if (value.value.indexOf(valueSort) !== -1) {
-  //         result = value.label;
-  //       }
-  //     });
-  //     return result;
-  //   }
-  // })
+  .filter('getBaseUrl', function () {
+    return function (param) {
+      return '/mica/' + param;
+    };
+  }).filter('doSearchQuery', function () {
+    return function (type, query) {
+      return '/mica/repository#/search?type=' + type + '&query=' + query + '&display=list';
+    };
+  })
+  .filter('getLabel', function () {
+    return function (SelectSort, valueSort) {
+      var result = null;
+      angular.forEach(SelectSort.options, function (value) {
+        if (value.value.indexOf(valueSort) !== -1) {
+          result = value.label;
+        }
+      });
+      return result;
+    };
+  })
   //.provide('ngObibaMicaLists', NgObibaMicaListsOptionsFactory)
  ;

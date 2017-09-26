@@ -70,11 +70,11 @@ angular.module('obiba.mica.lists.sort.widget',['obiba.mica.lists'])
     return {
       restrict: 'EA',
       controller: 'listSortWidgetController',
-      templateUrl: 'lists/component/sort-widget/list-sort-widget-template'
+      templateUrl: 'lists/component/sort-widget/list-sort-widget-template.html'
     };
   }])
-  .service('sortWidgetService', ['$filter', '$location', 'RqlQueryService', 'sortWidgetOptionsProvider', function ($filter, $location, RqlQueryService, sortWidgetOptionsProvider) {
-    var newOptions = sortWidgetOptionsProvider.getOptions();
+  .service('sortWidgetService', ['$filter', '$location', 'RqlQueryService', 'sortWidgetOptions', function ($filter, $location, RqlQueryService, sortWidgetOptions) {
+    var newOptions = sortWidgetOptions.getOptions();
     var self = this;
     this.getOrderOptions = function () {
       newOptions.orderField.options.map(function (option) {
