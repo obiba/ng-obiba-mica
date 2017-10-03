@@ -38,11 +38,23 @@ angular.module('obiba.mica.lists')
         $scope.selectedSort = selectedOptions.selectedSort ? selectedOptions.selectedSort.value : $scope.selectSort.options[0].value;
         $scope.selectedOrder = selectedOptions.slectedOrder ? selectedOptions.slectedOrder.value : $scope.selectOrder.options[0].value;
       }
-      $scope.radioCheked = function(){
-        var sortParam = {
-          sort: $scope.selectedSort,
-          order: $scope.selectedOrder
+      $scope.buttonClick = function () {
+        var sortParam ={
+          sort: '_score',
+          order: '-'
         };
+        $scope.selectedSort = '_score';
+        $scope.selectedOrder= '-';
         emitter.$emit('ngObibaMicaSearch.sortChange', sortParam);
+      };
+
+      $scope.radioCheked = function(){
+        if($scope.selectedSort!=='_score'){
+          var sortParam ={
+            sort: $scope.selectedSort,
+            order: $scope.selectedOrder
+          };
+          emitter.$emit('ngObibaMicaSearch.sortChange', sortParam);
+        }
       };
     }]);
