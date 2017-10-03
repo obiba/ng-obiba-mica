@@ -11,9 +11,19 @@
            <span class="dropdown-menu" role="menu" uib-dropdown-menu aria-labelledby="SortOrder">
                <form class="form-inline">
                 <span class="list-group">
+                    <span class="list-group-item text-center">
+                                <button
+                                       ng-model="selectedSort"
+                                       ng-click="buttonClick(selectSort.options[0].value)"
+                                       ng-class="{'active': selectedSort===selectSort.options[0].value}"
+                                       class="btn btn-primary btn-xs">
+                                    <span>{{"global.sort-by" | translate}}</span> {{selectSort.options[0].label | translate}}
+                                </button>
+
+                       </span>
                        <span class="list-group-item text-center">
                                 <span ng-repeat="optionorder in selectOrder.options">
-                                    <label>
+                                    <label ng-class="{'disabled': $parent.selectedSort===selectSort.options[0].value}">
                                         <i ng-if="optionorder.value=='-'"
                                            class="fa fa-long-arrow-down"></i>
                                         <i ng-if="optionorder.value==''"
@@ -23,17 +33,19 @@
                                            ng-model="$parent.selectedOrder"
                                            ng-value="optionorder.value"
                                            name="search-order"
+                                           ng-disabled="$parent.selectedSort===selectSort.options[0].value"
                                            ng-change="radioCheked()">
                                 </span>
                        </span>
                        <span class="list-group-item"
-                             ng-repeat="option in selectSort.options">
-                                <input type="radio"
+                             ng-repeat="option in selectSort.options" ng-show="$index !== 0">
+                                <input
+                                       type="radio"
                                        ng-model="$parent.selectedSort"
                                        ng-value="option.value"
                                        name="search-sort"
                                        ng-change="radioCheked()">
-                                <label translate>{{option.label}}</label>
+                                <label  translate>{{option.label}}</label>
                        </span>
                 </span>
                </form>
