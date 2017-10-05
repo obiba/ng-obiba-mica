@@ -7126,6 +7126,11 @@ angular.module('obiba.mica.search')
             $filter('translate')(charOptions.geoChartOptions.title) + ' (N=' + result.studyResultDto.totalHits + ')',
             charOptions.geoChartOptions.options).then(function(geoStudies) {
               if (geoStudies) {
+                var d3Config = new D3GeoConfig()
+                  .withData(geoStudies.entries)
+                  .withTitle($filter('translate')(charOptions.geoChartOptions.title) + ' (N=' + result.studyResultDto.totalHits + ')');
+                d3Config.color = charOptions.geoChartOptions.options.colorAxis.colors;
+
                 var chartObject = {
                   geoChartOptions: {
                     directiveTitle: geoStudies.options.title,
@@ -7137,9 +7142,7 @@ angular.module('obiba.mica.search')
                       vocabulary: geoStudies.vocabulary,
                       data: geoStudies.data,
                       entries: geoStudies.entries,
-                      d3Config: new D3GeoConfig()
-                          .withData(geoStudies.entries)
-                          .withTitle($filter('translate')(charOptions.geoChartOptions.title) + ' (N=' + result.studyResultDto.totalHits + ')')
+                      d3Config: d3Config
                     }
                   }
                 };
