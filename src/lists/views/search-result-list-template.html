@@ -9,53 +9,54 @@
   -->
 
 <div ng-show="options.obibaListOptions.searchForm" class="list-search-widget">
-  <div>
-    <list-search-widget type="type"></list-search-widget>
-  </div>
-</div>
-<div ng-show="display === 'list'" class="row ">
-  <div class="col-md-12">
-    <div class="pull-right">
-      <list-sort-widget target="type"></list-sort-widget>
-    </div>
-  </div>
-  <div class="clearfix"/>
-
   <div class="row">
-    <div class="col-md-12">
-        <div>
-          <div class="col-md-12">
-            <div class="row">
-
-              <div class="col-md-12">
-                <div ng-show="options.obibaListOptions.countCaption" class="pull-left caption-count" test-ref="search-counts">
+      <div class="col-md-2">
+          <div ng-show="options.obibaListOptions.countCaption" class="btn btn-default disabled" test-ref="search-counts">
       <span role="presentation" ng-repeat="res in resultTabsOrder"
             ng-class="{active: activeTarget[targetTypeMap[res]].active && resultTabsOrder.length > 1, disabled: resultTabsOrder.length === 1}"
             ng-if="options[targetTypeMap[res]].showSearchTab">
-        <a href style="cursor: default;" ng-if="resultTabsOrder.length === 1">
-          <div class="search-count ">
+        <span ng-if="resultTabsOrder.length === 1">
+          <div>
             {{totalHits = getTotalHits(res);""}}
             {{singleLabel = res + ".label";""}}
             <span>
                 {{totalHits | localizedNumber }}  {{totalHits>1?targetTypeMap[res]:singleLabel | translate}}
             </span>
           </div>
-        </a>
+        </span>
       </span>
-                </div>
+          </div>
+      </div>
+      <div class="col-md-10">
+          <list-search-widget type="type"></list-search-widget>
+      </div>
 
-                <div class="pull-right voffset2 ">
-                  <div ng-repeat="res in resultTabsOrder" ng-show="activeTarget[targetTypeMap[res]].active" class="inline "
-                       test-ref="pager">
-      <span search-result-pagination
-            target="activeTarget[targetTypeMap[res]].name"
-            total-hits="activeTarget[targetTypeMap[res]].totalHits"
-            on-change="onPaginate">
-      </span>
-                  </div>
-                </div>
+  </div>
+</div>
+<div ng-show="display === 'list'" class="row ">
+  <div class="clearfix"/>
+  <div class="row voffset5">
+    <div class="col-md-12">
+        <div>
+          <div class="col-md-12">
+            <div class="row">
+              <div class="col-md-4">
+                  <span><list-sort-widget target="type"></list-sort-widget></span>
               </div>
-
+              <div class="col-md-8">
+                    <div class="pull-right ">
+                        <span>
+                        <div ng-repeat="res in resultTabsOrder" ng-show="activeTarget[targetTypeMap[res]].active" class="inline" test-ref="pager">
+                              <span search-result-pagination
+                                    show-total="false"
+                                    target="activeTarget[targetTypeMap[res]].name"
+                                    total-hits="activeTarget[targetTypeMap[res]].totalHits"
+                                    on-change="onPaginate">
+                              </span>
+                        </div>
+                        </span>
+                    </div>
+                </div>
             </div>
           </div>
         </div>

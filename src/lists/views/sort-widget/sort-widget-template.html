@@ -1,5 +1,4 @@
 <div class="sortwidget">
-        <label for="search-sort">{{"global.sort-by" | translate}}  {{selectSort | getLabel:selected.sort | translate}}</label>
         <span class="btn-group dropdown" >
            <button id="SortOrder"  type="button" class="btn btn-primary dropdown-toggle"
                    data-toggle="dropdown" >
@@ -7,6 +6,7 @@
                   class="glyphicon glyphicon-sort-by-attributes-alt"></i>
                <i ng-if="selected.order=='' && selected.sort!==selectSort.options[0].value"
                   class="glyphicon glyphicon-sort-by-attributes"></i>
+               {{getLabel(selectSort,selected.sort) | translate}}
            </button>
            <span class="dropdown-menu pull-right" role="menu" uib-dropdown-menu aria-labelledby="SortOrder">
                <form class="form-inline">
