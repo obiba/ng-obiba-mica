@@ -10,7 +10,7 @@
 
 'use strict';
 
-/* global QUERY_TYPES */
+/* global targetToType */
 
 angular.module('obiba.mica.lists')
 
@@ -61,7 +61,7 @@ angular.module('obiba.mica.lists')
       var search = $location.search();
       var rqlQuery = RqlQueryService.parseQuery(search.query);
       if (rqlQuery) {
-        var rqlSort = RqlQueryService.getTargetQuerySort(QUERY_TYPES.STUDIES, rqlQuery);
+        var rqlSort = RqlQueryService.getTargetQuerySort(targetToType(rqlQuery.args[0].name), rqlQuery);
         if (rqlSort) {
           order = rqlSort.args[0].substring(0, 1) === '-' ? '-' :  self.getSelectedOrder(null);
           rqlSort = rqlSort.args[0].substring(0, 1) === '-' ? rqlSort.args[0].substring(1) : rqlSort.args[0];
@@ -72,6 +72,16 @@ angular.module('obiba.mica.lists')
         slectedOrder: self.getSelectedOrder(null),
         selectedSort: self.getSelectedSort(null)
       };
+    };
+
+    this.getLabel = function(selectSort, valueSort){
+      var result = null;
+      angular.forEach(selectSort.options, function (value) {
+        if (value.value === valueSort) {
+          result = value.label;
+        }
+      });
+      return result;
     };
 
   }]);

@@ -8366,17 +8366,6 @@ angular.module('obiba.mica.lists', ['obiba.mica.search'])
     return function (type, query) {
       return '/mica/repository#/search?type=' + type + '&query=' + query + '&display=list';
     };
-  })
-  .filter('getLabel', function () {
-    return function (SelectSort, valueSort) {
-      var result = null;
-      angular.forEach(SelectSort.options, function (value) {
-        if (value.value.indexOf(valueSort) !== -1) {
-          result = value.label;
-        }
-      });
-      return result;
-    };
   });
 ;/*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -8390,7 +8379,7 @@ angular.module('obiba.mica.lists', ['obiba.mica.search'])
 
 'use strict';
 
-/* global QUERY_TYPES */
+/* global targetToType */
 
 angular.module('obiba.mica.lists')
 
@@ -8441,7 +8430,7 @@ angular.module('obiba.mica.lists')
       var search = $location.search();
       var rqlQuery = RqlQueryService.parseQuery(search.query);
       if (rqlQuery) {
-        var rqlSort = RqlQueryService.getTargetQuerySort(QUERY_TYPES.STUDIES, rqlQuery);
+        var rqlSort = RqlQueryService.getTargetQuerySort(targetToType(rqlQuery.args[0].name), rqlQuery);
         if (rqlSort) {
           order = rqlSort.args[0].substring(0, 1) === '-' ? '-' :  self.getSelectedOrder(null);
           rqlSort = rqlSort.args[0].substring(0, 1) === '-' ? rqlSort.args[0].substring(1) : rqlSort.args[0];
@@ -8452,6 +8441,16 @@ angular.module('obiba.mica.lists')
         slectedOrder: self.getSelectedOrder(null),
         selectedSort: self.getSelectedSort(null)
       };
+    };
+
+    this.getLabel = function(selectSort, valueSort){
+      var result = null;
+      angular.forEach(selectSort.options, function (value) {
+        if (value.value === valueSort) {
+          result = value.label;
+        }
+      });
+      return result;
     };
 
   }]);;/*
@@ -8500,6 +8499,7 @@ angular.module('obiba.mica.lists')
       var emitter = $rootScope.$new();
       $scope.selectSort = sortWidgetService.getSortOptions();
       $scope.selectOrder = sortWidgetService.getOrderOptions();
+      $scope.getLabel = sortWidgetService.getLabel;
 
       $scope.selected = {
         sort:  $scope.selectSort.options[0].value,
@@ -11412,53 +11412,54 @@ angular.module("lists/views/search-result-list-template.html", []).run(["$templa
     "  -->\n" +
     "\n" +
     "<div ng-show=\"options.obibaListOptions.searchForm\" class=\"list-search-widget\">\n" +
-    "  <div>\n" +
-    "    <list-search-widget type=\"type\"></list-search-widget>\n" +
-    "  </div>\n" +
-    "</div>\n" +
-    "<div ng-show=\"display === 'list'\" class=\"row \">\n" +
-    "  <div class=\"col-md-12\">\n" +
-    "    <div class=\"pull-right\">\n" +
-    "      <list-sort-widget target=\"type\"></list-sort-widget>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "  <div class=\"clearfix\"/>\n" +
-    "\n" +
     "  <div class=\"row\">\n" +
-    "    <div class=\"col-md-12\">\n" +
-    "        <div>\n" +
-    "          <div class=\"col-md-12\">\n" +
-    "            <div class=\"row\">\n" +
-    "\n" +
-    "              <div class=\"col-md-12\">\n" +
-    "                <div ng-show=\"options.obibaListOptions.countCaption\" class=\"pull-left caption-count\" test-ref=\"search-counts\">\n" +
+    "      <div class=\"col-md-2\">\n" +
+    "          <div ng-show=\"options.obibaListOptions.countCaption\" class=\"btn btn-default disabled\" test-ref=\"search-counts\">\n" +
     "      <span role=\"presentation\" ng-repeat=\"res in resultTabsOrder\"\n" +
     "            ng-class=\"{active: activeTarget[targetTypeMap[res]].active && resultTabsOrder.length > 1, disabled: resultTabsOrder.length === 1}\"\n" +
     "            ng-if=\"options[targetTypeMap[res]].showSearchTab\">\n" +
-    "        <a href style=\"cursor: default;\" ng-if=\"resultTabsOrder.length === 1\">\n" +
-    "          <div class=\"search-count \">\n" +
+    "        <span ng-if=\"resultTabsOrder.length === 1\">\n" +
+    "          <div>\n" +
     "            {{totalHits = getTotalHits(res);\"\"}}\n" +
     "            {{singleLabel = res + \".label\";\"\"}}\n" +
     "            <span>\n" +
     "                {{totalHits | localizedNumber }}  {{totalHits>1?targetTypeMap[res]:singleLabel | translate}}\n" +
     "            </span>\n" +
     "          </div>\n" +
-    "        </a>\n" +
+    "        </span>\n" +
     "      </span>\n" +
-    "                </div>\n" +
+    "          </div>\n" +
+    "      </div>\n" +
+    "      <div class=\"col-md-10\">\n" +
+    "          <list-search-widget type=\"type\"></list-search-widget>\n" +
+    "      </div>\n" +
     "\n" +
-    "                <div class=\"pull-right voffset2 \">\n" +
-    "                  <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"inline \"\n" +
-    "                       test-ref=\"pager\">\n" +
-    "      <span search-result-pagination\n" +
-    "            target=\"activeTarget[targetTypeMap[res]].name\"\n" +
-    "            total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
-    "            on-change=\"onPaginate\">\n" +
-    "      </span>\n" +
-    "                  </div>\n" +
-    "                </div>\n" +
+    "  </div>\n" +
+    "</div>\n" +
+    "<div ng-show=\"display === 'list'\" class=\"row \">\n" +
+    "  <div class=\"clearfix\"/>\n" +
+    "  <div class=\"row voffset5\">\n" +
+    "    <div class=\"col-md-12\">\n" +
+    "        <div>\n" +
+    "          <div class=\"col-md-12\">\n" +
+    "            <div class=\"row\">\n" +
+    "              <div class=\"col-md-4\">\n" +
+    "                  <span><list-sort-widget target=\"type\"></list-sort-widget></span>\n" +
     "              </div>\n" +
-    "\n" +
+    "              <div class=\"col-md-8\">\n" +
+    "                    <div class=\"pull-right \">\n" +
+    "                        <span>\n" +
+    "                        <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"inline\" test-ref=\"pager\">\n" +
+    "                              <span search-result-pagination\n" +
+    "                                    show-total=\"false\"\n" +
+    "                                    target=\"activeTarget[targetTypeMap[res]].name\"\n" +
+    "                                    total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
+    "                                    on-change=\"onPaginate\">\n" +
+    "                              </span>\n" +
+    "                        </div>\n" +
+    "                        </span>\n" +
+    "                    </div>\n" +
+    "                </div>\n" +
     "            </div>\n" +
     "          </div>\n" +
     "        </div>\n" +
@@ -11480,7 +11481,6 @@ angular.module("lists/views/search-result-list-template.html", []).run(["$templa
 angular.module("lists/views/sort-widget/sort-widget-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("lists/views/sort-widget/sort-widget-template.html",
     "<div class=\"sortwidget\">\n" +
-    "        <label for=\"search-sort\">{{\"global.sort-by\" | translate}}  {{selectSort | getLabel:selected.sort | translate}}</label>\n" +
     "        <span class=\"btn-group dropdown\" >\n" +
     "           <button id=\"SortOrder\"  type=\"button\" class=\"btn btn-primary dropdown-toggle\"\n" +
     "                   data-toggle=\"dropdown\" >\n" +
@@ -11488,6 +11488,7 @@ angular.module("lists/views/sort-widget/sort-widget-template.html", []).run(["$t
     "                  class=\"glyphicon glyphicon-sort-by-attributes-alt\"></i>\n" +
     "               <i ng-if=\"selected.order=='' && selected.sort!==selectSort.options[0].value\"\n" +
     "                  class=\"glyphicon glyphicon-sort-by-attributes\"></i>\n" +
+    "               {{getLabel(selectSort,selected.sort) | translate}}\n" +
     "           </button>\n" +
     "           <span class=\"dropdown-menu pull-right\" role=\"menu\" uib-dropdown-menu aria-labelledby=\"SortOrder\">\n" +
     "               <form class=\"form-inline\">\n" +

@@ -152,15 +152,4 @@ angular.module('obiba.mica.lists', ['obiba.mica.search'])
     return function (type, query) {
       return '/mica/repository#/search?type=' + type + '&query=' + query + '&display=list';
     };
-  })
-  .filter('getLabel', function () {
-    return function (SelectSort, valueSort) {
-      var result = null;
-      angular.forEach(SelectSort.options, function (value) {
-        if (value.value.indexOf(valueSort) !== -1) {
-          result = value.label;
-        }
-      });
-      return result;
-    };
   });

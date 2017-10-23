@@ -44,6 +44,7 @@ angular.module('obiba.mica.lists')
       var emitter = $rootScope.$new();
       $scope.selectSort = sortWidgetService.getSortOptions();
       $scope.selectOrder = sortWidgetService.getOrderOptions();
+      $scope.getLabel = sortWidgetService.getLabel;
 
       $scope.selected = {
         sort:  $scope.selectSort.options[0].value,
