@@ -13,75 +13,51 @@
 /* global targetToType */
 
 angular.module('obiba.mica.lists')
+    .service('sortWidgetService', ['$filter', '$location', 'RqlQueryService', 'sortWidgetOptions', function ($filter, $location, RqlQueryService, sortWidgetOptions) {
+        var newOptions = sortWidgetOptions.getOptions();
+        console.log(newOptions);
+        var self = this;
+        this.getSortOrderOptions = function () {
+            newOptions.sortOrderField.options.map(function (option) {
+                return $filter('translate')(option.label);
+            });
+            return {
+                options: newOptions.sortOrderField.options
+            };
+        };
+        this.getSortOrderOption = function (value) {
+            var selectedOption = null;
+            if (!value) {
+                value = newOptions.sortOrderField.defaultValue;
+            }
+            angular.forEach(self.getSortOrderOptions().options, function (option) {
+                if (option.value === value) {
+                    selectedOption = option;
+                }
+            });
+            return selectedOption ? selectedOption : self.getSortOrderOption(newOptions.sortOrderField.defaultValue);
+        };
 
-  .service('sortWidgetService', ['$filter', '$location', 'RqlQueryService', 'sortWidgetOptions', function ($filter, $location, RqlQueryService, sortWidgetOptions) {
-    var newOptions = sortWidgetOptions.getOptions();
-    var self = this;
-    this.getOrderOptions = function () {
-      newOptions.orderField.options.map(function (option) {
-        return $filter('translate')(option.label);
-      });
-      return {
-        options: newOptions.orderField.options
-      };
-    };
-    this.getSortOptions = function () {
-      newOptions.sortField.options.map(function (option) {
+        this.getSortArg = function () {
+            var search = $location.search();
+            var rqlQuery = RqlQueryService.parseQuery(search.query);
+            if (rqlQuery) {
+                var rqlSort = RqlQueryService.getTargetQuerySort(targetToType(rqlQuery.args[0].name), rqlQuery);
+                if (rqlSort) {
+                    return rqlSort.args[0];
+                }
+            }
+            return newOptions.sortOrderField.defaultValue;
+        };
 
-        return $filter('translate')(option.label);
-      });
-      return {
-        options: newOptions.sortField.options
-      };
-    };
-    this.getSelectedSort = function (rqlSort) {
-      var selectedSortOption = null;
-      var sortBy = rqlSort ? rqlSort : newOptions.sortField.default;
-      angular.forEach(self.getSortOptions().options, function (option) {
-        if (option.value === sortBy) {
-          selectedSortOption = option;
-        }
-      });
-      return selectedSortOption;
-    };
+        this.getLabel = function (selectSort, valueSort) {
+            var result = null;
+            angular.forEach(selectSort.options, function (value) {
+                if (value.value === valueSort) {
+                    result = value.label;
+                }
+            });
+            return result;
+        };
 
-    this.getSelectedOrder = function (order) {
-      var selectedOption = '';
-      var orderBy = order ? order : newOptions.orderField.default;
-      angular.forEach(self.getOrderOptions().options, function (option) {
-        if (option.value === orderBy) {
-          selectedOption = option;
-        }
-      });
-      return selectedOption;
-    };
-
-    this.getSortArg = function () {
-      var order = null;
-      var search = $location.search();
-      var rqlQuery = RqlQueryService.parseQuery(search.query);
-      if (rqlQuery) {
-        var rqlSort = RqlQueryService.getTargetQuerySort(targetToType(rqlQuery.args[0].name), rqlQuery);
-        if (rqlSort) {
-          order = rqlSort.args[0].substring(0, 1) === '-' ? '-' :  self.getSelectedOrder(null);
-          rqlSort = rqlSort.args[0].substring(0, 1) === '-' ? rqlSort.args[0].substring(1) : rqlSort.args[0];
-          return {slectedOrder: self.getSelectedOrder(order), selectedSort: self.getSelectedSort(rqlSort)};
-        }
-      }
-      return {
-        slectedOrder: self.getSelectedOrder(null),
-        selectedSort: self.getSelectedSort(null)
-      };
-    };
-
-    this.getLabel = function(selectSort, valueSort){
-      var result = null;
-      angular.forEach(selectSort.options, function (value) {
-        if (value.value === valueSort) {
-          result = value.label;
-        }
-      });
-      return result;
-    };
-
-  }]);
+    }]);

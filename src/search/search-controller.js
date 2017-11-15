@@ -1342,7 +1342,7 @@ angular.module('obiba.mica.search')
           $scope.search.rqlQuery,
           $scope.search.pagination,
           $scope.lang,
-          sort.order+sort.sort
+          sort
         );
         refreshQuery();
       });

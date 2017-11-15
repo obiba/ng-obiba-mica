@@ -78,10 +78,10 @@ function NgObibaMicaListsOptionsFactory() {
 
 function SortWidgetOptionsProvider() {
   var defaultOptions = {
-    sortField: {
+    sortOrderField: {
       options: [
         {
-          value: '_score',
+          value: '-_score',
           label: 'relevance'
         },
         {
@@ -89,24 +89,19 @@ function SortWidgetOptionsProvider() {
           label: 'name'
         },
         {
+          value: '-name',
+          label: 'name'
+        },
+        {
           value: 'acronym',
+          label: 'acronym'
+        },
+        {
+          value: '-acronym',
           label: 'acronym'
         }
       ],
-      default: 'relevance'
-    },
-    orderField: {
-      options: [
-        {
-          value: '',
-          label: 'asc'
-        },
-        {
-          value: '-',
-          label: 'desc'
-        }
-      ],
-      default: ''
+      defaultValue: '-_score'
     }
   };
 

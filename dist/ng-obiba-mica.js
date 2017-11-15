@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-11-14
+ * Date: 2017-11-15
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -5724,7 +5724,7 @@ angular.module('obiba.mica.search')
           $scope.search.rqlQuery,
           $scope.search.pagination,
           $scope.lang,
-          sort.order+sort.sort
+          sort
         );
         refreshQuery();
       });
@@ -8307,10 +8307,10 @@ function NgObibaMicaListsOptionsFactory() {
 
 function SortWidgetOptionsProvider() {
   var defaultOptions = {
-    sortField: {
+    sortOrderField: {
       options: [
         {
-          value: '_score',
+          value: '-_score',
           label: 'relevance'
         },
         {
@@ -8318,24 +8318,19 @@ function SortWidgetOptionsProvider() {
           label: 'name'
         },
         {
+          value: '-name',
+          label: 'name'
+        },
+        {
           value: 'acronym',
+          label: 'acronym'
+        },
+        {
+          value: '-acronym',
           label: 'acronym'
         }
       ],
-      default: 'relevance'
-    },
-    orderField: {
-      options: [
-        {
-          value: '',
-          label: 'asc'
-        },
-        {
-          value: '-',
-          label: 'desc'
-        }
-      ],
-      default: ''
+      defaultValue: '-_score'
     }
   };
 
@@ -8410,78 +8405,54 @@ angular.module('obiba.mica.lists', ['obiba.mica.search'])
 /* global targetToType */
 
 angular.module('obiba.mica.lists')
+    .service('sortWidgetService', ['$filter', '$location', 'RqlQueryService', 'sortWidgetOptions', function ($filter, $location, RqlQueryService, sortWidgetOptions) {
+        var newOptions = sortWidgetOptions.getOptions();
+        console.log(newOptions);
+        var self = this;
+        this.getSortOrderOptions = function () {
+            newOptions.sortOrderField.options.map(function (option) {
+                return $filter('translate')(option.label);
+            });
+            return {
+                options: newOptions.sortOrderField.options
+            };
+        };
+        this.getSortOrderOption = function (value) {
+            var selectedOption = null;
+            if (!value) {
+                value = newOptions.sortOrderField.defaultValue;
+            }
+            angular.forEach(self.getSortOrderOptions().options, function (option) {
+                if (option.value === value) {
+                    selectedOption = option;
+                }
+            });
+            return selectedOption ? selectedOption : self.getSortOrderOption(newOptions.sortOrderField.defaultValue);
+        };
 
-  .service('sortWidgetService', ['$filter', '$location', 'RqlQueryService', 'sortWidgetOptions', function ($filter, $location, RqlQueryService, sortWidgetOptions) {
-    var newOptions = sortWidgetOptions.getOptions();
-    var self = this;
-    this.getOrderOptions = function () {
-      newOptions.orderField.options.map(function (option) {
-        return $filter('translate')(option.label);
-      });
-      return {
-        options: newOptions.orderField.options
-      };
-    };
-    this.getSortOptions = function () {
-      newOptions.sortField.options.map(function (option) {
+        this.getSortArg = function () {
+            var search = $location.search();
+            var rqlQuery = RqlQueryService.parseQuery(search.query);
+            if (rqlQuery) {
+                var rqlSort = RqlQueryService.getTargetQuerySort(targetToType(rqlQuery.args[0].name), rqlQuery);
+                if (rqlSort) {
+                    return rqlSort.args[0];
+                }
+            }
+            return newOptions.sortOrderField.defaultValue;
+        };
 
-        return $filter('translate')(option.label);
-      });
-      return {
-        options: newOptions.sortField.options
-      };
-    };
-    this.getSelectedSort = function (rqlSort) {
-      var selectedSortOption = null;
-      var sortBy = rqlSort ? rqlSort : newOptions.sortField.default;
-      angular.forEach(self.getSortOptions().options, function (option) {
-        if (option.value === sortBy) {
-          selectedSortOption = option;
-        }
-      });
-      return selectedSortOption;
-    };
+        this.getLabel = function (selectSort, valueSort) {
+            var result = null;
+            angular.forEach(selectSort.options, function (value) {
+                if (value.value === valueSort) {
+                    result = value.label;
+                }
+            });
+            return result;
+        };
 
-    this.getSelectedOrder = function (order) {
-      var selectedOption = '';
-      var orderBy = order ? order : newOptions.orderField.default;
-      angular.forEach(self.getOrderOptions().options, function (option) {
-        if (option.value === orderBy) {
-          selectedOption = option;
-        }
-      });
-      return selectedOption;
-    };
-
-    this.getSortArg = function () {
-      var order = null;
-      var search = $location.search();
-      var rqlQuery = RqlQueryService.parseQuery(search.query);
-      if (rqlQuery) {
-        var rqlSort = RqlQueryService.getTargetQuerySort(targetToType(rqlQuery.args[0].name), rqlQuery);
-        if (rqlSort) {
-          order = rqlSort.args[0].substring(0, 1) === '-' ? '-' :  self.getSelectedOrder(null);
-          rqlSort = rqlSort.args[0].substring(0, 1) === '-' ? rqlSort.args[0].substring(1) : rqlSort.args[0];
-          return {slectedOrder: self.getSelectedOrder(order), selectedSort: self.getSelectedSort(rqlSort)};
-        }
-      }
-      return {
-        slectedOrder: self.getSelectedOrder(null),
-        selectedSort: self.getSelectedSort(null)
-      };
-    };
-
-    this.getLabel = function(selectSort, valueSort){
-      var result = null;
-      angular.forEach(selectSort.options, function (value) {
-        if (value.value === valueSort) {
-          result = value.label;
-        }
-      });
-      return result;
-    };
-
-  }]);;/*
+    }]);;/*
  * Copyright (c) 2017 OBiBa. All rights reserved.
  *
  * This program and the accompanying materials
@@ -8495,28 +8466,6 @@ angular.module('obiba.mica.lists')
 
 /* global RQL_NODE */
 /* global typeToTarget */
-function getSearchButtonLabel(type, className) {
-  var label = type;
-  if (className) {
-    label = className.args[1];
-  }
-  switch (label) {
-    case 'networks':
-      return 'networks';
-    case 'studies':
-      return 'studies';
-    case 'Study':
-      return 'global.individual-studies';
-    case 'HarmonizationStudy':
-      return 'global.harmonization-studies';
-    case 'datasets':
-      return 'datasets';
-    case 'StudyDataset':
-      return 'collected-datasets';
-    case 'HarmonizationDataset':
-      return 'harmonized-datasets';
-  }
-}
 
 angular.module('obiba.mica.lists')
 
@@ -8527,7 +8476,6 @@ angular.module('obiba.mica.lists')
 
         if ($scope.query) {
           var targetQuery = RqlQueryService.findTargetQuery(typeToTarget($scope.type), RqlQueryService.parseQuery($scope.query));
-          $scope.searchBouttonLable =  getSearchButtonLabel($scope.type, RqlQueryService.findQueryInTargetByVocabulary(targetQuery, 'className'));
           var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.MATCH && arg.args.length === 1; });
           if (foundFulltextMatchQuery.length === 1) {
             $scope.searchFilter = foundFulltextMatchQuery[0].args[0][0];
@@ -8584,59 +8532,22 @@ angular.module('obiba.mica.lists')
     function ($scope, $rootScope, sortWidgetService) {
 
       var emitter = $rootScope.$new();
-      $scope.selectSort = sortWidgetService.getSortOptions();
-      $scope.selectOrder = sortWidgetService.getOrderOptions();
+      $scope.selectSortOrder = sortWidgetService.getSortOrderOptions();
       $scope.getLabel = sortWidgetService.getLabel;
-
-      $scope.selected = {
-        sort:  $scope.selectSort.options[0].value,
-        order: $scope.selectOrder.options[0].value
-      };
-
-      angular.forEach($scope.selectSort, function(sortOption){
-        $scope.selected[sortOption] = {
-          order: $scope.selectOrder.options[0].value
-        };
-      });
-
-
+      $scope.selected = $scope.selectSortOrder.options.defaultValue;
       intiSelectedOptions();
 
       $scope.$on('$locationChangeSuccess', function () {
         intiSelectedOptions();
       });
 
-      var sortParam;
-      $scope.radioCheked = function (selectedSort) {
-        angular.forEach($scope.selectSort.options, function (sortOption) {
-          if (selectedSort === sortOption.value) {
-            sortParam = {
-              sort: selectedSort,
-              order: $scope.selected[sortOption.value].order
-            };
-            $scope.selected.order = $scope.selected[sortOption.value].order;
-          }
-          else {
-            $scope.selected[sortOption.value] = null;
-          }
-        });
-
-        $scope.selected.sort = selectedSort;
-        emitter.$emit('ngObibaMicaSearch.sortChange', sortParam);
+      $scope.selectSortOrderOption = function (option) {
+        $scope.selected = option;
+        emitter.$emit('ngObibaMicaSearch.sortChange', option.value);
       };
 
       function intiSelectedOptions() {
-        var selectedOptions = sortWidgetService.getSortArg();
-        if (selectedOptions) {
-          $scope.selected = {
-            sort: selectedOptions.selectedSort ? selectedOptions.selectedSort.value : $scope.selectSort.options[0].value,
-            order: selectedOptions.slectedOrder ? selectedOptions.slectedOrder.value : $scope.selectOrder.options[0].value
-          };
-
-          $scope.selected[selectedOptions.selectedSort.value] = {
-            order: selectedOptions.slectedOrder ? selectedOptions.slectedOrder.value : $scope.selectOrder.options[0].value
-          };
-        }
+        $scope.selected = sortWidgetService.getSortOrderOption(sortWidgetService.getSortArg());
       }
     }]);;/*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -11117,19 +11028,17 @@ angular.module("lists/views/input-search-widget/input-search-widget-template.htm
     "        <div class=\"input-group\">\n" +
     "          <suggestion-field document-type=\"type\" model=\"searchFilter\" placeholder-text=\"'global.list-search-placeholder'\"\n" +
     "                            select=\"selectSuggestion\"></suggestion-field>\n" +
-    "\n" +
     "          <span class=\"input-group-btn\">\n" +
     "            <button type=\"submit\" class=\"btn btn-default\" ng-click=\"search()\">\n" +
     "              <i class=\"fa fa-search\"></i>\n" +
     "            </button>\n" +
     "          </span>\n" +
     "        </div>\n" +
-    "\n" +
     "      </div>\n" +
     "    </div>\n" +
-    "    <div class=\"col-md-4\">\n" +
-    "      <a class=\"btn btn-success pull-right\" href ng-href=\"{{navigateToSearchPage()}}\">\n" +
-    "        {{'global.search' | translate}} {{searchBouttonLable | translate}}\n" +
+    "    <div class=\"col-md-4 voffset2\">\n" +
+    "      <a href ng-href=\"{{navigateToSearchPage()}}\">\n" +
+    "        {{'search.advanced-button' | translate}}\n" +
     "      </a>\n" +
     "    </div>\n" +
     "  </div>\n" +
@@ -11490,130 +11399,68 @@ angular.module("lists/views/search-result-list-template.html", []).run(["$templa
     "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
     "  -->\n" +
     "\n" +
-    "<div ng-show=\"options.obibaListOptions.searchForm\" >\n" +
-    "  <div class=\"row\">\n" +
-    "    <div class=\"col-md-2\">\n" +
-    "     <div class=\"list-counts\">\n" +
-    "          <div ng-show=\"options.obibaListOptions.countCaption\" test-ref=\"search-counts\">\n" +
-    "      <span role=\"presentation\" ng-repeat=\"res in resultTabsOrder\"\n" +
-    "            ng-class=\"{active: activeTarget[targetTypeMap[res]].active && resultTabsOrder.length > 1, disabled: resultTabsOrder.length === 1}\"\n" +
-    "            ng-if=\"options[targetTypeMap[res]].showSearchTab\">\n" +
-    "        <span ng-if=\"resultTabsOrder.length === 1\">\n" +
-    "          <div>\n" +
-    "            {{totalHits = getTotalHits(res);\"\"}}\n" +
-    "            {{singleLabel = \"search.\" + res + \".label\";\"\"}}\n" +
-    "            <span>\n" +
-    "                {{totalHits | localizedNumber }}  {{totalHits>1?targetTypeMap[res]:singleLabel | translate}}\n" +
-    "            </span>\n" +
-    "          </div>\n" +
-    "        </span>\n" +
-    "      </span>\n" +
-    "         </div>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "      <div class=\"col-md-10\">\n" +
-    "          <list-search-widget type=\"type\"></list-search-widget>\n" +
-    "      </div>\n" +
-    "\n" +
-    "  </div>\n" +
+    "<div ng-show=\"options.obibaListOptions.searchForm\">\n" +
+    "    <list-search-widget type=\"type\"></list-search-widget>\n" +
     "</div>\n" +
-    "<div ng-show=\"display === 'list'\" class=\"row \">\n" +
-    "  <div class=\"clearfix\"/>\n" +
-    "  <div class=\"row voffset5\">\n" +
-    "    <div class=\"col-md-12\">\n" +
-    "        <div>\n" +
-    "          <div class=\"col-md-12\">\n" +
-    "            <div class=\"row\">\n" +
-    "              <div class=\"col-md-4\">\n" +
-    "                  <span ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active && activeTarget[targetTypeMap[res]].totalHits > 0\">\n" +
-    "                      <list-sort-widget target=\"type\"></list-sort-widget>\n" +
+    "<div ng-show=\"display === 'list'\">\n" +
+    "    <div class=\"row voffset3\">\n" +
+    "        <div class=\"col-md-12\">\n" +
+    "            <span role=\"presentation\" ng-repeat=\"res in resultTabsOrder\"\n" +
+    "                  ng-class=\"{active: activeTarget[targetTypeMap[res]].active && resultTabsOrder.length > 1, disabled: resultTabsOrder.length === 1}\"\n" +
+    "                  ng-if=\"options[targetTypeMap[res]].showSearchTab\">\n" +
+    "                <h4 ng-if=\"resultTabsOrder.length === 1\" class=\"pull-left\">\n" +
+    "                    {{totalHits = getTotalHits(res);\"\"}}\n" +
+    "                    {{singleLabel = \"search.\" + res + \".label\";\"\"}}\n" +
+    "                    {{totalHits | localizedNumber }}  {{totalHits>1?targetTypeMap[res]:singleLabel | translate}}\n" +
+    "                </h4>\n" +
+    "            </span>\n" +
+    "            <div class=\"pull-right hoffset1\">\n" +
+    "                <div ng-repeat=\"res in resultTabsOrder\"\n" +
+    "                     ng-show=\"activeTarget[targetTypeMap[res]].active\"\n" +
+    "                     class=\"inline\" test-ref=\"pager\">\n" +
+    "                  <span search-result-pagination\n" +
+    "                        show-total=\"false\"\n" +
+    "                        target=\"activeTarget[targetTypeMap[res]].name\"\n" +
+    "                        total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
+    "                        on-change=\"onPaginate\">\n" +
     "                  </span>\n" +
-    "              </div>\n" +
-    "              <div class=\"col-md-8\">\n" +
-    "                    <div class=\"pull-right \">\n" +
-    "                        <span>\n" +
-    "                        <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"inline\" test-ref=\"pager\">\n" +
-    "                              <span search-result-pagination\n" +
-    "                                    show-total=\"false\"\n" +
-    "                                    target=\"activeTarget[targetTypeMap[res]].name\"\n" +
-    "                                    total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
-    "                                    on-change=\"onPaginate\">\n" +
-    "                              </span>\n" +
-    "                        </div>\n" +
-    "                        </span>\n" +
-    "                    </div>\n" +
     "                </div>\n" +
     "            </div>\n" +
-    "          </div>\n" +
+    "            <span ng-repeat=\"res in resultTabsOrder\"\n" +
+    "                  ng-show=\"activeTarget[targetTypeMap[res]].active && activeTarget[targetTypeMap[res]].totalHits > 0\">\n" +
+    "                                <list-sort-widget target=\"type\" class=\"pull-right\"></list-sort-widget>\n" +
+    "            </span>\n" +
     "        </div>\n" +
-    "\n" +
     "    </div>\n" +
-    "\n" +
-    "    <div class=\"tab-content col-md-12\">\n" +
-    "\n" +
+    "    <div class=\"row\">\n" +
     "        <ng-include include-replace ng-repeat=\"res in resultTabsOrder\"\n" +
     "                    src=\"'search/views/search-result-list-' + res + '-template.html'\"></ng-include>\n" +
-    "      </div>\n" +
-    "\n" +
-    "  </div>\n" +
-    "\n" +
+    "    </div>\n" +
     "</div>\n" +
     "");
 }]);
 
 angular.module("lists/views/sort-widget/sort-widget-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("lists/views/sort-widget/sort-widget-template.html",
-    "<div class=\"sortwidget\">\n" +
-    "        <span class=\"btn-group dropdown\" >\n" +
-    "           <button id=\"SortOrder\"  type=\"button\" class=\"btn-sm btn btn-primary dropdown-toggle\"\n" +
-    "                   data-toggle=\"dropdown\" >\n" +
-    "               <i ng-if=\"selected.order=='-' || selected.sort===selectSort.options[0].value\"\n" +
-    "                  class=\"glyphicon glyphicon-arrow-down\"></i>\n" +
-    "               <i ng-if=\"selected.order=='' && selected.sort!==selectSort.options[0].value\"\n" +
-    "                  class=\"glyphicon glyphicon-arrow-up\"></i>\n" +
-    "               {{getLabel(selectSort,selected.sort) | translate}}\n" +
-    "           </button>\n" +
-    "           <span class=\"dropdown-menu pull-left\" role=\"menu\" uib-dropdown-menu aria-labelledby=\"SortOrder\">\n" +
-    "               <form class=\"form-inline\">\n" +
-    "                    <span class=\"list-group\">\n" +
-    "                        <table class=\"table table-hover\">\n" +
-    "\n" +
-    "                              <tr  ng-repeat=\"option in selectSort.options\">\n" +
-    "\n" +
-    "                               <td>\n" +
-    "                                   <input\n" +
-    "                                       type=\"radio\"\n" +
-    "                                       ng-model=\"selected.sort\"\n" +
-    "                                       ng-value=\"option.value\"\n" +
-    "                                       name=\"search-sort\"\n" +
-    "                                       class=\"hide\">\n" +
-    "                                    <label  translate>{{option.label}}</label>\n" +
-    "                               </td>\n" +
-    "                               <td width=\"25%\">\n" +
-    "                                   <span >\n" +
-    "                                        <span ng-repeat=\"optionorder in selectOrder.options\">\n" +
-    "                                            <span ng-class=\"{'pull-right':optionorder.value=='-','pull-left':optionorder.value==''}\">\n" +
-    "                                            <label >\n" +
-    "                                                <i ng-if=\"optionorder.value=='-'\"\n" +
-    "                                                   class=\"fa fa-long-arrow-down\"></i>\n" +
-    "                                                <i ng-if=\"optionorder.value=='' && option.value!==selectSort.options[0].value\"\n" +
-    "                                                   class=\"fa fa-long-arrow-up\"></i>\n" +
-    "                                            </label>\n" +
-    "                                                <input ng-if=\"option.value!==selectSort.options[0].value || optionorder.value=='-'\" type=\"radio\"\n" +
-    "                                                       ng-model=\"selected[option.value].order\"\n" +
-    "                                                       ng-value=\"optionorder.value\"\n" +
-    "                                                       name=\"{{'search-order' + option.value}}\"\n" +
-    "                                                       ng-change=\"radioCheked(option.value)\">\n" +
-    "                                             </span>\n" +
-    "                                        </span>\n" +
-    "                                   </span>\n" +
-    "                               </td>\n" +
-    "                           </tr>\n" +
-    "                        </table>\n" +
-    "                    </span>\n" +
-    "               </form>\n" +
-    "            </span>\n" +
-    "        </span>\n" +
+    "<div class=\"btn-group dropdown\">\n" +
+    "    <button id=\"SortOrder\" type=\"button\" class=\"btn-sm btn btn-primary dropdown-toggle\"\n" +
+    "            data-toggle=\"dropdown\">\n" +
+    "           {{selected.label | translate}}\n" +
+    "        <i ng-if=\"selected.value.startsWith('-') && selected.label !== 'relevance'\"\n" +
+    "           class=\"fa fa-long-arrow-down\"></i>\n" +
+    "        <i ng-if=\"!selected.value.startsWith('-') && selected.label !== 'relevance'\"\n" +
+    "           class=\"fa fa-long-arrow-up\"></i>\n" +
+    "    </button>\n" +
+    "    <ul class=\"dropdown-menu\" role=\"menu\" uib-dropdown-menu aria-labelledby=\"SortOrder\">\n" +
+    "        <li ng-repeat=\"option in selectSortOrder.options\" role=\"menuitem\">\n" +
+    "            <a ng-click=\"selectSortOrderOption(option)\" href><span translate>{{option.label}}</span>\n" +
+    "               <i ng-if=\"option.value.startsWith('-') && option.label !== 'relevance'\"\n" +
+    "                  class=\"fa fa-long-arrow-down\"></i>\n" +
+    "               <i ng-if=\"!option.value.startsWith('-') && option.label !== 'relevance'\"\n" +
+    "                  class=\"fa fa-long-arrow-up\"></i>\n" +
+    "            </a>\n" +
+    "        </li>\n" +
+    "    </ul>\n" +
     "</div>\n" +
     "");
 }]);

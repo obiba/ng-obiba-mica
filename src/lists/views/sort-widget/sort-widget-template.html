@@ -1,52 +1,20 @@
-<div class="sortwidget">
-        <span class="btn-group dropdown" >
-           <button id="SortOrder"  type="button" class="btn-sm btn btn-primary dropdown-toggle"
-                   data-toggle="dropdown" >
-               <i ng-if="selected.order=='-' || selected.sort===selectSort.options[0].value"
-                  class="glyphicon glyphicon-arrow-down"></i>
-               <i ng-if="selected.order=='' && selected.sort!==selectSort.options[0].value"
-                  class="glyphicon glyphicon-arrow-up"></i>
-               {{getLabel(selectSort,selected.sort) | translate}}
-           </button>
-           <span class="dropdown-menu pull-left" role="menu" uib-dropdown-menu aria-labelledby="SortOrder">
-               <form class="form-inline">
-                    <span class="list-group">
-                        <table class="table table-hover">
-
-                              <tr  ng-repeat="option in selectSort.options">
-
-                               <td>
-                                   <input
-                                       type="radio"
-                                       ng-model="selected.sort"
-                                       ng-value="option.value"
-                                       name="search-sort"
-                                       class="hide">
-                                    <label  translate>{{option.label}}</label>
-                               </td>
-                               <td width="25%">
-                                   <span >
-                                        <span ng-repeat="optionorder in selectOrder.options">
-                                            <span ng-class="{'pull-right':optionorder.value=='-','pull-left':optionorder.value==''}">
-                                            <label >
-                                                <i ng-if="optionorder.value=='-'"
-                                                   class="fa fa-long-arrow-down"></i>
-                                                <i ng-if="optionorder.value=='' && option.value!==selectSort.options[0].value"
-                                                   class="fa fa-long-arrow-up"></i>
-                                            </label>
-                                                <input ng-if="option.value!==selectSort.options[0].value || optionorder.value=='-'" type="radio"
-                                                       ng-model="selected[option.value].order"
-                                                       ng-value="optionorder.value"
-                                                       name="{{'search-order' + option.value}}"
-                                                       ng-change="radioCheked(option.value)">
-                                             </span>
-                                        </span>
-                                   </span>
-                               </td>
-                           </tr>
-                        </table>
-                    </span>
-               </form>
-            </span>
-        </span>
+<div class="btn-group dropdown">
+    <button id="SortOrder" type="button" class="btn-sm btn btn-primary dropdown-toggle"
+            data-toggle="dropdown">
+           {{selected.label | translate}}
+        <i ng-if="selected.value.startsWith('-') && selected.label !== 'relevance'"
+           class="fa fa-long-arrow-down"></i>
+        <i ng-if="!selected.value.startsWith('-') && selected.label !== 'relevance'"
+           class="fa fa-long-arrow-up"></i>
+    </button>
+    <ul class="dropdown-menu" role="menu" uib-dropdown-menu aria-labelledby="SortOrder">
+        <li ng-repeat="option in selectSortOrder.options" role="menuitem">
+            <a ng-click="selectSortOrderOption(option)" href><span translate>{{option.label}}</span>
+               <i ng-if="option.value.startsWith('-') && option.label !== 'relevance'"
+                  class="fa fa-long-arrow-down"></i>
+               <i ng-if="!option.value.startsWith('-') && option.label !== 'relevance'"
+                  class="fa fa-long-arrow-up"></i>
+            </a>
+        </li>
+    </ul>
 </div>

@@ -12,28 +12,6 @@
 
 /* global RQL_NODE */
 /* global typeToTarget */
-function getSearchButtonLabel(type, className) {
-  var label = type;
-  if (className) {
-    label = className.args[1];
-  }
-  switch (label) {
-    case 'networks':
-      return 'networks';
-    case 'studies':
-      return 'studies';
-    case 'Study':
-      return 'global.individual-studies';
-    case 'HarmonizationStudy':
-      return 'global.harmonization-studies';
-    case 'datasets':
-      return 'datasets';
-    case 'StudyDataset':
-      return 'collected-datasets';
-    case 'HarmonizationDataset':
-      return 'harmonized-datasets';
-  }
-}
 
 angular.module('obiba.mica.lists')
 
@@ -44,7 +22,6 @@ angular.module('obiba.mica.lists')
 
         if ($scope.query) {
           var targetQuery = RqlQueryService.findTargetQuery(typeToTarget($scope.type), RqlQueryService.parseQuery($scope.query));
-          $scope.searchBouttonLable =  getSearchButtonLabel($scope.type, RqlQueryService.findQueryInTargetByVocabulary(targetQuery, 'className'));
           var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.MATCH && arg.args.length === 1; });
           if (foundFulltextMatchQuery.length === 1) {
             $scope.searchFilter = foundFulltextMatchQuery[0].args[0][0];
@@ -101,58 +78,21 @@ angular.module('obiba.mica.lists')
     function ($scope, $rootScope, sortWidgetService) {
 
       var emitter = $rootScope.$new();
-      $scope.selectSort = sortWidgetService.getSortOptions();
-      $scope.selectOrder = sortWidgetService.getOrderOptions();
+      $scope.selectSortOrder = sortWidgetService.getSortOrderOptions();
       $scope.getLabel = sortWidgetService.getLabel;
-
-      $scope.selected = {
-        sort:  $scope.selectSort.options[0].value,
-        order: $scope.selectOrder.options[0].value
-      };
-
-      angular.forEach($scope.selectSort, function(sortOption){
-        $scope.selected[sortOption] = {
-          order: $scope.selectOrder.options[0].value
-        };
-      });
-
-
+      $scope.selected = $scope.selectSortOrder.options.defaultValue;
       intiSelectedOptions();
 
       $scope.$on('$locationChangeSuccess', function () {
         intiSelectedOptions();
       });
 
-      var sortParam;
-      $scope.radioCheked = function (selectedSort) {
-        angular.forEach($scope.selectSort.options, function (sortOption) {
-          if (selectedSort === sortOption.value) {
-            sortParam = {
-              sort: selectedSort,
-              order: $scope.selected[sortOption.value].order
-            };
-            $scope.selected.order = $scope.selected[sortOption.value].order;
-          }
-          else {
-            $scope.selected[sortOption.value] = null;
-          }
-        });
-
-        $scope.selected.sort = selectedSort;
-        emitter.$emit('ngObibaMicaSearch.sortChange', sortParam);
+      $scope.selectSortOrderOption = function (option) {
+        $scope.selected = option;
+        emitter.$emit('ngObibaMicaSearch.sortChange', option.value);
       };
 
       function intiSelectedOptions() {
-        var selectedOptions = sortWidgetService.getSortArg();
-        if (selectedOptions) {
-          $scope.selected = {
-            sort: selectedOptions.selectedSort ? selectedOptions.selectedSort.value : $scope.selectSort.options[0].value,
-            order: selectedOptions.slectedOrder ? selectedOptions.slectedOrder.value : $scope.selectOrder.options[0].value
-          };
-
-          $scope.selected[selectedOptions.selectedSort.value] = {
-            order: selectedOptions.slectedOrder ? selectedOptions.slectedOrder.value : $scope.selectOrder.options[0].value
-          };
-        }
+        $scope.selected = sortWidgetService.getSortOrderOption(sortWidgetService.getSortArg());
       }
     }]);
