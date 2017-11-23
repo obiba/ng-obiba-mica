@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-11-20
+ * Date: 2017-11-23
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -1905,9 +1905,12 @@ angular.module('obiba.mica.search', [
   }])
   .config(['$provide', '$injector', function ($provide) {
     $provide.provider('ngObibaMicaSearch', function () {
+      var parentThis = this;
       var localeResolver = ['LocalizedValues', function (LocalizedValues) {
         return LocalizedValues.getLocal();
-      }], options = {
+      }];
+      var optionsResolver;
+      var options = {
         obibaListOptions: {
           countCaption: true,
           searchForm: true,
@@ -2017,6 +2020,10 @@ angular.module('obiba.mica.search', [
         localeResolver = resolver;
       };
 
+      this.setOptionsResolver = function(resolver) {
+        optionsResolver = resolver;
+      };
+
       this.setOptions = function (value) {
         options = angular.merge(options, value);
         //NOTICE: angular.merge merges arrays by position. Overriding manually.
@@ -2042,21 +2049,50 @@ angular.module('obiba.mica.search', [
       };
 
       this.$get = ['$q', '$injector', function ngObibaMicaSearchFactory($q, $injector) {
+
+        function removeItemByValue(array, value) {
+          var index = array.indexOf(value);
+          if (index > -1) {
+            array.splice(index, 1);
+          }
+          return array;
+        }
+
         function normalizeOptions() {
+          options.coverage.groupBy.study = options.coverage.groupBy.study && options.studies.showSearchTab;
           options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
           var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
               return options.coverage.groupBy[canShow];
             }).length > 0;
 
           if (!canShowCoverage) {
-            var index = options.searchTabsOrder.indexOf(DISPLAY_TYPES.COVERAGE);
-            if (index > -1) {
-              options.searchTabsOrder.splice(index, 1);
-            }
+            removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.COVERAGE);
+          }
+
+          if (!options.networks.showSearchTab) {
+            removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.NETWORK);
+            removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.NETWORK);
+          }
+
+          if (!options.studies.showSearchTab) {
+            removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.GRAPHICS);
+            removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.STUDY);
+            removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.STUDY);
           }
         }
 
-        normalizeOptions();
+        function resolveOptions() {
+          $q.when($injector.invoke(optionsResolver), function (opts) {
+            parentThis.setOptions(opts);
+            normalizeOptions();
+          });
+        }
+
+        if (optionsResolver) {
+          resolveOptions();
+        } else {
+          normalizeOptions();
+        }
 
         return {
           getLocale: function(success, error) {
@@ -12229,17 +12265,17 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "\n" +
     "  <div ng-if=\"hasVariableTarget()\">\n" +
     "    <ul class=\"nav nav-pills pull-left\">\n" +
-    "      <li ng-if=\"groupByOptions.canShowStudy()\"\n" +
+    "      <li ng-if=\"groupByOptions.canShowStudy() && groupByOptions.canShowDataset()\"\n" +
     "        ng-class=\"{'active': bucket.startsWith('study') || bucket.startsWith('dce')}\" class=\"studies\">\n" +
     "        <a href ng-click=\"selectTab('study')\" translate>{{groupByOptions.studyTitle()}}</a>\n" +
     "      </li>\n" +
-    "      <li ng-if=\"groupByOptions.canShowDataset()\"\n" +
+    "      <li ng-if=\"groupByOptions.canShowStudy() && groupByOptions.canShowDataset()\"\n" +
     "        ng-class=\"{'active': bucket.startsWith('dataset')}\" class=\"datasets\">\n" +
     "        <a href ng-click=\"selectTab('dataset')\" translate>{{groupByOptions.datasetTitle()}}</a>\n" +
     "      </li>\n" +
     "    </ul>\n" +
     "\n" +
-    "    <div class=\"pull-right\">\n" +
+    "    <div ng-class=\"{'pull-right': groupByOptions.canShowStudy() && groupByOptions.canShowDataset()}\">\n" +
     "      <a ng-if=\"hasSelected()\" href class=\"btn btn-default\" ng-click=\"updateFilterCriteria()\">\n" +
     "        <i class=\"fa fa-filter\"></i> {{'search.filter' | translate}}\n" +
     "      </a>\n" +
@@ -12264,7 +12300,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "      </label>\n" +
     "    </div>\n" +
     "\n" +
-    "    <div class=\"voffset2\">\n" +
+    "    <div class=\"voffset2\"  ng-if=\"groupByOptions.canShowStudy()\">\n" +
     "      <div class=\"btn btn-group\" style=\"padding: 0\">\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'all'\" translate>all</label>\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'individual'\" translate>search.coverage-buckets.individual</label>\n" +
@@ -13214,7 +13250,7 @@ angular.module("search/views/search-result-list-template.html", []).run(["$templ
     "            </a>\n" +
     "        </li>\n" +
     "    </ul>\n" +
-    "    <div class=\"pull-right voffset2\">\n" +
+    "    <div class=\"voffset2\" ng-class=\"{'pull-right': options.studies.showSearchTab, 'pull-left': !options.studies.showSearchTab, 'hoffset2': !options.studies.showSearchTab}\">\n" +
     "        <a target=\"_self\" ng-if=\"type=='studies'\" download class=\"btn btn-info\" ng-href=\"{{getStudySpecificReportUrl()}}\">\n" +
     "            <i class=\"fa fa-download\"></i> {{'report-group.study.button-name' | translate}}\n" +
     "        </a>\n" +
@@ -13222,9 +13258,9 @@ angular.module("search/views/search-result-list-template.html", []).run(["$templ
     "            <i class=\"fa fa-download\"></i> {{'download' | translate}}\n" +
     "        </a>\n" +
     "    </div>\n" +
-    "    <div class=\"clearfix\"/>\n" +
+    "    <div class=\"clearfix\" ng-if=\"options.studies.showSearchTab\"/>\n" +
     "    <div class=\"tab-content\">\n" +
-    "        <div class=\"pull-left\" study-filter-shortcut></div>\n" +
+    "        <div class=\"pull-left\" study-filter-shortcut ng-if=\"options.studies.showSearchTab\"></div>\n" +
     "        <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"pull-right voffset2\" test-ref=\"pager\">\n" +
     "          <span search-result-pagination\n" +
     "                target=\"activeTarget[targetTypeMap[res]].name\"\n" +

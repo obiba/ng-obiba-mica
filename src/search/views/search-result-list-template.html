@@ -25,7 +25,7 @@
             </a>
         </li>
     </ul>
-    <div class="pull-right voffset2">
+    <div class="voffset2" ng-class="{'pull-right': options.studies.showSearchTab, 'pull-left': !options.studies.showSearchTab, 'hoffset2': !options.studies.showSearchTab}">
         <a target="_self" ng-if="type=='studies'" download class="btn btn-info" ng-href="{{getStudySpecificReportUrl()}}">
             <i class="fa fa-download"></i> {{'report-group.study.button-name' | translate}}
         </a>
@@ -33,9 +33,9 @@
             <i class="fa fa-download"></i> {{'download' | translate}}
         </a>
     </div>
-    <div class="clearfix"/>
+    <div class="clearfix" ng-if="options.studies.showSearchTab"/>
     <div class="tab-content">
-        <div class="pull-left" study-filter-shortcut></div>
+        <div class="pull-left" study-filter-shortcut ng-if="options.studies.showSearchTab"></div>
         <div ng-repeat="res in resultTabsOrder" ng-show="activeTarget[targetTypeMap[res]].active" class="pull-right voffset2" test-ref="pager">
           <span search-result-pagination
                 target="activeTarget[targetTypeMap[res]].name"

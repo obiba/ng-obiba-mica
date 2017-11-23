@@ -45,9 +45,12 @@ angular.module('obiba.mica.search', [
   }])
   .config(['$provide', '$injector', function ($provide) {
     $provide.provider('ngObibaMicaSearch', function () {
+      var parentThis = this;
       var localeResolver = ['LocalizedValues', function (LocalizedValues) {
         return LocalizedValues.getLocal();
-      }], options = {
+      }];
+      var optionsResolver;
+      var options = {
         obibaListOptions: {
           countCaption: true,
           searchForm: true,
@@ -157,6 +160,10 @@ angular.module('obiba.mica.search', [
         localeResolver = resolver;
       };
 
+      this.setOptionsResolver = function(resolver) {
+        optionsResolver = resolver;
+      };
+
       this.setOptions = function (value) {
         options = angular.merge(options, value);
         //NOTICE: angular.merge merges arrays by position. Overriding manually.
@@ -182,21 +189,50 @@ angular.module('obiba.mica.search', [
       };
 
       this.$get = ['$q', '$injector', function ngObibaMicaSearchFactory($q, $injector) {
+
+        function removeItemByValue(array, value) {
+          var index = array.indexOf(value);
+          if (index > -1) {
+            array.splice(index, 1);
+          }
+          return array;
+        }
+
         function normalizeOptions() {
+          options.coverage.groupBy.study = options.coverage.groupBy.study && options.studies.showSearchTab;
           options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
           var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
               return options.coverage.groupBy[canShow];
             }).length > 0;
 
           if (!canShowCoverage) {
-            var index = options.searchTabsOrder.indexOf(DISPLAY_TYPES.COVERAGE);
-            if (index > -1) {
-              options.searchTabsOrder.splice(index, 1);
-            }
+            removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.COVERAGE);
+          }
+
+          if (!options.networks.showSearchTab) {
+            removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.NETWORK);
+            removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.NETWORK);
+          }
+
+          if (!options.studies.showSearchTab) {
+            removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.GRAPHICS);
+            removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.STUDY);
+            removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.STUDY);
           }
         }
 
-        normalizeOptions();
+        function resolveOptions() {
+          $q.when($injector.invoke(optionsResolver), function (opts) {
+            parentThis.setOptions(opts);
+            normalizeOptions();
+          });
+        }
+
+        if (optionsResolver) {
+          resolveOptions();
+        } else {
+          normalizeOptions();
+        }
 
         return {
           getLocale: function(success, error) {

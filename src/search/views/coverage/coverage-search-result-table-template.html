@@ -2,17 +2,17 @@
 
   <div ng-if="hasVariableTarget()">
     <ul class="nav nav-pills pull-left">
-      <li ng-if="groupByOptions.canShowStudy()"
+      <li ng-if="groupByOptions.canShowStudy() && groupByOptions.canShowDataset()"
         ng-class="{'active': bucket.startsWith('study') || bucket.startsWith('dce')}" class="studies">
         <a href ng-click="selectTab('study')" translate>{{groupByOptions.studyTitle()}}</a>
       </li>
-      <li ng-if="groupByOptions.canShowDataset()"
+      <li ng-if="groupByOptions.canShowStudy() && groupByOptions.canShowDataset()"
         ng-class="{'active': bucket.startsWith('dataset')}" class="datasets">
         <a href ng-click="selectTab('dataset')" translate>{{groupByOptions.datasetTitle()}}</a>
       </li>
     </ul>
 
-    <div class="pull-right">
+    <div ng-class="{'pull-right': groupByOptions.canShowStudy() && groupByOptions.canShowDataset()}">
       <a ng-if="hasSelected()" href class="btn btn-default" ng-click="updateFilterCriteria()">
         <i class="fa fa-filter"></i> {{'search.filter' | translate}}
       </a>
@@ -37,7 +37,7 @@
       </label>
     </div>
 
-    <div class="voffset2">
+    <div class="voffset2"  ng-if="groupByOptions.canShowStudy()">
       <div class="btn btn-group" style="padding: 0">
         <label class="btn btn-sm btn-study" ng-model="bucketSelection.studySelection" uib-btn-radio="'all'" translate>all</label>
         <label class="btn btn-sm btn-study" ng-model="bucketSelection.studySelection" uib-btn-radio="'individual'" translate>search.coverage-buckets.individual</label>
