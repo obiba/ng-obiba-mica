@@ -1891,6 +1891,10 @@ ngObibaMica.search
           $scope.activeTarget[QUERY_TYPES.DATASETS].totalHits = $scope.result.list.datasetResultDto.totalHits;
           $scope.activeTarget[QUERY_TYPES.STUDIES].totalHits = $scope.result.list.studyResultDto.totalHits;
           $scope.activeTarget[QUERY_TYPES.NETWORKS].totalHits = $scope.result.list.networkResultDto.totalHits;
+          $scope.$emit('ngObibaMicaResultTabsOrderCount.updateActiveTarget', {activeTarget:$scope.activeTarget,
+            targetTypeMap:$scope.targetTypeMap,
+            getTotalHits: $scope.getTotalHits
+          });
         }
       });
 
@@ -3068,6 +3072,13 @@ ngObibaMica.search
     $scope.$watch('totalHits', function () {
       updateMaxSize();
       calculateRange();
+    });
+  }])
+  .controller('ResultTabsOrderCountController', ['$scope', function($scope){
+    $scope.$on('ngObibaMicaResultTabsOrderCount.updateActiveTarget', function(event){
+      $scope.activeTarget = event.targetScope.activeTarget;
+      $scope.targetTypeMap = event.targetScope.targetTypeMap;
+      $scope.getTotalHits = event.targetScope.getTotalHits;
     });
   }]);
 

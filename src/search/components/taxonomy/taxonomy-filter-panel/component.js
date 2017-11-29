@@ -26,6 +26,9 @@
         ctrl.filteredVocabularies = initFilteredVocabularies();
       }
     }
+    function togglePannel(){
+      ctrl.onToggle(ctrl.target, null);
+    }
 
     function initFilteredVocabularies() {
       return ctrl.taxonomy.vocabularies.map(function (vocabulary) {
@@ -37,6 +40,7 @@
     ctrl.filteredVocabularies = initFilteredVocabularies();
     ctrl.selectTaxonomyVocabularyArgs = selectTaxonomyVocabularyArgs;
     ctrl.onFilterChange = onFilterChange;
+    ctrl.togglePannel = togglePannel;
   };
 
   ngObibaMica.search
@@ -45,7 +49,8 @@
       bindings: {
         target: '<',
         taxonomy: '<',
-        onSelectTerm: '&'
+        onSelectTerm: '&',
+        onToggle: '<'
       },
       templateUrl: 'search/components/taxonomy/taxonomy-filter-panel/component.html',
       controller: ['FilterVocabulariesByQueryString', ngObibaMica.search.TaxonomyFilterPanelController]
