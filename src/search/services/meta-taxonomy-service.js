@@ -14,7 +14,6 @@
   ngObibaMica.search.FilterVocabulariesByQueryString = function() {
 
     function filter(vocabularies, queryString) {
-      console.log(queryString);
       if(queryString){
         return vocabularies.filter(function(vocabulary){
           vocabulary.filteredTerms =  (vocabulary.terms || []).filter(function(term){

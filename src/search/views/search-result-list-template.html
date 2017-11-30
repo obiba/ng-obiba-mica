@@ -9,22 +9,12 @@
   -->
 
 <div ng-show="display === 'list'" class="list-table">
-    <ul class="nav nav-pills pull-left voffset2" test-ref="search-counts">
-        <li role="presentation" ng-repeat="res in resultTabsOrder"
-            ng-class="{active: activeTarget[targetTypeMap[res]].active && resultTabsOrder.length > 1, disabled: resultTabsOrder.length === 1}"
-            ng-if="options[targetTypeMap[res]].showSearchTab" class="{{targetTypeMap[res]}}">
-            <a href
-               ng-click="selectTarget(targetTypeMap[res])" ng-if="resultTabsOrder.length > 1">
-                {{targetTypeMap[res] | translate}}
-                <span class="badge hoffset1" test-ref="{{targetTypeMap[res]}}"><small>{{getTotalHits(res) | localizedNumber}}</small></span>
-            </a>
-            <a href style="cursor: default;" ng-if="resultTabsOrder.length === 1">
-              <span class="text-primary">
-                {{targetTypeMap[res] | translate}} (<small>{{getTotalHits(res) | localizedNumber}}</small>)
-              </span>
-            </a>
-        </li>
-    </ul>
+    <result-tabs-order-count
+            options="options"
+            result-tabs-order="resultTabsOrder"
+            active-target="activeTarget"
+            target-type-map="targetTypeMap">
+    </result-tabs-order-count>
     <div class="voffset2" ng-class="{'pull-right': options.studies.showSearchTab, 'pull-left': !options.studies.showSearchTab, 'hoffset2': !options.studies.showSearchTab}">
         <a target="_self" ng-if="type=='studies'" download class="btn btn-info" ng-href="{{getStudySpecificReportUrl()}}">
             <i class="fa fa-download"></i> {{'report-group.study.button-name' | translate}}
