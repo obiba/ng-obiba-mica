@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-11-23
+ * Date: 2017-12-04
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -1933,6 +1933,7 @@ angular.module('obiba.mica.search', [
         hideSearch: ['studyId', 'dceId', 'datasetId', 'networkId'],
         variables: {
           showSearchTab: true,
+          listPageSize: 20,
           variablesColumn: {
             showVariablesTypeColumn: true,
             showVariablesStudiesColumn: true,
@@ -1943,6 +1944,7 @@ angular.module('obiba.mica.search', [
         },
         datasets: {
           showSearchTab: true,
+          listPageSize: 20,
           showDatasetsSearchFilter: true,
           datasetsColumn: {
             showDatasetsAcronymColumn: true,
@@ -1968,6 +1970,7 @@ angular.module('obiba.mica.search', [
         },
         studies: {
           showSearchTab: true,
+          listPageSize: 20,
           showStudiesSearchFilter: true,
           studiesColumn: {
             showStudiesDesignColumn: true,
@@ -1993,6 +1996,7 @@ angular.module('obiba.mica.search', [
         },
         networks: {
           showSearchTab: true,
+          listPageSize: 20,
           networksColumn: {
             showNetworksStudiesColumn: true,
             showNetworksStudyDatasetColumn: true,
@@ -2100,6 +2104,19 @@ angular.module('obiba.mica.search', [
           },
           getOptions: function() {
             return options;
+          },
+          getDefaultListPageSize: function(target) {
+            switch (target) {
+              case QUERY_TARGETS.VARIABLE:
+                return options.variables.listPageSize;
+              case QUERY_TARGETS.DATASET:
+                return options.datasets.listPageSize;
+              case QUERY_TARGETS.STUDY:
+                return options.studies.listPageSize;
+              case QUERY_TARGETS.NETWORK:
+                return options.networks.listPageSize;
+            }
+            return 20;
           },
           toggleHideSearchNavigate: function (vocabulary) {
             var index = options.hideNavigate.indexOf(vocabulary.name);
@@ -3732,7 +3749,7 @@ angular.module('obiba.mica.search')
           rqlQuery.args.push(targetQuery);
         }
 
-        var limit = pagination[target] || {from: 0, size: 10};
+        var limit = pagination[target] || {from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target)};
         RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
 
         if(addFieldsQuery){
@@ -7373,7 +7390,7 @@ angular.module('obiba.mica.search')
       });
     }])
 
-  .controller('SearchResultPaginationController', ['$scope', function ($scope) {
+  .controller('SearchResultPaginationController', ['$scope', 'ngObibaMicaSearch', function ($scope, ngObibaMicaSearch) {
 
     function updateMaxSize() {
       $scope.maxSize = Math.min(3, Math.ceil($scope.totalHits / $scope.pagination.selected.value));
@@ -7417,8 +7434,13 @@ angular.module('obiba.mica.search')
       {label: '100', value: 100}
     ];
 
+    var listPageSize = ngObibaMicaSearch.getDefaultListPageSize($scope.target);
+    var initialTargetPageSize = $scope.pageSizes.filter(function(p) {
+      return p.value === listPageSize;
+    });
+
     $scope.pagination = {
-      selected: $scope.pageSizes[0],
+      selected: initialTargetPageSize.length>0 ? initialTargetPageSize[0] : $scope.pageSizes[0],
       currentPage: 1
     };
 
