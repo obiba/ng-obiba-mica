@@ -26,7 +26,7 @@
           </span>
       </uib-accordion-heading>
       <uib-accordion close-others="false">
-        <div uib-accordion-group ng-repeat="vocabulary in taxonomy.vocabularies | orderBy:'position'" is-open="vocabulary.isOpen" is-disabled="false" template-url="search/views/classifications/vocabulary-accordion-group.html">
+        <div uib-accordion-group ng-repeat="vocabulary in taxonomy.vocabularies" is-open="vocabulary.isOpen" is-disabled="false" template-url="search/views/classifications/vocabulary-accordion-group.html">
           <uib-accordion-heading>
             <span uib-popover="{{localize(vocabulary.description ? vocabulary.description : vocabulary.title)}}"
                   popover-title="{{vocabulary.description ? localize(vocabulary.title) : null}}"

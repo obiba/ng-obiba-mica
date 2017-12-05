@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2017-12-04
+ * Date: 2017-12-05
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -11882,7 +11882,7 @@ angular.module("search/views/classifications/taxonomies-facets-view.html", []).r
     "          </span>\n" +
     "      </uib-accordion-heading>\n" +
     "      <uib-accordion close-others=\"false\">\n" +
-    "        <div uib-accordion-group ng-repeat=\"vocabulary in taxonomy.vocabularies | orderBy:'position'\" is-open=\"vocabulary.isOpen\" is-disabled=\"false\" template-url=\"search/views/classifications/vocabulary-accordion-group.html\">\n" +
+    "        <div uib-accordion-group ng-repeat=\"vocabulary in taxonomy.vocabularies\" is-open=\"vocabulary.isOpen\" is-disabled=\"false\" template-url=\"search/views/classifications/vocabulary-accordion-group.html\">\n" +
     "          <uib-accordion-heading>\n" +
     "            <span uib-popover=\"{{localize(vocabulary.description ? vocabulary.description : vocabulary.title)}}\"\n" +
     "                  popover-title=\"{{vocabulary.description ? localize(vocabulary.title) : null}}\"\n" +
