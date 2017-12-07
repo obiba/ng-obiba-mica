@@ -70,7 +70,8 @@ ngObibaMica.search
               'Mlstr_additional': {weight: 2},
               'Mica_variable': {trKey: 'properties', weight: 3}
             }
-          }
+          },
+          fieldsToFilter : ['title', 'description', 'keywords']
         },
         obibaListOptions: {
           countCaption: true,
@@ -205,6 +206,7 @@ ngObibaMica.search
         options.studies.fields = value.studies && value.studies.fields || options.studies.fields;
         options.networks.fields = value.networks && value.networks.fields || options.networks.fields;
         options.datasets.fields = value.datasets && value.datasets.fields || options.datasets.fields;
+        options.taxonomyPanelOptions.fieldsToFilter = value.taxonomyPanelOptions && value.taxonomyPanelOptions.fieldsToFilter || options.taxonomyPanelOptions.fieldsToFilter;
         if(value.studies && value.studies.obibaListOptions){
           options.obibaListOptions.countCaption = value.studies.obibaListOptions.studiesCountCaption === 0  ? value.studies.obibaListOptions.studiesCountCaption : true;
           options.obibaListOptions.searchForm = value.studies.obibaListOptions.studiesSearchForm === 0 ? value.studies.obibaListOptions.studiesSearchForm : true;

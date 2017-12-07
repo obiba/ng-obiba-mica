@@ -1934,7 +1934,8 @@ ngObibaMica.search
               'Mlstr_additional': {weight: 2},
               'Mica_variable': {trKey: 'properties', weight: 3}
             }
-          }
+          },
+          fieldsToFilter : ['title', 'description', 'keywords']
         },
         obibaListOptions: {
           countCaption: true,
@@ -2069,6 +2070,7 @@ ngObibaMica.search
         options.studies.fields = value.studies && value.studies.fields || options.studies.fields;
         options.networks.fields = value.networks && value.networks.fields || options.networks.fields;
         options.datasets.fields = value.datasets && value.datasets.fields || options.datasets.fields;
+        options.taxonomyPanelOptions.fieldsToFilter = value.taxonomyPanelOptions && value.taxonomyPanelOptions.fieldsToFilter || options.taxonomyPanelOptions.fieldsToFilter;
         if(value.studies && value.studies.obibaListOptions){
           options.obibaListOptions.countCaption = value.studies.obibaListOptions.studiesCountCaption === 0  ? value.studies.obibaListOptions.studiesCountCaption : true;
           options.obibaListOptions.searchForm = value.studies.obibaListOptions.studiesSearchForm === 0 ? value.studies.obibaListOptions.studiesSearchForm : true;
@@ -8874,10 +8876,10 @@ ngObibaMica.search
 
 (function() {
 ngObibaMica.search.MetaTaxonomyService = function($q, $translate, TaxonomyResource, ngObibaMicaSearch, LocalizedValues) {
-
+  var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions;
   var parser =
     new ngObibaMica.search.MetaTaxonomyParser(
-      ngObibaMicaSearch.getOptions().taxonomyPanelOptions,
+      taxonomyPanelOptions,
       LocalizedValues,
       $translate.use());
 
@@ -8926,8 +8928,15 @@ ngObibaMica.search.MetaTaxonomyService = function($q, $translate, TaxonomyResour
     return deferred.promise;
   }
 
+  /**
+   * Return taxonomy panel options
+   * @returns {taxonomyPanelOptions|{network, study, dataset, variable}}
+   */
+  function getTaxonomyPanelOptions(){
+    return taxonomyPanelOptions;
+  }
   // exported functions
-
+  this.getTaxonomyPanelOptions = getTaxonomyPanelOptions;
   this.getMetaTaxonomyForTargets = getMetaTaxonomyForTargets;
 };
 
@@ -8955,11 +8964,12 @@ ngObibaMica.search
 (function() {
   'use strict';
 
-  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues) {
+  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues, MetaTaxonomyService) {
     function translateField(title) {
       return LocalizedValues.forLocale(title, $translate.use());
     }
 
+    var taxonomyPanelOptions = MetaTaxonomyService.getTaxonomyPanelOptions();
     function filter(vocabularies, queryString) {
       if(queryString){
         var vocabulariesToFilter;
@@ -8971,12 +8981,13 @@ ngObibaMica.search
         }
         return (vocabulariesToFilter || []).filter(function(vocabulary){
           vocabulary.filteredTerms =  (vocabulary.terms || []).filter(function(term){
-           if(translateField(term.title).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, '')) >= 0 ||
-             translateField(term.description).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, '')) >= 0 ||
-             translateField(term.keywords).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, ''))  >= 0
-          ){
-              return term.name;
-            }
+            var termName = null;
+            (taxonomyPanelOptions.fieldsToFilter || []).forEach(function (field) {
+              if (translateField(term[field]).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, '')) >= 0) {
+                termName = term.name;
+              }
+            });
+            return termName;
           });
           if(vocabulary.terms){
           return vocabulary.filteredTerms.length > 0;
@@ -9027,7 +9038,7 @@ ngObibaMica.search
 
   ngObibaMica.search
     .service('TaxonomyService', ['TaxonomiesResource', 'TaxonomyResource', ngObibaMica.search.TaxonomyService])
-    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues',  ngObibaMica.search.FilterVocabulariesByQueryString]);
+    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues', 'MetaTaxonomyService', ngObibaMica.search.FilterVocabulariesByQueryString]);
 
 })();;/*
  * Copyright (c) 2017 OBiBa. All rights reserved.

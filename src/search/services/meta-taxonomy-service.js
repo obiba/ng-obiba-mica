@@ -12,10 +12,10 @@
 
 (function() {
 ngObibaMica.search.MetaTaxonomyService = function($q, $translate, TaxonomyResource, ngObibaMicaSearch, LocalizedValues) {
-
+  var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions;
   var parser =
     new ngObibaMica.search.MetaTaxonomyParser(
-      ngObibaMicaSearch.getOptions().taxonomyPanelOptions,
+      taxonomyPanelOptions,
       LocalizedValues,
       $translate.use());
 
@@ -64,8 +64,15 @@ ngObibaMica.search.MetaTaxonomyService = function($q, $translate, TaxonomyResour
     return deferred.promise;
   }
 
+  /**
+   * Return taxonomy panel options
+   * @returns {taxonomyPanelOptions|{network, study, dataset, variable}}
+   */
+  function getTaxonomyPanelOptions(){
+    return taxonomyPanelOptions;
+  }
   // exported functions
-
+  this.getTaxonomyPanelOptions = getTaxonomyPanelOptions;
   this.getMetaTaxonomyForTargets = getMetaTaxonomyForTargets;
 };
 
