@@ -12,11 +12,12 @@
 (function() {
   'use strict';
 
-  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues) {
+  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues, MetaTaxonomyService) {
     function translateField(title) {
       return LocalizedValues.forLocale(title, $translate.use());
     }
 
+    var taxonomyPanelOptions = MetaTaxonomyService.getTaxonomyPanelOptions();
     function filter(vocabularies, queryString) {
       if(queryString){
         var vocabulariesToFilter;
@@ -28,12 +29,13 @@
         }
         return (vocabulariesToFilter || []).filter(function(vocabulary){
           vocabulary.filteredTerms =  (vocabulary.terms || []).filter(function(term){
-           if(translateField(term.title).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, '')) >= 0 ||
-             translateField(term.description).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, '')) >= 0 ||
-             translateField(term.keywords).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, ''))  >= 0
-          ){
-              return term.name;
-            }
+            var termName = null;
+            (taxonomyPanelOptions.fieldsToFilter || []).forEach(function (field) {
+              if (translateField(term[field]).toLowerCase().normalize('NFD').replace(/[^\w]/g, '').indexOf(queryString.toLowerCase().normalize('NFD').replace(/[^\w]/g, '')) >= 0) {
+                termName = term.name;
+              }
+            });
+            return termName;
           });
           if(vocabulary.terms){
           return vocabulary.filteredTerms.length > 0;
@@ -84,6 +86,6 @@
 
   ngObibaMica.search
     .service('TaxonomyService', ['TaxonomiesResource', 'TaxonomyResource', ngObibaMica.search.TaxonomyService])
-    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues',  ngObibaMica.search.FilterVocabulariesByQueryString]);
+    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues', 'MetaTaxonomyService', ngObibaMica.search.FilterVocabulariesByQueryString]);
 
 })();
