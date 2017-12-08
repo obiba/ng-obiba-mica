@@ -1883,6 +1883,9 @@ var DISPLAY_TYPES = {
   GRAPHICS: 'graphics'
 };
 
+/* exported FIELDS_TO_FILTER */
+var FIELDS_TO_FILTER = ['title', 'description', 'keywords'];
+
 /*global NgObibaMicaTemplateUrlFactory */
 ngObibaMica.search = angular.module('obiba.mica.search', [
     'obiba.alert',
@@ -1934,7 +1937,8 @@ ngObibaMica.search
               'Mlstr_additional': {weight: 2},
               'Mica_variable': {trKey: 'properties', weight: 3}
             }
-          }
+          },
+          fieldsToFilter : FIELDS_TO_FILTER
         },
         obibaListOptions: {
           countCaption: true,
@@ -2053,6 +2057,17 @@ ngObibaMica.search
         optionsResolver = resolver;
       };
 
+      function sanitizeFieldsToFilter(valueFieldsToFilter){
+        if (valueFieldsToFilter.length > 0) {
+          return valueFieldsToFilter.filter(function(valueField){
+            return FIELDS_TO_FILTER.filter(function(defaultFiled){
+              return valueField === defaultFiled;
+            });
+          });
+        }
+      return null;
+      }
+
       this.setOptions = function (value) {
         options = angular.merge(options, value);
         //NOTICE: angular.merge merges arrays by position. Overriding manually.
@@ -2069,6 +2084,7 @@ ngObibaMica.search
         options.studies.fields = value.studies && value.studies.fields || options.studies.fields;
         options.networks.fields = value.networks && value.networks.fields || options.networks.fields;
         options.datasets.fields = value.datasets && value.datasets.fields || options.datasets.fields;
+        options.taxonomyPanelOptions.fieldsToFilter = sanitizeFieldsToFilter(value.taxonomyPanelOptions.fieldsToFilter) || options.taxonomyPanelOptions.fieldsToFilter;
         if(value.studies && value.studies.obibaListOptions){
           options.obibaListOptions.countCaption = value.studies.obibaListOptions.studiesCountCaption === 0  ? value.studies.obibaListOptions.studiesCountCaption : true;
           options.obibaListOptions.searchForm = value.studies.obibaListOptions.studiesSearchForm === 0 ? value.studies.obibaListOptions.studiesSearchForm : true;
@@ -8821,10 +8837,10 @@ ngObibaMica.search
 
 (function() {
 ngObibaMica.search.MetaTaxonomyService = function($q, $translate, TaxonomyResource, ngObibaMicaSearch, LocalizedValues) {
-
+  var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions;
   var parser =
     new ngObibaMica.search.MetaTaxonomyParser(
-      ngObibaMicaSearch.getOptions().taxonomyPanelOptions,
+      taxonomyPanelOptions,
       LocalizedValues,
       $translate.use());
 
@@ -8873,8 +8889,15 @@ ngObibaMica.search.MetaTaxonomyService = function($q, $translate, TaxonomyResour
     return deferred.promise;
   }
 
+  /**
+   * Return taxonomy panel options
+   * @returns {taxonomyPanelOptions|{network, study, dataset, variable}}
+   */
+  function getTaxonomyPanelOptions(){
+    return taxonomyPanelOptions;
+  }
   // exported functions
-
+  this.getTaxonomyPanelOptions = getTaxonomyPanelOptions;
   this.getMetaTaxonomyForTargets = getMetaTaxonomyForTargets;
 };
 
@@ -8902,7 +8925,7 @@ ngObibaMica.search
 (function() {
   'use strict';
 
-  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues) {
+  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues, MetaTaxonomyService) {
     function translateField(title) {
       return LocalizedValues.forLocale(title, $translate.use());
     }
@@ -8917,11 +8940,15 @@ ngObibaMica.search
           return token.length > 2;
         });
         var vocabulariesToFilter = angular.isArray(vocabularies) ? vocabularies : vocabularies.vocabularies;
-
+        var fieldsToFilter = MetaTaxonomyService.getTaxonomyPanelOptions().fieldsToFilter;
         return (vocabulariesToFilter || []).filter(function (vocabulary) {
           vocabulary.filteredTerms = (vocabulary.terms || []).filter(function (term) {
+            // Filter on configurable field
+            var toMatchField = fieldsToFilter.reduce(function(toMatchField, field){
+              return toMatchField + ' ' + translateField(term[field]);
+            },fieldsToFilter[0] );
             // term is selected when each of the token is included
-            var toMatch = asciiFold(translateField(term.title) + ' ' + translateField(term.description) + ' ' + translateField(term.keywords)).trim().toLowerCase();
+            var toMatch = asciiFold(toMatchField).trim().toLowerCase();
             return tokens.map(function (token) {
               if (token.startsWith('-')) {
                 var ntoken = token.substr(1);
@@ -8996,7 +9023,7 @@ ngObibaMica.search
   ngObibaMica.search
     .service('TaxonomyService',
       ['$q', 'TaxonomiesResource', 'TaxonomyResource', 'VocabularyService', ngObibaMica.search.TaxonomyService])
-    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues',  ngObibaMica.search.FilterVocabulariesByQueryString]);
+    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues', 'MetaTaxonomyService', ngObibaMica.search.FilterVocabulariesByQueryString]);
 
 })();;/*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -13274,7 +13301,6 @@ angular.module("search/components/taxonomy/taxonomy-filter-detail/component.html
     "<div class=\"panel panel-primary\">\n" +
     "  <div class=\"panel-heading\">\n" +
     "    <div><strong>{{$ctrl.taxonomy.title | localizedString}}</strong></div>\n" +
-    "    <small>{{$ctrl.taxonomy.description | localizedString}}</small>\n" +
     "  </div>\n" +
     "\n" +
     "  <div class=\"panel-body\">\n" +

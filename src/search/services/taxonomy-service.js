@@ -12,7 +12,7 @@
 (function() {
   'use strict';
 
-  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues) {
+  ngObibaMica.search.FilterVocabulariesByQueryString = function($translate, LocalizedValues, MetaTaxonomyService) {
     function translateField(title) {
       return LocalizedValues.forLocale(title, $translate.use());
     }
@@ -27,11 +27,15 @@
           return token.length > 2;
         });
         var vocabulariesToFilter = angular.isArray(vocabularies) ? vocabularies : vocabularies.vocabularies;
-
+        var fieldsToFilter = MetaTaxonomyService.getTaxonomyPanelOptions().fieldsToFilter;
         return (vocabulariesToFilter || []).filter(function (vocabulary) {
           vocabulary.filteredTerms = (vocabulary.terms || []).filter(function (term) {
+            // Filter on configurable field
+            var toMatchField = fieldsToFilter.reduce(function(toMatchField, field){
+              return toMatchField + ' ' + translateField(term[field]);
+            },fieldsToFilter[0] );
             // term is selected when each of the token is included
-            var toMatch = asciiFold(translateField(term.title) + ' ' + translateField(term.description) + ' ' + translateField(term.keywords)).trim().toLowerCase();
+            var toMatch = asciiFold(toMatchField).trim().toLowerCase();
             return tokens.map(function (token) {
               if (token.startsWith('-')) {
                 var ntoken = token.substr(1);
@@ -106,6 +110,6 @@
   ngObibaMica.search
     .service('TaxonomyService',
       ['$q', 'TaxonomiesResource', 'TaxonomyResource', 'VocabularyService', ngObibaMica.search.TaxonomyService])
-    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues',  ngObibaMica.search.FilterVocabulariesByQueryString]);
+    .service('FilterVocabulariesByQueryString', ['$translate','LocalizedValues', 'MetaTaxonomyService', ngObibaMica.search.FilterVocabulariesByQueryString]);
 
 })();
