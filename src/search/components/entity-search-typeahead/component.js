@@ -23,7 +23,7 @@
     }
 
     function select(suggestion) {
-      EntitySuggestionService.selectSuggestion(ctrl.target, suggestion);
+      EntitySuggestionService.selectSuggestion(ctrl.target, suggestion, ctrl.withSpecificFields === 'true');
     }
 
     function onKeyUp(event) {
@@ -58,6 +58,7 @@
         target: '<',
         entityType: '<',
         rqlQuery: '<',
+        withSpecificFields: '@',
         placeholderText: '@'
       },
       templateUrl: 'search/components/entity-search-typeahead/component.html',

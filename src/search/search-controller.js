@@ -1343,8 +1343,15 @@ ngObibaMica.search
         CLASSIFICATION: 'classification'
       };
 
-      // TODO refractor these two suggestion functions
-      function searchSuggestion(target, suggestion) {
+      const SUGGESTION_FIELDS_MAP = new Map([
+          [QUERY_TARGETS.NETWORK, ['acronym', 'name']],
+          [QUERY_TARGETS.STUDY, ['acronym', 'name']],
+          [QUERY_TARGETS.DATASET, ['acronym', 'name']],
+          [QUERY_TARGETS.VARIABLE, ['name', 'label']]
+      ]);
+
+      // TODO refractor this suggestion functions
+      function searchSuggestion(target, suggestion, withSpecificFields) {
         var rqlQuery = angular.copy($scope.search.rqlQuery);
         var targetQuery = RqlQueryService.findTargetQuery(target, rqlQuery);
 
@@ -1357,22 +1364,30 @@ ngObibaMica.search
         var trimmedQuery = suggestion.trim();
         if (trimmedQuery.length) {
           // add filter as match criteria
-          var query = new RqlQuery(RQL_NODE.MATCH);
+          var query = new RqlQuery(RQL_NODE.DOC_MATCH);
           query.args.push([trimmedQuery]);
+
+          if (withSpecificFields) {
+            var fields = SUGGESTION_FIELDS_MAP.get(target);
+            if (fields) {
+              query.args.push(fields);
+            }
+          }
+
           matchQuery = {
             target: $scope.target,
             rqlQuery: query
           };
         }
 
-        var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.MATCH && arg.args.length === 1; });
+        var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.DOC_MATCH; });
         if (foundFulltextMatchQuery.length === 1) {
           if (matchQuery) {
             foundFulltextMatchQuery.pop().args = matchQuery.rqlQuery.args;
           } else {
             // remove existing match
             targetQuery.args = targetQuery.args.filter(function (arg) {
-              return arg.name !== RQL_NODE.MATCH;
+              return arg.name !== RQL_NODE.DOC_MATCH;
             });
           }
         } else if (matchQuery) {
@@ -1380,49 +1395,6 @@ ngObibaMica.search
         }
 
         $scope.search.rqlQuery = rqlQuery;
-        refreshQuery();
-      }
-
-      function searchSuggestionForListing(target, searchFilter) {
-        var matchQuery = null;
-
-        var trimmedQuery = searchFilter.trim();
-        if (trimmedQuery.length) {
-          // add filter as match criteria
-          var rqlQuery = new RqlQuery(RQL_NODE.MATCH);
-          rqlQuery.args.push([trimmedQuery]);
-          matchQuery = {
-            target: target,
-            rqlQuery: rqlQuery
-          };
-        }
-
-        var targetQuery = RqlQueryService.findTargetQuery(target, $scope.search.rqlQuery);
-
-        var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.MATCH && arg.args.length === 1; });
-        if (foundFulltextMatchQuery.length === 1) {
-          if (matchQuery) {
-            foundFulltextMatchQuery.pop().args = matchQuery.rqlQuery.args;
-          } else {
-            // remove existing match
-            targetQuery.args = targetQuery.args.filter(function (arg) {
-              return arg.name !== RQL_NODE.MATCH;
-            });
-          }
-        } else {
-          targetQuery.args.push(matchQuery.rqlQuery);
-        }
-
-        // change the sort for relevance
-        $scope.search.rqlQuery = RqlQueryService.prepareSearchQueryNoFields(
-          $scope.search.display,
-          $scope.search.type,
-          $scope.search.rqlQuery,
-          $scope.search.pagination,
-          $scope.lang,
-          '-_score'
-        );
-
         refreshQuery();
       }
 
@@ -1537,19 +1509,15 @@ ngObibaMica.search
           $scope.search.display,
           $scope.search.type,
           $scope.search.rqlQuery,
-          null,
+          {},
           $scope.lang,
           sort
         );
         refreshQuery();
       });
 
-      $rootScope.$on('ngObibaMicaSearch.searchSuggestion', function (event, suggestion, target) {
-        if (target) {
-          searchSuggestion(target, suggestion);
-        } else {
-          searchSuggestionForListing($scope.target, suggestion);
-        }
+      $rootScope.$on('ngObibaMicaSearch.searchSuggestion', function (event, suggestion, target, withSpecificFields) {
+        searchSuggestion(target, suggestion, withSpecificFields);
       });
 
       function init() {

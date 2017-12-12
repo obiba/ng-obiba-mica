@@ -55,7 +55,7 @@
         var targetQuery = RqlQueryService.findTargetQuery(target, query);
         if (targetQuery) {
           var matchQuery = targetQuery.args.filter(function (arg) {
-            return arg.name === RQL_NODE.MATCH && arg.args.length === 1;
+            return arg.name === RQL_NODE.DOC_MATCH;
           }).pop();
 
           return matchQuery && matchQuery.args ? matchQuery.args[0][0] : '';
@@ -65,9 +65,9 @@
       return '';
     }
 
-    function selectSuggestion(target, suggestion) {
+    function selectSuggestion(target, suggestion, withSpecificFields) {
       $rootScope.$new().$emit('ngObibaMicaSearch.searchSuggestion',
-        new obiba.utils.NgObibaStringUtils().cleanDoubleQuotesLeftUnclosed(suggestion), target);
+        new obiba.utils.NgObibaStringUtils().cleanDoubleQuotesLeftUnclosed(suggestion), target, withSpecificFields);
     }
 
     this.getCurrentSuggestion = getCurrentSuggestion;

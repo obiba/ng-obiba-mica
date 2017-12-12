@@ -1,6 +1,7 @@
 <div uib-accordion-group class="panel-default" heading="{{$ctrl.metaTaxonomy.title | localizedString}}" is-open="$ctrl.status.isFirstOpen">
   <entity-search-typeahead
     placeholder-text="search.placeholder.meta-taxonomy-filter.{{$ctrl.entityType}}"
+    with-specific-fields="true"
     target="$ctrl.metaTaxonomy.name"
     rql-query="$ctrl.rqlQuery"
     entity-type="$ctrl.entityType"></entity-search-typeahead>
