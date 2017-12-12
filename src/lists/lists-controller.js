@@ -13,8 +13,8 @@
 
 ngObibaMica.lists
 
-  .controller('listSearchWidgetController', ['$scope', '$rootScope', '$location', 'RqlQueryService', 'ngObibaMicaUrl',
-    function ($scope, $rootScope, $location, RqlQueryService, ngObibaMicaUrl) {
+  .controller('listSearchWidgetController', ['$scope', '$location', 'RqlQueryService', 'ngObibaMicaUrl',
+    function ($scope, $location, RqlQueryService, ngObibaMicaUrl) {
       function initMatchInput() {
         $scope.query = $location.search().query;
         $scope.target = typeToTarget($scope.type);
@@ -51,16 +51,6 @@ ngObibaMica.lists
       $scope.$on('$locationChangeSuccess', function () {
         initMatchInput();
       });
-
-      var emitter = $rootScope.$new();
-
-      $scope.selectSuggestion = function (suggestion) {
-        emitter.$emit('ngObibaMicaSearch.searchSuggestion', suggestion);
-      };
-
-      $scope.search = function() {
-        emitter.$emit('ngObibaMicaSearch.searchSuggestion', $scope.searchFilter.replace(/\/.*/g, ''));
-      };
 
       initMatchInput();
     }])

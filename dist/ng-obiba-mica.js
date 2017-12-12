@@ -2336,6 +2336,7 @@ var RQL_NODE = {
   LE: 'le',
   BETWEEN: 'between',
   MATCH: 'match',
+  DOC_MATCH: 'doc_match',
   EXISTS: 'exists',
   MISSING: 'missing'
 };
@@ -2694,8 +2695,9 @@ CriteriaBuilder.prototype.fieldToVocabulary = function (field) {
  */
 CriteriaBuilder.prototype.visitLeaf = function (node, parentItem) {
   var match = RQL_NODE.MATCH === node.name;
+  var docMatch = RQL_NODE.DOC_MATCH === node.name;
 
-  if (match && node.args.length === 1) {
+  if (docMatch) {
     var matchItem = new CriteriaItemBuilder()
         .type(node.name)
         .target(parentItem.parent.type)
@@ -2805,6 +2807,7 @@ CriteriaBuilder.prototype.visit = function (node, parentItem) {
     case RQL_NODE.EXISTS:
     case RQL_NODE.MISSING:
     case RQL_NODE.MATCH:
+    case RQL_NODE.DOC_MATCH:
       this.visitLeaf(node, parentItem);
       break;
     default:
@@ -2950,9 +2953,24 @@ ngObibaMica.search
       return query;
     };
 
+    this.docMatchQuery = function (fields, queryString) {
+      var query = new RqlQuery(RQL_NODE.DOC_MATCH);
+      if (Array.isArray(fields)) {
+        query.args.push(fields);
+      }
 
-    this.isFreeTextMatch = function(query) {
-      return query.name === RQL_NODE.MATCH && query.args.length === 1;
+      var arg = [];
+      if (!Array.isArray(queryString)) {
+        arg.push(queryString);
+      } else {
+        arg = queryString;
+      }
+
+      query.args.push(arg);
+    };
+
+    this.isDocumentMatch = function(query) {
+      return query.name === RQL_NODE.DOC_MATCH;
     };
 
     this.updateMatchQuery = function (query, queryString) {
@@ -3072,8 +3090,8 @@ ngObibaMica.search
           if (!logicalOp && query.args && query.args.length > 0) {
             var targetTaxo = 'Mica_' + parentQuery.name;
 
-            if (!self.isFreeTextMatch(query)) {
-              var criteriaVocabulary = query.name === 'match' ? query.args[1] : query.args[0];
+            if (!self.isDocumentMatch(query)) {
+              var criteriaVocabulary = query.name === RQL_NODE.MATCH ? query.args[1] : query.args[0];
               logicalOp = criteriaVocabulary.startsWith(targetTaxo + '.') ? RQL_NODE.AND : RQL_NODE.OR;
             }
           }
@@ -3595,7 +3613,7 @@ ngObibaMica.search
             return isLeaf(arg.name) || isOperator(arg.name);
           });
 
-          if (leafQueries.length === 1 && RqlQueryUtils.isFreeTextMatch(leafQueries[0])) {
+          if (leafQueries.length === 1 && RqlQueryUtils.isDocumentMatch(leafQueries[0])) {
             return false;
           }
 
@@ -5883,8 +5901,15 @@ ngObibaMica.search
         CLASSIFICATION: 'classification'
       };
 
-      // TODO refractor these two suggestion functions
-      function searchSuggestion(target, suggestion) {
+      const SUGGESTION_FIELDS_MAP = new Map([
+          [QUERY_TARGETS.NETWORK, ['acronym', 'name']],
+          [QUERY_TARGETS.STUDY, ['acronym', 'name']],
+          [QUERY_TARGETS.DATASET, ['acronym', 'name']],
+          [QUERY_TARGETS.VARIABLE, ['name', 'label']]
+      ]);
+
+      // TODO refractor this suggestion functions
+      function searchSuggestion(target, suggestion, withSpecificFields) {
         var rqlQuery = angular.copy($scope.search.rqlQuery);
         var targetQuery = RqlQueryService.findTargetQuery(target, rqlQuery);
 
@@ -5897,22 +5922,30 @@ ngObibaMica.search
         var trimmedQuery = suggestion.trim();
         if (trimmedQuery.length) {
           // add filter as match criteria
-          var query = new RqlQuery(RQL_NODE.MATCH);
+          var query = new RqlQuery(RQL_NODE.DOC_MATCH);
           query.args.push([trimmedQuery]);
+
+          if (withSpecificFields) {
+            var fields = SUGGESTION_FIELDS_MAP.get(target);
+            if (fields) {
+              query.args.push(fields);
+            }
+          }
+
           matchQuery = {
             target: $scope.target,
             rqlQuery: query
           };
         }
 
-        var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.MATCH && arg.args.length === 1; });
+        var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.DOC_MATCH; });
         if (foundFulltextMatchQuery.length === 1) {
           if (matchQuery) {
             foundFulltextMatchQuery.pop().args = matchQuery.rqlQuery.args;
           } else {
             // remove existing match
             targetQuery.args = targetQuery.args.filter(function (arg) {
-              return arg.name !== RQL_NODE.MATCH;
+              return arg.name !== RQL_NODE.DOC_MATCH;
             });
           }
         } else if (matchQuery) {
@@ -5920,49 +5953,6 @@ ngObibaMica.search
         }
 
         $scope.search.rqlQuery = rqlQuery;
-        refreshQuery();
-      }
-
-      function searchSuggestionForListing(target, searchFilter) {
-        var matchQuery = null;
-
-        var trimmedQuery = searchFilter.trim();
-        if (trimmedQuery.length) {
-          // add filter as match criteria
-          var rqlQuery = new RqlQuery(RQL_NODE.MATCH);
-          rqlQuery.args.push([trimmedQuery]);
-          matchQuery = {
-            target: target,
-            rqlQuery: rqlQuery
-          };
-        }
-
-        var targetQuery = RqlQueryService.findTargetQuery(target, $scope.search.rqlQuery);
-
-        var foundFulltextMatchQuery = targetQuery.args.filter(function (arg) { return arg.name === RQL_NODE.MATCH && arg.args.length === 1; });
-        if (foundFulltextMatchQuery.length === 1) {
-          if (matchQuery) {
-            foundFulltextMatchQuery.pop().args = matchQuery.rqlQuery.args;
-          } else {
-            // remove existing match
-            targetQuery.args = targetQuery.args.filter(function (arg) {
-              return arg.name !== RQL_NODE.MATCH;
-            });
-          }
-        } else {
-          targetQuery.args.push(matchQuery.rqlQuery);
-        }
-
-        // change the sort for relevance
-        $scope.search.rqlQuery = RqlQueryService.prepareSearchQueryNoFields(
-          $scope.search.display,
-          $scope.search.type,
-          $scope.search.rqlQuery,
-          $scope.search.pagination,
-          $scope.lang,
-          '-_score'
-        );
-
         refreshQuery();
       }
 
@@ -6077,19 +6067,15 @@ ngObibaMica.search
           $scope.search.display,
           $scope.search.type,
           $scope.search.rqlQuery,
-          null,
+          {},
           $scope.lang,
           sort
         );
         refreshQuery();
       });
 
-      $rootScope.$on('ngObibaMicaSearch.searchSuggestion', function (event, suggestion, target) {
-        if (target) {
-          searchSuggestion(target, suggestion);
-        } else {
-          searchSuggestionForListing($scope.target, suggestion);
-        }
+      $rootScope.$on('ngObibaMicaSearch.searchSuggestion', function (event, suggestion, target, withSpecificFields) {
+        searchSuggestion(target, suggestion, withSpecificFields);
       });
 
       function init() {
@@ -8796,7 +8782,7 @@ ngObibaMica.search
         var targetQuery = RqlQueryService.findTargetQuery(target, query);
         if (targetQuery) {
           var matchQuery = targetQuery.args.filter(function (arg) {
-            return arg.name === RQL_NODE.MATCH && arg.args.length === 1;
+            return arg.name === RQL_NODE.DOC_MATCH;
           }).pop();
 
           return matchQuery && matchQuery.args ? matchQuery.args[0][0] : '';
@@ -8806,9 +8792,9 @@ ngObibaMica.search
       return '';
     }
 
-    function selectSuggestion(target, suggestion) {
+    function selectSuggestion(target, suggestion, withSpecificFields) {
       $rootScope.$new().$emit('ngObibaMicaSearch.searchSuggestion',
-        new obiba.utils.NgObibaStringUtils().cleanDoubleQuotesLeftUnclosed(suggestion), target);
+        new obiba.utils.NgObibaStringUtils().cleanDoubleQuotesLeftUnclosed(suggestion), target, withSpecificFields);
     }
 
     this.getCurrentSuggestion = getCurrentSuggestion;
@@ -9283,7 +9269,7 @@ ngObibaMica.search
     }
 
     function select(suggestion) {
-      EntitySuggestionService.selectSuggestion(ctrl.target, suggestion);
+      EntitySuggestionService.selectSuggestion(ctrl.target, suggestion, ctrl.withSpecificFields === 'true');
     }
 
     function onKeyUp(event) {
@@ -9318,6 +9304,7 @@ ngObibaMica.search
         target: '<',
         entityType: '<',
         rqlQuery: '<',
+        withSpecificFields: '@',
         placeholderText: '@'
       },
       templateUrl: 'search/components/entity-search-typeahead/component.html',
@@ -10013,8 +10000,8 @@ ngObibaMica.lists
 
 ngObibaMica.lists
 
-  .controller('listSearchWidgetController', ['$scope', '$rootScope', '$location', 'RqlQueryService', 'ngObibaMicaUrl',
-    function ($scope, $rootScope, $location, RqlQueryService, ngObibaMicaUrl) {
+  .controller('listSearchWidgetController', ['$scope', '$location', 'RqlQueryService', 'ngObibaMicaUrl',
+    function ($scope, $location, RqlQueryService, ngObibaMicaUrl) {
       function initMatchInput() {
         $scope.query = $location.search().query;
         $scope.target = typeToTarget($scope.type);
@@ -10051,16 +10038,6 @@ ngObibaMica.lists
       $scope.$on('$locationChangeSuccess', function () {
         initMatchInput();
       });
-
-      var emitter = $rootScope.$new();
-
-      $scope.selectSuggestion = function (suggestion) {
-        emitter.$emit('ngObibaMicaSearch.searchSuggestion', suggestion);
-      };
-
-      $scope.search = function() {
-        emitter.$emit('ngObibaMicaSearch.searchSuggestion', $scope.searchFilter.replace(/\/.*/g, ''));
-      };
 
       initMatchInput();
     }])
@@ -13223,6 +13200,7 @@ angular.module("search/components/meta-taxonomy/meta-taxonomy-filter-list/compon
     "<div uib-accordion-group class=\"panel-default\" heading=\"{{$ctrl.metaTaxonomy.title | localizedString}}\" is-open=\"$ctrl.status.isFirstOpen\">\n" +
     "  <entity-search-typeahead\n" +
     "    placeholder-text=\"search.placeholder.meta-taxonomy-filter.{{$ctrl.entityType}}\"\n" +
+    "    with-specific-fields=\"true\"\n" +
     "    target=\"$ctrl.metaTaxonomy.name\"\n" +
     "    rql-query=\"$ctrl.rqlQuery\"\n" +
     "    entity-type=\"$ctrl.entityType\"></entity-search-typeahead>\n" +

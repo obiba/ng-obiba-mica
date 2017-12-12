@@ -77,6 +77,7 @@ var RQL_NODE = {
   LE: 'le',
   BETWEEN: 'between',
   MATCH: 'match',
+  DOC_MATCH: 'doc_match',
   EXISTS: 'exists',
   MISSING: 'missing'
 };
@@ -435,8 +436,9 @@ CriteriaBuilder.prototype.fieldToVocabulary = function (field) {
  */
 CriteriaBuilder.prototype.visitLeaf = function (node, parentItem) {
   var match = RQL_NODE.MATCH === node.name;
+  var docMatch = RQL_NODE.DOC_MATCH === node.name;
 
-  if (match && node.args.length === 1) {
+  if (docMatch) {
     var matchItem = new CriteriaItemBuilder()
         .type(node.name)
         .target(parentItem.parent.type)
@@ -546,6 +548,7 @@ CriteriaBuilder.prototype.visit = function (node, parentItem) {
     case RQL_NODE.EXISTS:
     case RQL_NODE.MISSING:
     case RQL_NODE.MATCH:
+    case RQL_NODE.DOC_MATCH:
       this.visitLeaf(node, parentItem);
       break;
     default:
@@ -691,9 +694,24 @@ ngObibaMica.search
       return query;
     };
 
+    this.docMatchQuery = function (fields, queryString) {
+      var query = new RqlQuery(RQL_NODE.DOC_MATCH);
+      if (Array.isArray(fields)) {
+        query.args.push(fields);
+      }
 
-    this.isFreeTextMatch = function(query) {
-      return query.name === RQL_NODE.MATCH && query.args.length === 1;
+      var arg = [];
+      if (!Array.isArray(queryString)) {
+        arg.push(queryString);
+      } else {
+        arg = queryString;
+      }
+
+      query.args.push(arg);
+    };
+
+    this.isDocumentMatch = function(query) {
+      return query.name === RQL_NODE.DOC_MATCH;
     };
 
     this.updateMatchQuery = function (query, queryString) {
@@ -813,8 +831,8 @@ ngObibaMica.search
           if (!logicalOp && query.args && query.args.length > 0) {
             var targetTaxo = 'Mica_' + parentQuery.name;
 
-            if (!self.isFreeTextMatch(query)) {
-              var criteriaVocabulary = query.name === 'match' ? query.args[1] : query.args[0];
+            if (!self.isDocumentMatch(query)) {
+              var criteriaVocabulary = query.name === RQL_NODE.MATCH ? query.args[1] : query.args[0];
               logicalOp = criteriaVocabulary.startsWith(targetTaxo + '.') ? RQL_NODE.AND : RQL_NODE.OR;
             }
           }
@@ -1336,7 +1354,7 @@ ngObibaMica.search
             return isLeaf(arg.name) || isOperator(arg.name);
           });
 
-          if (leafQueries.length === 1 && RqlQueryUtils.isFreeTextMatch(leafQueries[0])) {
+          if (leafQueries.length === 1 && RqlQueryUtils.isDocumentMatch(leafQueries[0])) {
             return false;
           }
 
