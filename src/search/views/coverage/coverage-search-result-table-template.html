@@ -72,7 +72,7 @@
         <th rowspan="{{bucketStartsWithDce ? 1 : 2}}" colspan="{{table.cols.colSpan}}" translate>
           {{'search.coverage-buckets.' + bucket}}
         </th>
-        <th ng-repeat="header in table.vocabularyHeaders" colspan="{{header.termsCount}}">
+        <th ng-repeat="header in ::table.vocabularyHeaders" colspan="{{::header.termsCount}}">
           <span
             uib-popover="{{header.entity.descriptions[0].value}}"
             popover-title="{{header.entity.titles[0].value}}"
@@ -104,11 +104,11 @@
       </tr>
       </thead>
       <tbody>
-      <tr ng-repeat="row in ::table.rows track by row.value" ng-if="showMissing || table.termHeaders.length == row.hits.length">
+      <tr ng-repeat="row in ::table.rows track by row.value" ng-show="showMissing || table.termHeaders.length == row.hits.length">
         <td style="text-align: center">
           <input type="checkbox" ng-model="row.selected">
         </td>
-        <td ng-repeat="col in ::table.cols.ids[row.value]" colspan="{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}" ng-hide="col.id === '-' && (choseHarmonization && !choseAll)">
+        <td ng-repeat="col in ::table.cols.ids[row.value] track by col.index" colspan="{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}" ng-hide="col.id === '-' && (choseHarmonization && !choseAll)">
           <span ng-if="col.id === '-'">-</span>
           <a ng-hide="col.rowSpan === 0  || col.id === '-'" href="{{col.url}}"
             uib-popover-html="col.description === col.title ? null : col.description"
@@ -136,11 +136,11 @@
             </div>
           </div>
         </td>
-        <td ng-repeat="h in ::table.termHeaders track by h.entity.name" title="{{h.entity.titles[0].value}}">
-          <a href ng-click="updateCriteria(row.value, h, $index, 'variables')"><span class="label label-info"
-            ng-if="row.hits[$index]"><localized-number value="row.hits[$index]"></localized-number></span></a>
-          <span ng-if="!row.hits[$index]">0</span>
-        </td>
+          <td ng-repeat="h in ::table.termHeaders track by h.entity.name" title="{{h.entity.titles[0].value}}">
+            <a href ng-click="updateCriteria(row.value, h, $index, 'variables')"><span class="label label-info"
+              ng-show="row.hits[$index]">{{row.hits[$index]}}</span></a>
+            <span ng-show="!row.hits[$index]">0</span>
+          </td>
       </tr>
       </tbody>
       <tfoot>
