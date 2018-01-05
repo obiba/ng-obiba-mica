@@ -2586,7 +2586,10 @@ ngObibaMica.search
 
         var odd = true;
         var groupId;
-        $scope.result.rows.forEach(function (row) {
+        $scope.result.rows.forEach(function (row, i) {
+          row.hits = row.hits.map(function(hit){
+            return LocalizedValues.formatNumber(hit);
+          });
           cols.ids[row.value] = [];
           if ($scope.bucket.startsWith('dce')) {
             var ids = row.value.split(':');
@@ -2611,7 +2614,8 @@ ngObibaMica.search
               url: PageUrlService.studyPage(id, isHarmo ? 'harmonization' : 'individual'),
               title: titles[0],
               description: descriptions[0],
-              rowSpan: rowSpan
+              rowSpan: rowSpan,
+              index: i
             });
 
             // population
@@ -2622,7 +2626,8 @@ ngObibaMica.search
               url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
               title: titles[1],
               description: descriptions[1],
-              rowSpan: rowSpan
+              rowSpan: rowSpan,
+              index: i
             });
 
             // dce
@@ -2635,7 +2640,8 @@ ngObibaMica.search
               end: row.end,
               progressClass: odd ? 'info' : 'warning',
               url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
-              rowSpan: 1
+              rowSpan: 1,
+              index: i
             });
           } else {
             var parts = $scope.bucket.split('-');
@@ -2659,7 +2665,8 @@ ngObibaMica.search
               progressStart: 0,
               progress: getProgress(row.start ? row.start + '-01' : currentYearMonth, row.end ? row.end + '-12' : currentYearMonth),
               progressClass: odd ? 'info' : 'warning',
-              rowSpan: 1
+              rowSpan: 1,
+              index: i
             });
             odd = !odd;
           }
@@ -2667,7 +2674,10 @@ ngObibaMica.search
 
         // adjust the rowspans and the progress
         if ($scope.bucket.startsWith('dce')) {
-          $scope.result.rows.forEach(function (row) {
+          $scope.result.rows.forEach(function (row, i) {
+            row.hits = row.hits.map(function(hit){
+              return LocalizedValues.formatNumber(hit);
+            });
             if (cols.ids[row.value][0].rowSpan > 0) {
               cols.ids[row.value][0].rowSpan = rowSpans[cols.ids[row.value][0].id];
             }
@@ -2687,6 +2697,7 @@ ngObibaMica.search
               // compute the progress
               cols.ids[row.value][2].progressStart = 100 * (toTime(start, true) - toTime(min, true))/diff;
               cols.ids[row.value][2].progress = 100 * (toTime(end, false) - toTime(start, true))/diff;
+              cols.ids[row.value].index = i;
             }
           });
         }
