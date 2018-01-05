@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-01-04
+ * Date: 2018-01-05
  */
 /*
  * Copyright (c) 2017 OBiBa. All rights reserved.
@@ -7177,7 +7177,11 @@ ngObibaMica.search
 
         var odd = true;
         var groupId;
+        var i = 0;
         $scope.result.rows.forEach(function (row) {
+          row.hits = row.hits.map(function(hit){
+            return LocalizedValues.formatNumber(hit);
+          });
           cols.ids[row.value] = [];
           if ($scope.bucket.startsWith('dce')) {
             var ids = row.value.split(':');
@@ -7202,7 +7206,8 @@ ngObibaMica.search
               url: PageUrlService.studyPage(id, isHarmo ? 'harmonization' : 'individual'),
               title: titles[0],
               description: descriptions[0],
-              rowSpan: rowSpan
+              rowSpan: rowSpan,
+                index: i++
             });
 
             // population
@@ -7213,7 +7218,8 @@ ngObibaMica.search
               url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
               title: titles[1],
               description: descriptions[1],
-              rowSpan: rowSpan
+              rowSpan: rowSpan,
+                index: i++
             });
 
             // dce
@@ -7226,7 +7232,8 @@ ngObibaMica.search
               end: row.end,
               progressClass: odd ? 'info' : 'warning',
               url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
-              rowSpan: 1
+              rowSpan: 1,
+                index: i++
             });
           } else {
             var parts = $scope.bucket.split('-');
@@ -7250,7 +7257,8 @@ ngObibaMica.search
               progressStart: 0,
               progress: getProgress(row.start ? row.start + '-01' : currentYearMonth, row.end ? row.end + '-12' : currentYearMonth),
               progressClass: odd ? 'info' : 'warning',
-              rowSpan: 1
+              rowSpan: 1,
+                index: i++
             });
             odd = !odd;
           }
@@ -7259,6 +7267,9 @@ ngObibaMica.search
         // adjust the rowspans and the progress
         if ($scope.bucket.startsWith('dce')) {
           $scope.result.rows.forEach(function (row) {
+            row.hits = row.hits.map(function(hit){
+              return LocalizedValues.formatNumber(hit);
+            });
             if (cols.ids[row.value][0].rowSpan > 0) {
               cols.ids[row.value][0].rowSpan = rowSpans[cols.ids[row.value][0].id];
             }
@@ -7278,6 +7289,7 @@ ngObibaMica.search
               // compute the progress
               cols.ids[row.value][2].progressStart = 100 * (toTime(start, true) - toTime(min, true))/diff;
               cols.ids[row.value][2].progress = 100 * (toTime(end, false) - toTime(start, true))/diff;
+              cols.ids[row.value].index = i++;
             }
           });
         }
@@ -14447,7 +14459,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "        <th rowspan=\"{{bucketStartsWithDce ? 1 : 2}}\" colspan=\"{{table.cols.colSpan}}\" translate>\n" +
     "          {{'search.coverage-buckets.' + bucket}}\n" +
     "        </th>\n" +
-    "        <th ng-repeat=\"header in table.vocabularyHeaders\" colspan=\"{{header.termsCount}}\">\n" +
+    "        <th ng-repeat=\"header in ::table.vocabularyHeaders\" colspan=\"{{::header.termsCount}}\">\n" +
     "          <span\n" +
     "            uib-popover=\"{{header.entity.descriptions[0].value}}\"\n" +
     "            popover-title=\"{{header.entity.titles[0].value}}\"\n" +
@@ -14479,11 +14491,11 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "      </tr>\n" +
     "      </thead>\n" +
     "      <tbody>\n" +
-    "      <tr ng-repeat=\"row in ::table.rows track by row.value\" ng-if=\"showMissing || table.termHeaders.length == row.hits.length\">\n" +
+    "      <tr ng-repeat=\"row in ::table.rows track by row.value\" ng-show=\"showMissing || table.termHeaders.length == row.hits.length\">\n" +
     "        <td style=\"text-align: center\">\n" +
     "          <input type=\"checkbox\" ng-model=\"row.selected\">\n" +
     "        </td>\n" +
-    "        <td ng-repeat=\"col in ::table.cols.ids[row.value]\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\" ng-hide=\"col.id === '-' && (choseHarmonization && !choseAll)\">\n" +
+    "        <td ng-repeat=\"col in ::table.cols.ids[row.value] track by col.index\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\" ng-hide=\"col.id === '-' && (choseHarmonization && !choseAll)\">\n" +
     "          <span ng-if=\"col.id === '-'\">-</span>\n" +
     "          <a ng-hide=\"col.rowSpan === 0  || col.id === '-'\" href=\"{{col.url}}\"\n" +
     "            uib-popover-html=\"col.description === col.title ? null : col.description\"\n" +
@@ -14511,11 +14523,11 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "            </div>\n" +
     "          </div>\n" +
     "        </td>\n" +
-    "        <td ng-repeat=\"h in ::table.termHeaders track by h.entity.name\" title=\"{{h.entity.titles[0].value}}\">\n" +
-    "          <a href ng-click=\"updateCriteria(row.value, h, $index, 'variables')\"><span class=\"label label-info\"\n" +
-    "            ng-if=\"row.hits[$index]\"><localized-number value=\"row.hits[$index]\"></localized-number></span></a>\n" +
-    "          <span ng-if=\"!row.hits[$index]\">0</span>\n" +
-    "        </td>\n" +
+    "          <td ng-repeat=\"h in ::table.termHeaders track by h.entity.name\" title=\"{{h.entity.titles[0].value}}\">\n" +
+    "            <a href ng-click=\"updateCriteria(row.value, h, $index, 'variables')\"><span class=\"label label-info\"\n" +
+    "              ng-show=\"row.hits[$index]\">{{row.hits[$index]}}</span></a>\n" +
+    "            <span ng-show=\"!row.hits[$index]\">0</span>\n" +
+    "          </td>\n" +
     "      </tr>\n" +
     "      </tbody>\n" +
     "      <tfoot>\n" +
