@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-01-11
+ * Date: 2018-01-16
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -9951,7 +9951,12 @@ ngObibaMica.search
     }
 
     function selectTaxonomyVocabularyArgs(taxonomy, vocabulary, args) {
-      ctrl.onSelectTerm({target: ctrl.target, taxonomy: taxonomy, vocabulary: vocabulary, args: args});
+      var trueArgs = args;
+      if ((vocabulary.terms && args.term) && vocabulary.terms.length === args.term.length) {
+        trueArgs.term = null;
+      }
+
+      ctrl.onSelectTerm({target: ctrl.target, taxonomy: taxonomy, vocabulary: vocabulary, args: trueArgs});
     }
 
     function onFilterChange(queryString) {
@@ -10138,14 +10143,6 @@ ngObibaMica.search
       ctrl.onRemoveCriterion({item: ctrl.vocabulary.existingItem});
     }
 
-    function toggleVocabularySelection(checkboxClickEvent, modelValue) {
-      if (modelValue) {
-        selectVocabularyArgs(null);
-      } else {
-        removeCriterion();
-      }
-    }
-
     function selectAllFilteredVocabularyTerms(terms) {
       var processedTerms = terms.map(function (term) {
         term.selected = true;
@@ -10171,7 +10168,6 @@ ngObibaMica.search
 
     ctrl.$onChanges = onChanges;
     ctrl.canStillSelectMore = canStillSelectMore;
-    ctrl.toggleVocabularySelection = toggleVocabularySelection;
     ctrl.selectAllFilteredVocabularyTerms = selectAllFilteredVocabularyTerms;
     ctrl.selectVocabularyArgs = selectVocabularyArgs;
     ctrl.removeCriterion = removeCriterion;
@@ -13798,9 +13794,6 @@ angular.module("search/components/vocabulary/vocabulary-filter-detail/component.
     "      popover-trigger=\"'mouseenter'\"\n" +
     "      popover-popup-delay=\"250\"\n" +
     "      popover-class=\"right-panel-popover\">\n" +
-    "    <input type=\"checkbox\"\n" +
-    "           ng-click=\"$ctrl.toggleVocabularySelection($event, $ctrl.vocabulary.wholeVocabularyIsSelected)\"\n" +
-    "           ng-model=\"$ctrl.vocabulary.wholeVocabularyIsSelected\">\n" +
     "    {{$ctrl.vocabulary.title | localizedString}}\n" +
     "  </label>\n" +
     "\n" +
