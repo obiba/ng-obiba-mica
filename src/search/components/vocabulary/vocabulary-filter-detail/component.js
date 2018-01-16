@@ -32,14 +32,6 @@
       ctrl.onRemoveCriterion({item: ctrl.vocabulary.existingItem});
     }
 
-    function toggleVocabularySelection(checkboxClickEvent, modelValue) {
-      if (modelValue) {
-        selectVocabularyArgs(null);
-      } else {
-        removeCriterion();
-      }
-    }
-
     function selectAllFilteredVocabularyTerms(terms) {
       var processedTerms = terms.map(function (term) {
         term.selected = true;
@@ -65,7 +57,6 @@
 
     ctrl.$onChanges = onChanges;
     ctrl.canStillSelectMore = canStillSelectMore;
-    ctrl.toggleVocabularySelection = toggleVocabularySelection;
     ctrl.selectAllFilteredVocabularyTerms = selectAllFilteredVocabularyTerms;
     ctrl.selectVocabularyArgs = selectVocabularyArgs;
     ctrl.removeCriterion = removeCriterion;

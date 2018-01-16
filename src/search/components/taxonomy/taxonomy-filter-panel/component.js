@@ -47,7 +47,12 @@
     }
 
     function selectTaxonomyVocabularyArgs(taxonomy, vocabulary, args) {
-      ctrl.onSelectTerm({target: ctrl.target, taxonomy: taxonomy, vocabulary: vocabulary, args: args});
+      var trueArgs = args;
+      if ((vocabulary.terms && args.term) && vocabulary.terms.length === args.term.length) {
+        trueArgs.term = null;
+      }
+
+      ctrl.onSelectTerm({target: ctrl.target, taxonomy: taxonomy, vocabulary: vocabulary, args: trueArgs});
     }
 
     function onFilterChange(queryString) {
