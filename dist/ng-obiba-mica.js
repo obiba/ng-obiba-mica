@@ -13699,7 +13699,7 @@ angular.module("search/components/meta-taxonomy/meta-taxonomy-filter-list/compon
 
 angular.module("search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html",
-    "<div>\n" +
+    "<div ng-class=\"{'overlay-front-on-box-shodow' : $ctrl.showTaxonomyPanel}\">\n" +
     "  <uib-accordion close-others=\"false\" is-disabled=\"false\">\n" +
     "    <meta-taxonomy-filter-list ng-repeat=\"metaTaxonomy in $ctrl.metaTaxonomies\"\n" +
     "                               meta-taxonomy=\"metaTaxonomy\"\n" +
@@ -13730,7 +13730,7 @@ angular.module("search/components/taxonomy/taxonomy-filter-detail/component.html
 
 angular.module("search/components/taxonomy/taxonomy-filter-panel/component.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/components/taxonomy/taxonomy-filter-panel/component.html",
-    "<div class=\"vocabulary-filter-detail\" ng-class=\"{'close_right':$ctrl.classClose}\">\n" +
+    "<div class=\"vocabulary-filter-detail\" ng-class=\"{'close_right':$ctrl.classClose, 'overlay-front-on-box-shodow' : $ctrl.showTaxonomyPanel}\">\n" +
     "\n" +
     "\n" +
     "  <div class=\"ng-clearfix\"></div>\n" +
