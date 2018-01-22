@@ -138,8 +138,8 @@
         </td>
           <td ng-repeat="h in ::table.termHeaders track by h.entity.name" title="{{h.entity.titles[0].value}}">
             <a href ng-click="updateCriteria(row.value, h, $index, 'variables')"><span class="label label-info"
-              ng-show="row.hits[$index]">{{row.hits[$index]}}</span></a>
-            <span ng-show="!row.hits[$index]">0</span>
+              ng-show="row.hitsTitles[$index]">{{row.hitsTitles[$index]}}</span></a>
+            <span ng-show="!row.hitsTitles[$index]">0</span>
           </td>
       </tr>
       </tbody>

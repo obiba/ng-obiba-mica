@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-01-18
+ * Date: 2018-01-22
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -7186,7 +7186,7 @@ ngObibaMica.search
         var odd = true;
         var groupId;
         $scope.result.rows.forEach(function (row, i) {
-          row.hits = row.hits.map(function(hit){
+          row.hitsTitles = row.hits.map(function(hit){
             return LocalizedValues.formatNumber(hit);
           });
           cols.ids[row.value] = [];
@@ -7274,7 +7274,7 @@ ngObibaMica.search
         // adjust the rowspans and the progress
         if ($scope.bucket.startsWith('dce')) {
           $scope.result.rows.forEach(function (row, i) {
-            row.hits = row.hits.map(function(hit){
+            row.hitsTitles = row.hits.map(function(hit){
               return LocalizedValues.formatNumber(hit);
             });
             if (cols.ids[row.value][0].rowSpan > 0) {
@@ -14610,8 +14610,8 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "        </td>\n" +
     "          <td ng-repeat=\"h in ::table.termHeaders track by h.entity.name\" title=\"{{h.entity.titles[0].value}}\">\n" +
     "            <a href ng-click=\"updateCriteria(row.value, h, $index, 'variables')\"><span class=\"label label-info\"\n" +
-    "              ng-show=\"row.hits[$index]\">{{row.hits[$index]}}</span></a>\n" +
-    "            <span ng-show=\"!row.hits[$index]\">0</span>\n" +
+    "              ng-show=\"row.hitsTitles[$index]\">{{row.hitsTitles[$index]}}</span></a>\n" +
+    "            <span ng-show=\"!row.hitsTitles[$index]\">0</span>\n" +
     "          </td>\n" +
     "      </tr>\n" +
     "      </tbody>\n" +

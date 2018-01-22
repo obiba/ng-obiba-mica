@@ -2593,7 +2593,7 @@ ngObibaMica.search
         var odd = true;
         var groupId;
         $scope.result.rows.forEach(function (row, i) {
-          row.hits = row.hits.map(function(hit){
+          row.hitsTitles = row.hits.map(function(hit){
             return LocalizedValues.formatNumber(hit);
           });
           cols.ids[row.value] = [];
@@ -2681,7 +2681,7 @@ ngObibaMica.search
         // adjust the rowspans and the progress
         if ($scope.bucket.startsWith('dce')) {
           $scope.result.rows.forEach(function (row, i) {
-            row.hits = row.hits.map(function(hit){
+            row.hitsTitles = row.hits.map(function(hit){
               return LocalizedValues.formatNumber(hit);
             });
             if (cols.ids[row.value][0].rowSpan > 0) {
