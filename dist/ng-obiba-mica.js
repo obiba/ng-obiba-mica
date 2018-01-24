@@ -14562,7 +14562,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "        <th ng-if=\"bucketStartsWithDce\" translate>search.coverage-dce-cols.study</th>\n" +
     "        <th ng-if=\"bucketStartsWithDce\" colspan=\"{{choseHarmonization && !choseAll ? 2 : 1}}\" translate>search.coverage-dce-cols.population</th>\n" +
     "        <th ng-if=\"bucketStartsWithDce\" ng-hide=\"choseHarmonization && !choseAll\" translate>search.coverage-dce-cols.dce</th>\n" +
-    "        <th ng-repeat=\"header in ::table.termHeaders track by header.entity.name\">\n" +
+    "        <th ng-repeat=\"header in ::table.termHeaders\">\n" +
     "          <span\n" +
     "            uib-popover=\"{{header.entity.descriptions[0].value}}\"\n" +
     "            popover-title=\"{{header.entity.titles[0].value}}\"\n" +
@@ -14609,7 +14609,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "            </div>\n" +
     "          </div>\n" +
     "        </td>\n" +
-    "          <td ng-repeat=\"h in ::table.termHeaders track by h.entity.name\" title=\"{{h.entity.titles[0].value}}\">\n" +
+    "          <td ng-repeat=\"h in ::table.termHeaders\" title=\"{{h.entity.titles[0].value}}\">\n" +
     "            <a href ng-click=\"updateCriteria(row.value, h, $index, 'variables')\"><span class=\"label label-info\"\n" +
     "              ng-show=\"row.hitsTitles[$index]\">{{row.hitsTitles[$index]}}</span></a>\n" +
     "            <span ng-show=\"!row.hitsTitles[$index]\">0</span>\n" +
@@ -14620,7 +14620,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "      <tr>\n" +
     "        <th></th>\n" +
     "        <th colspan=\"{{table.cols.colSpan}}\" translate>all</th>\n" +
-    "        <th ng-repeat=\"header in ::table.termHeaders track by header.entity.name\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
+    "        <th ng-repeat=\"header in ::table.termHeaders\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
     "          <a href ng-click=\"updateCriteria(null, header, $index, 'variables')\"><localized-number value=\"header.hits\"></localized-number></a>\n" +
     "        </th>\n" +
     "      </tr>\n" +

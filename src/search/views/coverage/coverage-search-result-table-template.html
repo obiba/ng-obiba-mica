@@ -89,7 +89,7 @@
         <th ng-if="bucketStartsWithDce" translate>search.coverage-dce-cols.study</th>
         <th ng-if="bucketStartsWithDce" colspan="{{choseHarmonization && !choseAll ? 2 : 1}}" translate>search.coverage-dce-cols.population</th>
         <th ng-if="bucketStartsWithDce" ng-hide="choseHarmonization && !choseAll" translate>search.coverage-dce-cols.dce</th>
-        <th ng-repeat="header in ::table.termHeaders track by header.entity.name">
+        <th ng-repeat="header in ::table.termHeaders">
           <span
             uib-popover="{{header.entity.descriptions[0].value}}"
             popover-title="{{header.entity.titles[0].value}}"
@@ -136,7 +136,7 @@
             </div>
           </div>
         </td>
-          <td ng-repeat="h in ::table.termHeaders track by h.entity.name" title="{{h.entity.titles[0].value}}">
+          <td ng-repeat="h in ::table.termHeaders" title="{{h.entity.titles[0].value}}">
             <a href ng-click="updateCriteria(row.value, h, $index, 'variables')"><span class="label label-info"
               ng-show="row.hitsTitles[$index]">{{row.hitsTitles[$index]}}</span></a>
             <span ng-show="!row.hitsTitles[$index]">0</span>
@@ -147,7 +147,7 @@
       <tr>
         <th></th>
         <th colspan="{{table.cols.colSpan}}" translate>all</th>
-        <th ng-repeat="header in ::table.termHeaders track by header.entity.name" title="{{header.entity.descriptions[0].value}}">
+        <th ng-repeat="header in ::table.termHeaders" title="{{header.entity.descriptions[0].value}}">
           <a href ng-click="updateCriteria(null, header, $index, 'variables')"><localized-number value="header.hits"></localized-number></a>
         </th>
       </tr>
