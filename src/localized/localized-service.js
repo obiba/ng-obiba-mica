@@ -59,7 +59,7 @@ ngObibaMica.localized
       };
 
       this.formatNumber = function (val) {
-        return (typeof val === 'undefined' && val === null && typeof val !== 'number') ? val : val.toLocaleString($translate.use());
+        return (typeof val === 'undefined' || val === null || typeof val !== 'number') ? val : val.toLocaleString($translate.use());
       };
 
       this.arrayToObject = function (values) {

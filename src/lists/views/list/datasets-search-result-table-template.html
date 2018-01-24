@@ -37,7 +37,8 @@
                         {{counts.studies > 1 ? "studies" : "study.label"
                         | translate}}
                     </a>
-                    <a ng-show="counts.variables && options.obibaListOptions.showVariableBadge!==false"
+
+                    <a ng-if="counts.variables && options.obibaListOptions.showVariableBadge!==false"
                        href="{{'variables' | doSearchQuery : 'dataset(in(Mica_dataset.id,' + summary.id +  '))' }}"
                        class="btn btn-default btn-xxs"
                        test-ref="variableCount">

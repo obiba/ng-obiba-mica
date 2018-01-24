@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-01-22
+ * Date: 2018-01-24
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -11367,7 +11367,7 @@ ngObibaMica.localized
       };
 
       this.formatNumber = function (val) {
-        return (typeof val === 'undefined' && val === null && typeof val !== 'number') ? val : val.toLocaleString($translate.use());
+        return (typeof val === 'undefined' || val === null || typeof val !== 'number') ? val : val.toLocaleString($translate.use());
       };
 
       this.arrayToObject = function (values) {
@@ -13062,7 +13062,8 @@ angular.module("lists/views/list/datasets-search-result-table-template.html", []
     "                        {{counts.studies > 1 ? \"studies\" : \"study.label\"\n" +
     "                        | translate}}\n" +
     "                    </a>\n" +
-    "                    <a ng-show=\"counts.variables && options.obibaListOptions.showVariableBadge!==false\"\n" +
+    "\n" +
+    "                    <a ng-if=\"counts.variables && options.obibaListOptions.showVariableBadge!==false\"\n" +
     "                       href=\"{{'variables' | doSearchQuery : 'dataset(in(Mica_dataset.id,' + summary.id +  '))' }}\"\n" +
     "                       class=\"btn btn-default btn-xxs\"\n" +
     "                       test-ref=\"variableCount\">\n" +
