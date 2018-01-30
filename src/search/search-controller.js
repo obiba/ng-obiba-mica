@@ -997,6 +997,12 @@ ngObibaMica.search
         $scope.search.selectedTarget = target;
         $scope.search.selectedTaxonomy = taxonomy;
         $scope.search.showTaxonomyPanel = taxonomy !== null;
+
+        // QUICKFIX for MK-1772 - there is a digest desync and UI misses info, resend the request upon closing
+        // A good solution may be a RequestQueue.
+        if (!$scope.search.showTaxonomyPanel) {
+          loadResults();
+        }
       }
 
       $scope.translateTaxonomyNav = function(t, key) {

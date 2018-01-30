@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-01-26
+ * Date: 2018-01-31
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -5590,6 +5590,12 @@ ngObibaMica.search
         $scope.search.selectedTarget = target;
         $scope.search.selectedTaxonomy = taxonomy;
         $scope.search.showTaxonomyPanel = taxonomy !== null;
+
+        // QUICKFIX for MK-1772 - there is a digest desync and UI misses info, resend the request upon closing
+        // A good solution may be a RequestQueue.
+        if (!$scope.search.showTaxonomyPanel) {
+          loadResults();
+        }
       }
 
       $scope.translateTaxonomyNav = function(t, key) {
