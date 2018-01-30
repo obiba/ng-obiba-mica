@@ -1354,29 +1354,33 @@ ngObibaMica.search
           }
         }
 
-        // TODO externalize TermsVocabularyFacetController.selectTerm and use it for terms case
-        var selected = vocabulary.terms.filter(function(t) {return t.selected;}).map(function(t) { return t.name; }),
-            criterion = RqlQueryService.findCriterion($scope.search.criteria, CriteriaIdGenerator.generate(taxonomy, vocabulary));
-
-        if(criterion) {
-          if (selected.length === 0) {
-            RqlQueryService.removeCriteriaItem(criterion);
-          } else if (Object.keys(args).length === 0) {
-            RqlQueryService.updateCriteriaItem(criterion, RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, args && args.term, $scope.lang), true);
-          } else {
-            criterion.rqlQuery.name = RQL_NODE.IN;
-            RqlQueryUtils.updateQuery(criterion.rqlQuery, selected);
-            
-            if (vocabulary.terms.length > 1 && selected.length === vocabulary.terms.length) {
-              criterion.rqlQuery.name = RQL_NODE.EXISTS;
-              criterion.rqlQuery.args.pop();
-            }           
-          }
-
-          $scope.refreshQuery();
+        if (options.searchLayout === 'layout1') {          
+          selectCriteria(RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, args && args.term, $scope.lang));
         } else {
-          var setExists = vocabulary.terms.length > 1 && selected.length === vocabulary.terms.length;
-          selectCriteria(RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, !setExists && (args && args.term), $scope.lang));
+          // TODO externalize TermsVocabularyFacetController.selectTerm and use it for terms case
+          var selected = vocabulary.terms.filter(function(t) {return t.selected;}).map(function(t) { return t.name; }),
+              criterion = RqlQueryService.findCriterion($scope.search.criteria, CriteriaIdGenerator.generate(taxonomy, vocabulary));
+
+          if(criterion) {
+            if (selected.length === 0) {
+              RqlQueryService.removeCriteriaItem(criterion);
+            } else if (Object.keys(args).length === 0) {
+              RqlQueryService.updateCriteriaItem(criterion, RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, args && args.term, $scope.lang), true);
+            } else {
+              criterion.rqlQuery.name = RQL_NODE.IN;
+              RqlQueryUtils.updateQuery(criterion.rqlQuery, selected);
+              
+              if (vocabulary.terms.length > 1 && selected.length === vocabulary.terms.length) {
+                criterion.rqlQuery.name = RQL_NODE.EXISTS;
+                criterion.rqlQuery.args.pop();
+              }           
+            }
+
+            $scope.refreshQuery();
+          } else {
+            var setExists = vocabulary.terms.length > 1 && selected.length === vocabulary.terms.length;
+            selectCriteria(RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, !setExists && (args && args.term), $scope.lang));
+          }
         }
       };
 
