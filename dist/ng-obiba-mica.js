@@ -10084,26 +10084,48 @@ ngObibaMica.search
 
 'use strict';
 
-(function() {
+(function () {
 
-  ngObibaMica.search.VocabularyFilterDetailHeading = function($window) {
+  ngObibaMica.search.VocabularyFilterDetailHeading = function () {
     var ctrl = this;
+    var bodyElement = document.querySelectorAll('body')[0];
 
-    function selectType(type){
-      return ctrl.onSelectType({type: type});
+    function selectType(type) {
+      return ctrl.onSelectType({ type: type });
     }
 
-    function onFilterChange(queryString){
-      return ctrl.onFilterChange({queryString:queryString});
+    function closePanelWhenClickingOutside(event, callbackOnClose) {
+      var keepOpen = event.target.closest('#back-to-top') !== null;
+      var nodes = bodyElement.querySelectorAll('.overlay-front-on-box-shodow');
+
+      function isInside(rect) {
+        return event.clientX > rect.x && event.clientX < rect.x + rect.width &&
+          event.clientY > rect.y && event.clientY < rect.y + rect.height;
+      }
+
+      nodes.forEach(function (node) {
+        keepOpen = keepOpen || isInside(node.getBoundingClientRect());
+      });
+
+      if (nodes && !keepOpen) {
+        event.preventDefault();
+        if (callbackOnClose) {
+          callbackOnClose();
+        }
+      }
     }
 
     function removeWindowEventHandlers() {
-      $window.onkeyup = null;    
+      bodyElement.onkeyup = null;
+      bodyElement.onmouseup = null;
     }
-    
+
     function addWindowEventHandlers() {
-      
-      $window.onkeyup = function(event) {
+      bodyElement.onmouseup = function (event) {
+        closePanelWhenClickingOutside(event, ctrl.togglePannel);
+      };
+
+      bodyElement.onkeyup = function (event) {
         if (event.keyCode === 27) {
           removeWindowEventHandlers();
           ctrl.togglePannel();
@@ -10111,18 +10133,19 @@ ngObibaMica.search
       };
     }
 
-    function initOverlay() {
-      if (ctrl.showTaxonomyPanel) {
-        addWindowEventHandlers();
-      } else {
-        removeWindowEventHandlers();
-      }
+    function onFilterChange(queryString) {
+      return ctrl.onFilterChange({ queryString: queryString });
     }
-    
+
+    function onDestroy() {
+      removeWindowEventHandlers();
+    }
+
     ctrl.selectType = selectType;
     ctrl.filterChange = onFilterChange;
+    ctrl.$onDestroy = onDestroy;
 
-    initOverlay();
+    addWindowEventHandlers();
   };
 
   ngObibaMica.search
@@ -10141,10 +10164,10 @@ ngObibaMica.search
         result: '<',
         togglePannel: '&'
       },
-      templateUrl: ['ngObibaMicaSearchTemplateUrl', function(ngObibaMicaSearchTemplateUrl){
+      templateUrl: ['ngObibaMicaSearchTemplateUrl', function (ngObibaMicaSearchTemplateUrl) {
         return ngObibaMicaSearchTemplateUrl.getTemplateUrl('vocabularyFilterDetailHeading');
       }],
-      controller: ['$window', ngObibaMica.search.VocabularyFilterDetailHeading]
+      controller: [ngObibaMica.search.VocabularyFilterDetailHeading]
     });
 })();
 ;/*
