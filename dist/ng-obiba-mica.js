@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-02-08
+ * Date: 2018-03-07
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -2292,398 +2292,8 @@ ngObibaMica.search
 
 'use strict';
 
-ngObibaMica.search
-
-  .filter('regex', function() {
-    return function(elements, regex, fields, lang) {
-      var out = [];
-
-      try {
-        var pattern = new RegExp(regex, 'i');
-        out = elements.filter(function(element) {
-          return fields.some(function(field) {
-            var value = element[field];
-            
-            if(angular.isArray(value) && lang) {
-              return value.filter(function(item) {
-                return item.locale === lang;
-              }).some(function(item) {
-                return pattern.test(item.text);
-              });
-            }
-
-            return pattern.test(value);
-          });
-        });
-      } catch(e) {
-      }
-
-      return out;
-    };
-  })
-
-  .filter('orderBySelection', function() {
-    return function (elements, selections) {
-      if (!elements){
-        return [];
-      }
-
-      var selected = [];
-      var unselected = [];
-
-      elements.forEach(function(element) {
-        if (selections[element.key]) {
-          selected.push(element);
-        } else {
-          unselected.push(element);
-        }
-      });
-
-      return selected.concat(unselected);
-    };
-  })
-
-  .filter('visibleVocabularies', ['VocabularyService', function(VocabularyService) {
-    return function(vocabularies) {
-      return VocabularyService.visibleVocabularies(vocabularies);
-    };
-  }])
-
-  .filter('dceDescription', function() {
-    return function(input) {
-      return input.split(':<p>').map(function(d){
-        return '<p>' + d;
-      })[2];
-    };
-  })
-
-  .filter('renderableTargets', ['RqlQueryService', function(RqlQueryService) {
-    return function(targets) {
-      return RqlQueryService.getRenderableTargetCriteria(targets);
-    };
-  }]);;/*
- * Copyright (c) 2018 OBiBa. All rights reserved.
- *
- * This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
-/* global DISPLAY_TYPES */
-
-/* exported QUERY_TYPES */
-var QUERY_TYPES = {
-  NETWORKS: 'networks',
-  STUDIES: 'studies',
-  DATASETS: 'datasets',
-  VARIABLES: 'variables'
-};
-
-/* exported QUERY_TARGETS */
-var QUERY_TARGETS = {
-  NETWORK: 'network',
-  STUDY: 'study',
-  DATASET: 'dataset',
-  VARIABLE: 'variable',
-  TAXONOMY: 'taxonomy'
-};
-
-/* exported BUCKET_TYPES */
-var BUCKET_TYPES = {
-  NETWORK: 'network',
-  STUDY: 'study',
-  STUDY_INDIVIDUAL: 'study-individual',
-  STUDY_HARMONIZATION: 'study-harmonization',
-  DCE: 'dce',
-  DCE_INDIVIDUAL: 'dce-individual',
-  DCE_HARMONIZATION: 'dce-harmonization',
-  DATASET: 'dataset',
-  DATASET_COLLECTED: 'dataset-collected',
-  DATASET_HARMONIZED: 'dataset-harmonized',
-  DATASCHEMA: 'dataschema'
-};
-
-/* exported RQL_NODE */
-var RQL_NODE = {
-  // target nodes
-  VARIABLE: 'variable',
-  DATASET: 'dataset',
-  STUDY: 'study',
-  NETWORK: 'network',
-
-  /* target children */
-  LIMIT: 'limit',
-  SORT: 'sort',
-  AND: 'and',
-  NAND: 'nand',
-  OR: 'or',
-  NOR: 'nor',
-  NOT: 'not',
-  FACET: 'facet',
-  LOCALE: 'locale',
-  AGGREGATE: 'aggregate',
-  BUCKET: 'bucket',
-  FIELDS: 'fields',
-  FILTER: 'filter',
-
-  /* leaf criteria nodes */
-  CONTAINS: 'contains',
-  IN: 'in',
-  OUT: 'out',
-  EQ: 'eq',
-  GT: 'gt',
-  GE: 'ge',
-  LT: 'lt',
-  LE: 'le',
-  BETWEEN: 'between',
-  MATCH: 'match',
-  EXISTS: 'exists',
-  MISSING: 'missing'
-};
-
-/* exported SORT_FIELDS */
-var SORT_FIELDS = {
-  ACRONYM: 'acronym',
-  NAME: 'name',
-  CONTAINER_ID: 'containerId',
-  POPULATION_WEIGHT: 'populationWeight',
-  DATA_COLLECTION_EVENT_WEIGHT: 'dataCollectionEventWeight',
-  POPULATION_ID: 'populationId',
-  DATASET_ID: 'datasetId',
-  VARIABLE_TYPE: 'variableType',
-  INDEX: 'index',
-  STUDY_TABLE: {
-    POPULATION_WEIGHT: 'studyTable.populationWeight',
-    DATA_COLLECTION_EVENT_WEIGHT: 'studyTable.dataCollectionEventWeight',
-    STUDY_ID: 'studyTable.studyId',
-    POPULATION_ID: 'studyTable.populationId'
-  }
-};
-
-/* exported targetToType */
-function targetToType(target) {
-  switch (target.toLocaleString()) {
-    case QUERY_TARGETS.NETWORK:
-      return QUERY_TYPES.NETWORKS;
-    case QUERY_TARGETS.STUDY:
-      return QUERY_TYPES.STUDIES;
-    case QUERY_TARGETS.DATASET:
-      return QUERY_TYPES.DATASETS;
-    case QUERY_TARGETS.VARIABLE:
-      return QUERY_TYPES.VARIABLES;
-  }
-
-  throw new Error('Invalid target: ' + target);
-}
-
-/* exported targetToType */
-function typeToTarget(type) {
-  switch (type.toLocaleString()) {
-    case QUERY_TYPES.NETWORKS:
-      return QUERY_TARGETS.NETWORK;
-    case QUERY_TYPES.STUDIES:
-      return QUERY_TARGETS.STUDY;
-    case QUERY_TYPES.DATASETS:
-      return QUERY_TARGETS.DATASET;
-    case QUERY_TYPES.VARIABLES:
-      return QUERY_TARGETS.VARIABLE;
-  }
-
-  throw new Error('Invalid type: ' + type);
-}
-
-/* exported CriteriaIdGenerator */
-var CriteriaIdGenerator = {
-  generate: function (taxonomy, vocabulary, term) {
-    return taxonomy && vocabulary ?
-    taxonomy.name + '.' + vocabulary.name + (term ? '.' + term.name : '') :
-      undefined;
-  }
-};
-
-/* exported CriteriaItem */
-function CriteriaItem(model) {
-  var self = this;
-  Object.keys(model).forEach(function(k) {
-    self[k] = model[k];
-  });
-}
-
-CriteriaItem.prototype.isRepeatable = function() {
-  return false;
-};
-
-CriteriaItem.prototype.getTarget = function() {
-  return this.target || null;
-};
-
-CriteriaItem.prototype.getRangeTerms = function () {
-  var range = {from: null, to: null};
-
-  if (this.type === RQL_NODE.BETWEEN) {
-    range.from = this.selectedTerms[0];
-    range.to = this.selectedTerms[1];
-  } else if (this.type === RQL_NODE.GE) {
-    range.from = this.selectedTerms[0];
-    range.to = null;
-  } else if (this.type === RQL_NODE.LE) {
-    range.from = null;
-    range.to = this.selectedTerms[0];
-  }
-
-  return range;
-};
-
-/* exported RepeatableCriteriaItem */
-function RepeatableCriteriaItem() {
-  CriteriaItem.call(this, {});
-  this.list = [];
-}
-
-RepeatableCriteriaItem.prototype = Object.create(CriteriaItem.prototype);
-
-RepeatableCriteriaItem.prototype.isRepeatable = function() {
-  return true;
-};
-
-RepeatableCriteriaItem.prototype.addItem = function(item) {
-  this.list.push(item);
-  return this;
-};
-
-RepeatableCriteriaItem.prototype.items = function() {
-  return this.list;
-};
-
-RepeatableCriteriaItem.prototype.first = function() {
-  return this.list[0];
-};
-
-RepeatableCriteriaItem.prototype.getTarget = function() {
-  return this.list.length > 0 ? this.list[0].getTarget() : null;
-};
-
-/**
- * Criteria Item builder
- */
-function CriteriaItemBuilder(LocalizedValues, useLang) {
-  var criteria = {
-    type: null,
-    rqlQuery: null,
-    lang: useLang || 'en',
-    parent: null,
-    children: []
-  };
-
-  var builder = this;
-
-  this.type = function (value) {
-    if (!RQL_NODE[value.toUpperCase()]) {
-      throw new Error('Invalid node type:', value);
-    }
-    criteria.type = value;
-    return this;
-  };
-
-  this.target = function (value) {
-    criteria.target = value;
-    return this;
-  };
-
-  this.parent = function (value) {
-    criteria.parent = value;
-    return this;
-  };
-
-  this.taxonomy = function (value) {
-    criteria.taxonomy = value;
-    return this;
-  };
-
-  this.vocabulary = function (value) {
-    criteria.vocabulary = value;
-    return this;
-  };
-
-  this.term = function (value) {
-    if (Array.isArray(value)) {
-      return builder.selectedTerms(value);
-    } else {
-      criteria.term = value;
-      return this;
-    }
-  };
-
-  this.rqlQuery = function (value) {
-    criteria.rqlQuery = value;
-    return this;
-  };
-
-  this.selectedTerm = function (term) {
-    if (!criteria.selectedTerms) {
-      criteria.selectedTerms = [];
-    }
-
-    criteria.selectedTerms.push(typeof term === 'string' || typeof term === 'number' ? term : term.name);
-    return this;
-  };
-
-  this.selectedTerms = function (terms) {
-    criteria.selectedTerms = terms.filter(function (term) {
-      return term;
-    }).map(function (term) {
-      if (typeof term === 'string' || typeof term === 'number') {
-        return term;
-      } else {
-        return term.name;
-      }
-    });
-    return this;
-  };
-
-  /**
-   * This is
-   */
-  function prepareForLeaf() {
-    if (criteria.term) {
-      criteria.itemTitle = LocalizedValues.forLocale(criteria.term.title, criteria.lang);
-      criteria.itemDescription = LocalizedValues.forLocale(criteria.term.description, criteria.lang);
-      criteria.itemParentTitle = LocalizedValues.forLocale(criteria.vocabulary.title, criteria.lang);
-      criteria.itemParentDescription = LocalizedValues.forLocale(criteria.vocabulary.description, criteria.lang);
-      if (!criteria.itemTitle) {
-        criteria.itemTitle = criteria.term.name;
-      }
-      if (!criteria.itemParentTitle) {
-        criteria.itemParentTitle = criteria.vocabulary.name;
-      }
-    } else {
-      criteria.itemTitle = LocalizedValues.forLocale(criteria.vocabulary.title, criteria.lang);
-      criteria.itemDescription = LocalizedValues.forLocale(criteria.vocabulary.description, criteria.lang);
-      criteria.itemParentTitle = LocalizedValues.forLocale(criteria.taxonomy.title, criteria.lang);
-      criteria.itemParentDescription = LocalizedValues.forLocale(criteria.taxonomy.description, criteria.lang);
-      if (!criteria.itemTitle) {
-        criteria.itemTitle = criteria.vocabulary.name;
-      }
-      if (!criteria.itemParentTitle) {
-        criteria.itemParentTitle = criteria.taxonomy.name;
-      }
-    }
-
-    criteria.id = CriteriaIdGenerator.generate(criteria.taxonomy, criteria.vocabulary, criteria.term);
-  }
-
-  this.build = function () {
-    if (criteria.taxonomy && criteria.vocabulary) {
-      prepareForLeaf();
-    }
-    return new CriteriaItem(criteria);
-  };
-
-}
+/* global RepeatableCriteriaItem */
+/* global CriteriaItemBuilder */
 
 /**
  * Class for all criteria builders
@@ -2910,6 +2520,636 @@ CriteriaBuilder.prototype.build = function () {
     self.visit(node, self.rootItem);
   });
 };
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+
+/* exported CriteriaIdGenerator */
+function CriteriaIdGenerator() { }
+
+CriteriaIdGenerator.generate = function (taxonomy, vocabulary, term) {
+  return taxonomy && vocabulary ?
+    taxonomy.name + '.' + vocabulary.name + (term ? '.' + term.name : '') :
+    undefined;
+};
+
+
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+/* exported CriteriaItem */
+function CriteriaItem(model) {
+  var self = this;
+  Object.keys(model).forEach(function (k) {
+    self[k] = model[k];
+  });
+}
+
+CriteriaItem.prototype.isRepeatable = function () {
+  return false;
+};
+
+CriteriaItem.prototype.getTarget = function () {
+  return this.target || null;
+};
+
+CriteriaItem.prototype.getRangeTerms = function () {
+  var range = { from: null, to: null };
+
+  if (this.type === RQL_NODE.BETWEEN) {
+    range.from = this.selectedTerms[0];
+    range.to = this.selectedTerms[1];
+  } else if (this.type === RQL_NODE.GE) {
+    range.from = this.selectedTerms[0];
+    range.to = null;
+  } else if (this.type === RQL_NODE.LE) {
+    range.from = null;
+    range.to = this.selectedTerms[0];
+  }
+
+  return range;
+};
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+
+/**
+ * Criteria Item builder
+ */
+
+/* global CriteriaIdGenerator */
+/* global CriteriaItem */
+/* exported CriteriaItemBuilder */
+function CriteriaItemBuilder(LocalizedValues, useLang) {
+  var criteria = {
+    type: null,
+    rqlQuery: null,
+    lang: useLang || 'en',
+    parent: null,
+    children: []
+  };
+
+  var builder = this;
+
+  this.type = function (value) {
+    if (!RQL_NODE[value.toUpperCase()]) {
+      throw new Error('Invalid node type:', value);
+    }
+    criteria.type = value;
+    return this;
+  };
+
+  this.target = function (value) {
+    criteria.target = value;
+    return this;
+  };
+
+  this.parent = function (value) {
+    criteria.parent = value;
+    return this;
+  };
+
+  this.taxonomy = function (value) {
+    criteria.taxonomy = value;
+    return this;
+  };
+
+  this.vocabulary = function (value) {
+    criteria.vocabulary = value;
+    return this;
+  };
+
+  this.term = function (value) {
+    if (Array.isArray(value)) {
+      return builder.selectedTerms(value);
+    } else {
+      criteria.term = value;
+      return this;
+    }
+  };
+
+  this.rqlQuery = function (value) {
+    criteria.rqlQuery = value;
+    return this;
+  };
+
+  this.selectedTerm = function (term) {
+    if (!criteria.selectedTerms) {
+      criteria.selectedTerms = [];
+    }
+
+    criteria.selectedTerms.push(typeof term === 'string' || typeof term === 'number' ? term : term.name);
+    return this;
+  };
+
+  this.selectedTerms = function (terms) {
+    criteria.selectedTerms = terms.filter(function (term) {
+      return term;
+    }).map(function (term) {
+      if (typeof term === 'string' || typeof term === 'number') {
+        return term;
+      } else {
+        return term.name;
+      }
+    });
+    return this;
+  };
+
+  /**
+   * This is
+   */
+  function prepareForLeaf() {
+    if (criteria.term) {
+      criteria.itemTitle = LocalizedValues.forLocale(criteria.term.title, criteria.lang);
+      criteria.itemDescription = LocalizedValues.forLocale(criteria.term.description, criteria.lang);
+      criteria.itemParentTitle = LocalizedValues.forLocale(criteria.vocabulary.title, criteria.lang);
+      criteria.itemParentDescription = LocalizedValues.forLocale(criteria.vocabulary.description, criteria.lang);
+      if (!criteria.itemTitle) {
+        criteria.itemTitle = criteria.term.name;
+      }
+      if (!criteria.itemParentTitle) {
+        criteria.itemParentTitle = criteria.vocabulary.name;
+      }
+    } else {
+      criteria.itemTitle = LocalizedValues.forLocale(criteria.vocabulary.title, criteria.lang);
+      criteria.itemDescription = LocalizedValues.forLocale(criteria.vocabulary.description, criteria.lang);
+      criteria.itemParentTitle = LocalizedValues.forLocale(criteria.taxonomy.title, criteria.lang);
+      criteria.itemParentDescription = LocalizedValues.forLocale(criteria.taxonomy.description, criteria.lang);
+      if (!criteria.itemTitle) {
+        criteria.itemTitle = criteria.vocabulary.name;
+      }
+      if (!criteria.itemParentTitle) {
+        criteria.itemParentTitle = criteria.taxonomy.name;
+      }
+    }
+
+    criteria.id = CriteriaIdGenerator.generate(criteria.taxonomy, criteria.vocabulary, criteria.term);
+  }
+
+  this.build = function () {
+    if (criteria.taxonomy && criteria.vocabulary) {
+      prepareForLeaf();
+    }
+    return new CriteriaItem(criteria);
+  };
+
+}
+
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+/* global CriteriaItem */
+/* exported RepeatableCriteriaItem */
+function RepeatableCriteriaItem() {
+  CriteriaItem.call(this, {});
+  this.list = [];
+}
+
+RepeatableCriteriaItem.prototype = Object.create(CriteriaItem.prototype);
+
+RepeatableCriteriaItem.prototype.isRepeatable = function () {
+  return true;
+};
+
+RepeatableCriteriaItem.prototype.addItem = function (item) {
+  this.list.push(item);
+  return this;
+};
+
+RepeatableCriteriaItem.prototype.items = function () {
+  return this.list;
+};
+
+RepeatableCriteriaItem.prototype.first = function () {
+  return this.list[0];
+};
+
+RepeatableCriteriaItem.prototype.getTarget = function () {
+  return this.list.length > 0 ? this.list[0].getTarget() : null;
+};
+
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function() {
+
+
+  /**
+   * Parses each metaTaxonomies taxonomy and returns a list of :
+   * [
+   *  {
+   *    info: {
+   *      name: name,
+   *      title: title
+   *     },
+   *    taxonomies: [taxos]
+   *   }
+   * ]
+   * @constructor
+   */
+  ngObibaMica.search.MetaTaxonomyParser = function(config) {
+
+    function parseTerms(targetConfig, terms) {
+      return terms.map(function(taxonomy, index) {
+        var result = {
+          state: new ngObibaMica.search.PanelTaxonomyState(index+''),
+          info: {name: taxonomy.name || '', title: taxonomy.title || '', description: taxonomy.description || ''},
+          taxonomies: [taxonomy]
+        };
+
+        var taxonomyConfig = targetConfig.taxonomies[taxonomy.name];
+
+        if (taxonomyConfig.hasOwnProperty('trKey')) {
+          result.info.trKey = taxonomyConfig.trKey;
+        }
+
+        return result;
+      }); 
+    }
+
+    function createResultObject(metaVocabulary, taxonomies) {
+      return {
+        name: metaVocabulary.name,
+        title: metaVocabulary.title,
+        taxonomies: taxonomies
+      };
+    }
+
+    function sortTaxonomies(target, taxonomies) {
+      var configTaxonomies = config[target].taxonomies;
+      taxonomies.sort(function(a, b) {
+        return configTaxonomies[a.info.name].weight - configTaxonomies[b.info.name].weight;
+      });
+    }
+
+    this.config = config;
+    this.parseTerms = parseTerms;
+    this.createResultObject = createResultObject;
+    this.sortTaxonomies = sortTaxonomies;
+  };
+
+  ngObibaMica.search.MetaTaxonomyParser.prototype.parseEntityTaxonomies = function(metaVocabulary) {
+    return this.createResultObject(metaVocabulary,
+      this.parseTerms(this.config[metaVocabulary.name], metaVocabulary.terms || []));
+  };
+
+  /**
+   * Variable meta taxonomies need to be massaged a little more:
+   * - extract Variable characteristics
+   * - extract Scales as one taxonomy (there are four related taxonomies) into one
+   * - sort them and return the list to the client code
+   * @param metaVocabulary
+   * @returns {{name, title, taxonomies}|*}
+   */
+  ngObibaMica.search.MetaTaxonomyParser.prototype.parseVariableTaxonomies = function(metaVocabulary) {
+
+    var metaTaxonomies = metaVocabulary.terms.filter(function (term) {
+      return ['Variable_chars', 'Scales'].indexOf(term.name) > -1;
+    }).reduce(function(acc, term) {
+      var key = new obiba.utils.NgObibaStringUtils().camelize(term.name);
+      acc[key] = term;
+      return acc;
+    }, {});
+
+    var taxonomies = this.parseTerms(this.config[QUERY_TARGETS.VARIABLE], metaTaxonomies.variableChars.terms);
+
+    var scales = metaTaxonomies.scales;
+    if (scales && scales.terms) {
+      taxonomies.push({
+        state: new ngObibaMica.search.PanelTaxonomyState(),
+        info: {
+          name: scales.name,
+          names: scales.terms.map(function(t){return t.name;}),
+          title: scales.title,
+          description: scales.description || ''
+        },
+        taxonomies: scales.terms
+      });
+    }
+
+    this.sortTaxonomies(QUERY_TARGETS.VARIABLE, taxonomies);
+    return this.createResultObject(metaVocabulary, taxonomies);
+  };
+
+})();;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+(function() {
+
+  'use strict';
+
+  ngObibaMica.search.PanelTaxonomyState = function(id) {
+    var STATES = {
+      NONE: 0,
+      ACTIVE: 1,
+      LOADING: 2
+    };
+
+    this.id = id;
+    this.STATES = STATES;
+    this.state = STATES.NONE;
+  };
+
+  ngObibaMica.search.PanelTaxonomyState.prototype.isLoading = function() {
+    return this.STATES.LOADING === (this.state & this.STATES.LOADING);
+  };
+
+  ngObibaMica.search.PanelTaxonomyState.prototype.isActive = function() {
+    return this.STATES.ACTIVE === (this.state & this.STATES.ACTIVE);
+  };
+
+  ngObibaMica.search.PanelTaxonomyState.prototype.active = function() {
+    this.state = this.state | this.STATES.ACTIVE;
+  };
+
+  ngObibaMica.search.PanelTaxonomyState.prototype.inactive = function() {
+    this.state = this.state & ~this.STATES.ACTIVE;
+  };
+
+  ngObibaMica.search.PanelTaxonomyState.prototype.loading = function() {
+    this.state = this.state | this.STATES.LOADING;
+  };
+
+  ngObibaMica.search.PanelTaxonomyState.prototype.loaded = function() {
+    this.state = this.state & ~this.STATES.LOADING;
+  };
+
+  ngObibaMica.search.PanelTaxonomyState.prototype.none = function() {
+    this.state = this.STATES.NONE;
+  };
+
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+ngObibaMica.search
+
+  .filter('regex', function() {
+    return function(elements, regex, fields, lang) {
+      var out = [];
+
+      try {
+        var pattern = new RegExp(regex, 'i');
+        out = elements.filter(function(element) {
+          return fields.some(function(field) {
+            var value = element[field];
+            
+            if(angular.isArray(value) && lang) {
+              return value.filter(function(item) {
+                return item.locale === lang;
+              }).some(function(item) {
+                return pattern.test(item.text);
+              });
+            }
+
+            return pattern.test(value);
+          });
+        });
+      } catch(e) {
+      }
+
+      return out;
+    };
+  })
+
+  .filter('orderBySelection', function() {
+    return function (elements, selections) {
+      if (!elements){
+        return [];
+      }
+
+      var selected = [];
+      var unselected = [];
+
+      elements.forEach(function(element) {
+        if (selections[element.key]) {
+          selected.push(element);
+        } else {
+          unselected.push(element);
+        }
+      });
+
+      return selected.concat(unselected);
+    };
+  })
+
+  .filter('visibleVocabularies', ['VocabularyService', function(VocabularyService) {
+    return function(vocabularies) {
+      return VocabularyService.visibleVocabularies(vocabularies);
+    };
+  }])
+
+  .filter('dceDescription', function() {
+    return function(input) {
+      return input.split(':<p>').map(function(d){
+        return '<p>' + d;
+      })[2];
+    };
+  })
+
+  .filter('renderableTargets', ['RqlQueryService', function(RqlQueryService) {
+    return function(targets) {
+      return RqlQueryService.getRenderableTargetCriteria(targets);
+    };
+  }]);;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+/* global DISPLAY_TYPES */
+/* global CriteriaItem */
+/* global CriteriaItemBuilder */
+/* global CriteriaBuilder */
+
+/* exported QUERY_TYPES */
+var QUERY_TYPES = {
+  NETWORKS: 'networks',
+  STUDIES: 'studies',
+  DATASETS: 'datasets',
+  VARIABLES: 'variables'
+};
+
+/* exported QUERY_TARGETS */
+var QUERY_TARGETS = {
+  NETWORK: 'network',
+  STUDY: 'study',
+  DATASET: 'dataset',
+  VARIABLE: 'variable',
+  TAXONOMY: 'taxonomy'
+};
+
+/* exported BUCKET_TYPES */
+var BUCKET_TYPES = {
+  NETWORK: 'network',
+  STUDY: 'study',
+  STUDY_INDIVIDUAL: 'study-individual',
+  STUDY_HARMONIZATION: 'study-harmonization',
+  DCE: 'dce',
+  DCE_INDIVIDUAL: 'dce-individual',
+  DCE_HARMONIZATION: 'dce-harmonization',
+  DATASET: 'dataset',
+  DATASET_COLLECTED: 'dataset-collected',
+  DATASET_HARMONIZED: 'dataset-harmonized',
+  DATASCHEMA: 'dataschema'
+};
+
+/* exported RQL_NODE */
+var RQL_NODE = {
+  // target nodes
+  VARIABLE: 'variable',
+  DATASET: 'dataset',
+  STUDY: 'study',
+  NETWORK: 'network',
+
+  /* target children */
+  LIMIT: 'limit',
+  SORT: 'sort',
+  AND: 'and',
+  NAND: 'nand',
+  OR: 'or',
+  NOR: 'nor',
+  NOT: 'not',
+  FACET: 'facet',
+  LOCALE: 'locale',
+  AGGREGATE: 'aggregate',
+  BUCKET: 'bucket',
+  FIELDS: 'fields',
+  FILTER: 'filter',
+
+  /* leaf criteria nodes */
+  CONTAINS: 'contains',
+  IN: 'in',
+  OUT: 'out',
+  EQ: 'eq',
+  GT: 'gt',
+  GE: 'ge',
+  LT: 'lt',
+  LE: 'le',
+  BETWEEN: 'between',
+  MATCH: 'match',
+  EXISTS: 'exists',
+  MISSING: 'missing'
+};
+
+/* exported SORT_FIELDS */
+var SORT_FIELDS = {
+  ACRONYM: 'acronym',
+  NAME: 'name',
+  CONTAINER_ID: 'containerId',
+  POPULATION_WEIGHT: 'populationWeight',
+  DATA_COLLECTION_EVENT_WEIGHT: 'dataCollectionEventWeight',
+  POPULATION_ID: 'populationId',
+  DATASET_ID: 'datasetId',
+  VARIABLE_TYPE: 'variableType',
+  INDEX: 'index',
+  STUDY_TABLE: {
+    POPULATION_WEIGHT: 'studyTable.populationWeight',
+    DATA_COLLECTION_EVENT_WEIGHT: 'studyTable.dataCollectionEventWeight',
+    STUDY_ID: 'studyTable.studyId',
+    POPULATION_ID: 'studyTable.populationId'
+  }
+};
+
+/* exported targetToType */
+function targetToType(target) {
+  switch (target.toLocaleString()) {
+    case QUERY_TARGETS.NETWORK:
+      return QUERY_TYPES.NETWORKS;
+    case QUERY_TARGETS.STUDY:
+      return QUERY_TYPES.STUDIES;
+    case QUERY_TARGETS.DATASET:
+      return QUERY_TYPES.DATASETS;
+    case QUERY_TARGETS.VARIABLE:
+      return QUERY_TYPES.VARIABLES;
+  }
+
+  throw new Error('Invalid target: ' + target);
+}
+
+/* exported targetToType */
+function typeToTarget(type) {
+  switch (type.toLocaleString()) {
+    case QUERY_TYPES.NETWORKS:
+      return QUERY_TARGETS.NETWORK;
+    case QUERY_TYPES.STUDIES:
+      return QUERY_TARGETS.STUDY;
+    case QUERY_TYPES.DATASETS:
+      return QUERY_TARGETS.DATASET;
+    case QUERY_TYPES.VARIABLES:
+      return QUERY_TARGETS.VARIABLE;
+  }
+
+  throw new Error('Invalid type: ' + type);
+}
+
 
 ngObibaMica.search
 
@@ -8727,173 +8967,6 @@ ngObibaMica.search
           }
         });
     }]);
-;/*
- * Copyright (c) 2018 OBiBa. All rights reserved.
- *
- * This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
-(function() {
-
-
-  /**
-   * Parses each metaTaxonomies taxonomy and returns a list of :
-   * [
-   *  {
-   *    info: {
-   *      name: name,
-   *      title: title
-   *     },
-   *    taxonomies: [taxos]
-   *   }
-   * ]
-   * @constructor
-   */
-  ngObibaMica.search.MetaTaxonomyParser = function(config) {
-
-    function parseTerms(targetConfig, terms) {
-      return terms.map(function(taxonomy, index) {
-        var result = {
-          state: new ngObibaMica.search.PanelTaxonomyState(index+''),
-          info: {name: taxonomy.name || '', title: taxonomy.title || '', description: taxonomy.description || ''},
-          taxonomies: [taxonomy]
-        };
-
-        var taxonomyConfig = targetConfig.taxonomies[taxonomy.name];
-
-        if (taxonomyConfig.hasOwnProperty('trKey')) {
-          result.info.trKey = taxonomyConfig.trKey;
-        }
-
-        return result;
-      }); 
-    }
-
-    function createResultObject(metaVocabulary, taxonomies) {
-      return {
-        name: metaVocabulary.name,
-        title: metaVocabulary.title,
-        taxonomies: taxonomies
-      };
-    }
-
-    function sortTaxonomies(target, taxonomies) {
-      var configTaxonomies = config[target].taxonomies;
-      taxonomies.sort(function(a, b) {
-        return configTaxonomies[a.info.name].weight - configTaxonomies[b.info.name].weight;
-      });
-    }
-
-    this.config = config;
-    this.parseTerms = parseTerms;
-    this.createResultObject = createResultObject;
-    this.sortTaxonomies = sortTaxonomies;
-  };
-
-  ngObibaMica.search.MetaTaxonomyParser.prototype.parseEntityTaxonomies = function(metaVocabulary) {
-    return this.createResultObject(metaVocabulary,
-      this.parseTerms(this.config[metaVocabulary.name], metaVocabulary.terms || []));
-  };
-
-  /**
-   * Variable meta taxonomies need to be massaged a little more:
-   * - extract Variable characteristics
-   * - extract Scales as one taxonomy (there are four related taxonomies) into one
-   * - sort them and return the list to the client code
-   * @param metaVocabulary
-   * @returns {{name, title, taxonomies}|*}
-   */
-  ngObibaMica.search.MetaTaxonomyParser.prototype.parseVariableTaxonomies = function(metaVocabulary) {
-
-    var metaTaxonomies = metaVocabulary.terms.filter(function (term) {
-      return ['Variable_chars', 'Scales'].indexOf(term.name) > -1;
-    }).reduce(function(acc, term) {
-      var key = new obiba.utils.NgObibaStringUtils().camelize(term.name);
-      acc[key] = term;
-      return acc;
-    }, {});
-
-    var taxonomies = this.parseTerms(this.config[QUERY_TARGETS.VARIABLE], metaTaxonomies.variableChars.terms);
-
-    var scales = metaTaxonomies.scales;
-    if (scales && scales.terms) {
-      taxonomies.push({
-        state: new ngObibaMica.search.PanelTaxonomyState(),
-        info: {
-          name: scales.name,
-          names: scales.terms.map(function(t){return t.name;}),
-          title: scales.title,
-          description: scales.description || ''
-        },
-        taxonomies: scales.terms
-      });
-    }
-
-    this.sortTaxonomies(QUERY_TARGETS.VARIABLE, taxonomies);
-    return this.createResultObject(metaVocabulary, taxonomies);
-  };
-
-})();;/*
- * Copyright (c) 2018 OBiBa. All rights reserved.
- *
- * This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-(function() {
-
-  'use strict';
-
-  ngObibaMica.search.PanelTaxonomyState = function(id) {
-    var STATES = {
-      NONE: 0,
-      ACTIVE: 1,
-      LOADING: 2
-    };
-
-    this.id = id;
-    this.STATES = STATES;
-    this.state = STATES.NONE;
-  };
-
-  ngObibaMica.search.PanelTaxonomyState.prototype.isLoading = function() {
-    return this.STATES.LOADING === (this.state & this.STATES.LOADING);
-  };
-
-  ngObibaMica.search.PanelTaxonomyState.prototype.isActive = function() {
-    return this.STATES.ACTIVE === (this.state & this.STATES.ACTIVE);
-  };
-
-  ngObibaMica.search.PanelTaxonomyState.prototype.active = function() {
-    this.state = this.state | this.STATES.ACTIVE;
-  };
-
-  ngObibaMica.search.PanelTaxonomyState.prototype.inactive = function() {
-    this.state = this.state & ~this.STATES.ACTIVE;
-  };
-
-  ngObibaMica.search.PanelTaxonomyState.prototype.loading = function() {
-    this.state = this.state | this.STATES.LOADING;
-  };
-
-  ngObibaMica.search.PanelTaxonomyState.prototype.loaded = function() {
-    this.state = this.state & ~this.STATES.LOADING;
-  };
-
-  ngObibaMica.search.PanelTaxonomyState.prototype.none = function() {
-    this.state = this.STATES.NONE;
-  };
-
-})();
 ;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
