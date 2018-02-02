@@ -8,14 +8,6 @@
   ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<div ng-show="display === 'coverage'">
-  <coverage-result-table
-    result="result.coverage"
-    loading="loading"
-    bucket="bucket"
-    query="query"
-    criteria="criteria"
-    class="voffset2"
-    on-update-criteria="onUpdateCriteria"
-    on-remove-criteria="onRemoveCriteria"></coverage-result-table>
+<div ng-show="display === 'graphics'">
+  <graphics-result on-update-criteria="onUpdateCriteria" result="result.graphics" loading="loading" class="voffset2 graphics-tab"></graphics-result>
 </div>

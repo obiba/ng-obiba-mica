@@ -413,38 +413,6 @@ ngObibaMica.search
     };
   }])
 
-  .directive('coverageResultTable', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        result: '=',
-        loading: '=',
-        bucket: '=',
-        query: '=',
-        criteria: '=',
-        onUpdateCriteria: '=',
-        onRemoveCriteria: '='
-      },
-      controller: 'CoverageResultTableController',
-      templateUrl: 'search/views/coverage/coverage-search-result-table-template.html'
-    };
-  }])
-
-  .directive('graphicsResult', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        result: '=',
-        loading: '=',
-        onUpdateCriteria: '='
-      },
-      controller: 'GraphicsResultController',
-      templateUrl: 'search/views/graphics/graphics-search-result-template.html'
-    };
-  }])
-
   .directive('includeReplace', function () {
     return {
       require: 'ngInclude',
@@ -467,32 +435,6 @@ ngObibaMica.search
       }
     };
   })
-
-  .directive('resultPanel', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        type: '=',
-        bucket: '=',
-        query: '=',
-        criteria: '=',
-        display: '=',
-        result: '=',
-        lang: '=',
-        loading: '=',
-        searchTabsOrder: '=',
-        resultTabsOrder: '=',
-        onTypeChanged: '=',
-        onBucketChanged: '=',
-        onPaginate: '=',
-        onUpdateCriteria: '=',
-        onRemoveCriteria: '='
-      },
-      controller: 'SearchResultController',
-      templateUrl: 'search/views/search-result-panel-template.html'
-    };
-  }])
 
   .directive('criteriaRoot', [function(){
     return {

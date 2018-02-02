@@ -22,18 +22,22 @@
           <div class="table-responsive" ng-if="chart.getTable().data  &&  chart.getTable().data.length>1">
             <table style="max-height: 400px;" class="table table-bordered table-striped" fixed-header="chart.getTable().data">
               <thead>
-              <tr>
-                <th>{{chart.getTable().data[0][0]}}</th>
-                <th>{{chart.getTable().data[0][1]}}</th>
-                <th ng-if="chart.getTable().data[0][2]">{{chart.getTable().data[0][2]}}</th>
-              </tr>
+                <tr>
+                  <th>{{chart.getTable().data[0][0]}}</th>
+                  <th>{{chart.getTable().data[0][1]}}</th>
+                  <th ng-if="chart.getTable().data[0][2]">{{chart.getTable().data[0][2]}}</th>
+                </tr>
               </thead>
               <tbody>
-              <tr ng-repeat="row in chart.getTable().entries">
-                <td>{{row.title}}</td>
-                <td><a href ng-click="updateCriteria(row.key, chart.getTable().vocabulary)"><localized-number value="row.value"></localized-number></a></td>
-                <td ng-if="row.participantsNbr">{{row.participantsNbr}}</td>
-              </tr>
+                <tr ng-repeat="row in chart.getTable().entries">
+                  <td>{{row.title}}</td>
+                  <td>
+                    <a href ng-click="updateCriteria(row.key, chart.getTable().vocabulary)">
+                      <localized-number value="row.value"></localized-number>
+                    </a>
+                  </td>
+                  <td ng-if="row.participantsNbr">{{row.participantsNbr}}</td>
+                </tr>
               </tbody>
             </table>
           </div>

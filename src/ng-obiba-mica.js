@@ -99,10 +99,10 @@ var ngObibaMica;
       'searchCriteriaRegionTemplate': 'search/views/criteria/search-criteria-region-template.html',
       'vocabularyFilterDetailHeading': 'search/components/vocabulary-filter-detail-heading/component.html',
       'CriterionDropdownTemplate': 'search/views/criteria/criterion-dropdown-template.html',
-      'searchResultList': 'search/views/search-result-list-template.html',
+      'searchResultList': 'search/components/result/search-result/list.html',
       'searchInputList': 'lists/views/input-search-widget/input-search-widget-template.html',
-      'searchResultCoverage': 'search/views/search-result-coverage-template.html',
-      'searchResultGraphics': 'search/views/search-result-graphics-template.html'
+      'searchResultCoverage': 'search/components/result/search-result/coverage.html',
+      'searchResultGraphics': 'search/components/result/search-result/graphics.html'
     };
     var factory = {registry: null};
 

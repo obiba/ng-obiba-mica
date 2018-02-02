@@ -106,10 +106,10 @@ var ngObibaMica;
       'searchCriteriaRegionTemplate': 'search/views/criteria/search-criteria-region-template.html',
       'vocabularyFilterDetailHeading': 'search/components/vocabulary-filter-detail-heading/component.html',
       'CriterionDropdownTemplate': 'search/views/criteria/criterion-dropdown-template.html',
-      'searchResultList': 'search/views/search-result-list-template.html',
+      'searchResultList': 'search/components/result/search-result/list.html',
       'searchInputList': 'lists/views/input-search-widget/input-search-widget-template.html',
-      'searchResultCoverage': 'search/views/search-result-coverage-template.html',
-      'searchResultGraphics': 'search/views/search-result-graphics-template.html'
+      'searchResultCoverage': 'search/components/result/search-result/coverage.html',
+      'searchResultGraphics': 'search/components/result/search-result/graphics.html'
     };
     var factory = {registry: null};
 
@@ -4868,9 +4868,7 @@ ngObibaMica.search
 /* global DISPLAY_TYPES */
 /* global CriteriaIdGenerator */
 /* global targetToType */
-/* global typeToTarget */
 /* global SORT_FIELDS */
-/* global STUDY_FILTER_CHOICES */
 
 /**
  * State shared between Criterion DropDown and its content directives
@@ -5135,7 +5133,7 @@ function TaxonomiesPanelController($rootScope,
 }
 /**
  * ClassificationPanelController
- *
+ * 
  * @param $rootScope
  * @param $scope
  * @param $translate
@@ -6251,7 +6249,7 @@ ngObibaMica.search
       ]);
 
       function searchSuggestion(target, suggestion, withSpecificFields) {
-        var rqlQuery = $scope.search.rqlQuery;
+        var rqlQuery = angular.copy($scope.search.rqlQuery);
         var targetQuery = RqlQueryService.findTargetQuery(target, rqlQuery);
 
         if (!targetQuery) {
@@ -6755,112 +6753,6 @@ ngObibaMica.search
       });
     }
   ])
-
-  .controller('SearchResultController', [
-    '$scope',
-    'ngObibaMicaSearch',
-    'ngObibaMicaUrl',
-    'RqlQueryService',
-    'RqlQueryUtils',
-    'ngObibaMicaSearchTemplateUrl',
-    function ($scope,
-              ngObibaMicaSearch,
-              ngObibaMicaUrl,
-              RqlQueryService,
-              RqlQueryUtils,
-              ngObibaMicaSearchTemplateUrl) {
-
-      function updateType(type) {
-        Object.keys($scope.activeTarget).forEach(function (key) {
-          $scope.activeTarget[key].active = type === key;
-        });
-      }
-
-      $scope.targetTypeMap = $scope.$parent.taxonomyTypeMap;
-      $scope.QUERY_TARGETS = QUERY_TARGETS;
-      $scope.QUERY_TYPES = QUERY_TYPES;
-      $scope.options = ngObibaMicaSearch.getOptions();
-      $scope.activeTarget = {};
-      $scope.activeTarget[QUERY_TYPES.VARIABLES] = {active: false, name: QUERY_TARGETS.VARIABLE, totalHits: 0};
-      $scope.activeTarget[QUERY_TYPES.DATASETS] = {active: false, name: QUERY_TARGETS.DATASET, totalHits: 0};
-      $scope.activeTarget[QUERY_TYPES.STUDIES] = {active: false, name: QUERY_TARGETS.STUDY, totalHits: 0};
-      $scope.activeTarget[QUERY_TYPES.NETWORKS] = {active: false, name: QUERY_TARGETS.NETWORK, totalHits: 0};
-
-      $scope.getUrlTemplate = function (tab) {
-        switch (tab){
-          case 'list' :
-            return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultList');
-          case 'coverage' :
-            return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultCoverage');
-          case 'graphics' :
-            return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultGraphics');
-        }
-      };
-
-      $scope.selectType = function (type) {
-        updateType(type);
-        $scope.type = type;
-        $scope.$parent.onTypeChanged(type);
-      };
-
-      $scope.getTotalHits = function(type) {
-        if (!$scope.result.list || !$scope.result.list[type + 'ResultDto']) {
-          return '...';
-        }
-        return $scope.result.list[type + 'ResultDto'].totalHits;
-      };
-
-      $scope.getReportUrl = function () {
-
-        if ($scope.query === null) {
-          return $scope.query;
-        }
-
-        var parsedQuery = RqlQueryService.parseQuery($scope.query);
-        var target = typeToTarget($scope.type);
-        var targetQuery = parsedQuery.args.filter(function (query) {
-          return query.name === target;
-        }).pop();
-        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, 100000));
-        var queryWithoutLimit = new RqlQuery().serializeArgs(parsedQuery.args);
-
-        return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithoutLimit));
-      };
-
-      $scope.getStudySpecificReportUrl = function () {
-
-          if ($scope.query === null) {
-              return $scope.query;
-          }
-
-          var parsedQuery = RqlQueryService.parseQuery($scope.query);
-          var target = typeToTarget($scope.type);
-          var targetQuery = parsedQuery.args.filter(function (query) {
-              return query.name === target;
-          }).pop();
-          RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, 100000));
-          var queryWithoutLimit = new RqlQuery().serializeArgs(parsedQuery.args);
-
-          return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvReportResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithoutLimit));
-      };
-
-      $scope.$watchCollection('result', function () {
-        if ($scope.result.list) {
-          $scope.activeTarget[QUERY_TYPES.VARIABLES].totalHits = $scope.result.list.variableResultDto.totalHits;
-          $scope.activeTarget[QUERY_TYPES.DATASETS].totalHits = $scope.result.list.datasetResultDto.totalHits;
-          $scope.activeTarget[QUERY_TYPES.STUDIES].totalHits = $scope.result.list.studyResultDto.totalHits;
-          $scope.activeTarget[QUERY_TYPES.NETWORKS].totalHits = $scope.result.list.networkResultDto.totalHits;
-        }
-      });
-
-
-      $scope.$watch('type', function (type) {
-        updateType(type);
-      });
-
-      $scope.DISPLAY_TYPES = DISPLAY_TYPES;
-    }])
-
   .controller('CriterionLogicalController', [
     '$scope',
     function ($scope) {
@@ -7152,895 +7044,6 @@ ngObibaMica.search
       $scope.isInOutFilter = isInOutFilter;
       $scope.isContainsFilter = isContainsFilter;
       $scope.updateSelection = updateSelection;
-    }])
-
-  .controller('CoverageResultTableController', [
-    '$scope',
-    '$location',
-    '$q',
-    '$translate',
-    '$filter',
-    'LocalizedValues',
-    'PageUrlService',
-    'RqlQueryUtils',
-    'RqlQueryService',
-    'CoverageGroupByService',
-    'StudyFilterShortcutService',
-    'TaxonomyService',
-    'AlertService',
-    function ($scope,
-              $location,
-              $q,
-              $translate,
-              $filter,
-              LocalizedValues,
-              PageUrlService,
-              RqlQueryUtils,
-              RqlQueryService,
-              CoverageGroupByService,
-              StudyFilterShortcutService,
-              TaxonomyService,
-              AlertService) {
-      var targetMap = {}, vocabulariesTermsMap = {};
-
-      targetMap[BUCKET_TYPES.NETWORK] = QUERY_TARGETS.NETWORK;
-      targetMap[BUCKET_TYPES.STUDY] = QUERY_TARGETS.STUDY;
-      targetMap[BUCKET_TYPES.STUDY_INDIVIDUAL] = QUERY_TARGETS.STUDY;
-      targetMap[BUCKET_TYPES.STUDY_HARMONIZATION] = QUERY_TARGETS.STUDY;
-      targetMap[BUCKET_TYPES.DCE] = QUERY_TARGETS.VARIABLE;
-      targetMap[BUCKET_TYPES.DCE_INDIVIDUAL] = QUERY_TARGETS.VARIABLE;
-      targetMap[BUCKET_TYPES.DCE_HARMONIZATION] = QUERY_TARGETS.VARIABLE;
-      targetMap[BUCKET_TYPES.DATASCHEMA] = QUERY_TARGETS.DATASET;
-      targetMap[BUCKET_TYPES.DATASET] = QUERY_TARGETS.DATASET;
-      targetMap[BUCKET_TYPES.DATASET_COLLECTED] = QUERY_TARGETS.DATASET;
-      targetMap[BUCKET_TYPES.DATASET_HARMONIZED] = QUERY_TARGETS.DATASET;
-
-      function decorateVocabularyHeaders(headers, vocabularyHeaders) {
-        var count = 0, i = 0;
-        for (var j=0 ; j < vocabularyHeaders.length; j ++) {
-          if (count >= headers[i].termsCount) {
-            i++;
-            count = 0;
-          }
-
-          count += vocabularyHeaders[j].termsCount;
-          vocabularyHeaders[j].taxonomyName = headers[i].entity.name;
-        }
-      }
-
-      function decorateTermHeaders(headers, termHeaders, attr) {
-        var idx = 0;
-        return headers.reduce(function(result, h) {
-          result[h.entity.name] = termHeaders.slice(idx, idx + h.termsCount).map(function(t) {
-            if(h.termsCount > 1 && attr === 'vocabularyName') {
-              t.canRemove = true;
-            }
-
-            t[attr] = h.entity.name;
-
-            return t;
-          });
-
-          idx += h.termsCount;
-          return result;
-        }, {});
-      }
-
-      function dceUpdateBucket(val) {
-        if (val) {
-          $scope.selectBucket(BUCKET_TYPES.DCE);
-        } else if ($scope.bucket.startsWith('dce')) {
-          $scope.selectBucket(BUCKET_TYPES.STUDY);
-        }
-      }
-
-      function onDceUpdateBucket(val, old) {
-        if (val === old) {
-          return;
-        }
-
-        dceUpdateBucket(val);
-      }
-
-      function setInitialFilter() {
-        var result = StudyFilterShortcutService.getStudyClassNameChoices();
-
-        if (result.choseAll) {
-          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.ALL_STUDIES;
-        } else if (result.choseIndividual) {
-          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.INDIVIDUAL_STUDIES;
-        } else if (result.choseHarmonization) {
-          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
-        }
-
-        angular.extend($scope, result);
-
-        var bucket = $location.search().bucket;
-        if (bucket === BUCKET_TYPES.STUDY || bucket === BUCKET_TYPES.DCE) {
-          $scope.bucketSelection._dceBucketSelected = bucket === BUCKET_TYPES.DCE; // don't trigger the watch callback
-        }
-      }
-
-      function onLocationChange() {
-        var search = $location.search();
-        if (search.display && search.display === DISPLAY_TYPES.COVERAGE) {
-          $scope.bucket = search.bucket ? search.bucket : CoverageGroupByService.defaultBucket();
-          $scope.bucketStartsWithDce = $scope.bucket.startsWith('dce');
-          $scope.singleStudy = CoverageGroupByService.isSingleStudy();
-          setInitialFilter();
-        }
-      }
-
-      function updateBucket (groupBy) {
-        if ($scope.groupByOptions.canShowVariableTypeFilter(groupBy)) {
-          $scope.selectBucket(groupBy);
-        } else if (BUCKET_TYPES.STUDY !== groupBy) {
-          $scope.selectBucket(BUCKET_TYPES.DCE);
-        }
-      }
-
-      function dsUpdateBucket (groupBy) {
-        $scope.selectBucket(groupBy);
-      }
-
-      function isStudyBucket() {
-        return $scope.bucket.indexOf('study') > -1 || $scope.bucket.indexOf('dce') > -1;
-      }
-
-      function isDatasetBucket() {
-        return $scope.bucket.indexOf('dataset') > -1;
-      }
-
-      function selectTab(tab) {
-        if (tab === BUCKET_TYPES.STUDY) {
-          updateBucket(($scope.bucketSelection.dceBucketSelected || $scope.groupByOptions.isSingleStudy()) ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
-        } else if (tab === BUCKET_TYPES.DATASET) {
-          dsUpdateBucket(BUCKET_TYPES.DATASET);
-        }
-      }
-
-      function getBucketUrl(bucket, id) {
-        switch (bucket) {
-          case BUCKET_TYPES.STUDY:
-          case BUCKET_TYPES.STUDY_INDIVIDUAL:
-          case BUCKET_TYPES.DCE:
-          case BUCKET_TYPES.DCE_INDIVIDUAL:
-            return PageUrlService.studyPage(id, 'individual');
-          case BUCKET_TYPES.STUDY_HARMONIZATION:
-          case BUCKET_TYPES.DCE_HARMONIZATION:
-            return PageUrlService.studyPage(id, 'harmonization');
-          case BUCKET_TYPES.NETWORK:
-            return PageUrlService.networkPage(id);
-          case BUCKET_TYPES.DATASCHEMA:
-          case BUCKET_TYPES.DATASET_HARMONIZED:
-            return PageUrlService.datasetPage(id, 'harmonized');
-          case BUCKET_TYPES.DATASET:
-          case BUCKET_TYPES.DATASET_COLLECTED:
-            return PageUrlService.datasetPage(id, 'collected');
-        }
-
-        return '';
-      }
-
-      function updateFilterCriteriaInternal(selected) {
-        var vocabulary = $scope.bucket.startsWith('dce') ? 'dceId' : 'id';
-        var growlMsgKey = 'search.criterion.created';
-
-        var rqlQuery = RqlQueryService.parseQuery($location.search().query);
-        var targetQuery = RqlQueryService.findTargetQuery(targetMap[$scope.bucket], rqlQuery);
-        if (!targetQuery) {
-          targetQuery = new RqlQuery(targetMap[$scope.bucket]);
-          rqlQuery.args.push(targetQuery);
-        }
-
-        var foundVocabularyQuery = RqlQueryService.findQueryInTargetByVocabulary(targetQuery, vocabulary);
-        var vocabularyQuery;
-
-        if (foundVocabularyQuery) {
-          growlMsgKey = 'search.criterion.updated';
-          vocabularyQuery = foundVocabularyQuery;
-          if (vocabularyQuery.name === RQL_NODE.EXISTS) {
-            vocabularyQuery.name = RQL_NODE.IN;
-          }
-        } else {
-          vocabularyQuery = new RqlQuery(RQL_NODE.IN);
-        }
-
-        vocabularyQuery.args = ['Mica_' + targetMap[$scope.bucket] + '.' + vocabulary];
-        vocabularyQuery.args.push(selected.map(function (selection) { return selection.value; }));
-
-        if (!foundVocabularyQuery) {
-          if (targetQuery.args.length > 0) {
-            var andQuery = new RqlQuery(RQL_NODE.AND);
-            targetQuery.args.forEach(function (arg) { andQuery.args.push(arg); });
-            andQuery.args.push(vocabularyQuery);
-            targetQuery.args = [andQuery];
-          } else {
-            targetQuery.args = [vocabularyQuery];
-          }
-        }
-
-        $location.search('query', new RqlQuery().serializeArgs(rqlQuery.args));
-
-        TaxonomyService.findVocabularyInTaxonomy(targetMap[$scope.bucket], 'Mica_' + targetMap[$scope.bucket], vocabulary)
-            .then(function (foundVocabulary) {
-              AlertService.growl({
-                id: 'SearchControllerGrowl',
-                type: 'info',
-                msgKey: growlMsgKey,
-                msgArgs: [foundVocabulary ?
-                    LocalizedValues.forLocale(foundVocabulary.title, $translate.use()) :
-                    vocabulary, $filter('translate')('taxonomy.target.' + targetMap[$scope.bucket])],
-                delay: 3000
-              });
-            });
-
-      }
-
-      function splitIds() {
-        var cols = {
-          colSpan: $scope.bucket.startsWith('dce') ? (CoverageGroupByService.isSingleStudy() ? 2 : 3) : 1,
-          ids: {}
-        };
-
-        var rowSpans = {};
-
-        function appendRowSpan(id) {
-          var rowSpan;
-          if (!rowSpans[id]) {
-            rowSpan = 1;
-            rowSpans[id] = 1;
-          } else {
-            rowSpan = 0;
-            rowSpans[id] = rowSpans[id] + 1;
-          }
-          return rowSpan;
-        }
-
-        var minMax = {};
-
-        function appendMinMax(id, start, end) {
-          if (minMax[id]) {
-            if (start < minMax[id][0]) {
-              minMax[id][0] = start;
-            }
-            if (end > minMax[id][1]) {
-              minMax[id][1] = end;
-            }
-          } else {
-            minMax[id] = [start, end];
-          }
-        }
-
-        function toTime(yearMonth, start) {
-          var res;
-          if (yearMonth) {
-            if (yearMonth.indexOf('-')>0) {
-              var ym = yearMonth.split('-');
-              if (!start) {
-                var m = parseInt(ym[1]);
-                if(m<12) {
-                  ym[1] = m + 1;
-                } else {
-                  ym[0] = parseInt(ym[0]) + 1;
-                  ym[1] = 1;
-                }
-              }
-              var ymStr = ym[0] + '/'  + ym[1] + '/01';
-              res = Date.parse(ymStr);
-            } else {
-              res = start ? Date.parse(yearMonth + '/01/01') : Date.parse(yearMonth + '/12/31');
-            }
-          }
-          return res;
-        }
-
-        var currentYear = new Date().getFullYear();
-        var currentMonth = new Date().getMonth() + 1;
-        var currentYearMonth = currentYear + '-' + currentMonth;
-        var currentDate = toTime(currentYearMonth, true);
-
-        function getProgress(startYearMonth, endYearMonth) {
-          var start = toTime(startYearMonth, true);
-          var end = endYearMonth ? toTime(endYearMonth, false) : currentDate;
-          var current = end < currentDate ? end : currentDate;
-          if(end === start) {
-            return 100;
-          } else {
-            return Math.round(startYearMonth ? 100 * (current - start) / (end - start) : 0);
-          }
-        }
-
-        var odd = true;
-        var groupId;
-        $scope.result.rows.forEach(function (row, i) {
-          row.hitsTitles = row.hits.map(function(hit){
-            return LocalizedValues.formatNumber(hit);
-          });
-          cols.ids[row.value] = [];
-          if ($scope.bucket.startsWith('dce')) {
-            var ids = row.value.split(':');
-            var isHarmo = row.className.indexOf('Harmonization') > -1 || ids[2] === '.'; // would work for both HarmonizationDataset and HarmonizationStudy
-            var titles = row.title.split(':');
-            var descriptions = row.description.split(':');
-            var rowSpan;
-            var id;
-
-            // study
-            id = ids[0];
-            if (!groupId) {
-              groupId = id;
-            } else if(id !== groupId) {
-              odd = !odd;
-              groupId = id;
-            }
-            rowSpan = appendRowSpan(id);
-            appendMinMax(id,row.start || currentYearMonth, row.end || currentYearMonth);
-            cols.ids[row.value].push({
-              id: CoverageGroupByService.isSingleStudy() ? '-' : id,
-              url: PageUrlService.studyPage(id, isHarmo ? 'harmonization' : 'individual'),
-              title: titles[0],
-              description: descriptions[0],
-              rowSpan: rowSpan,
-              index: i++
-            });
-
-            // population
-            id = ids[0] + ':' + ids[1];
-            rowSpan = appendRowSpan(id);
-            cols.ids[row.value].push({
-              id: id,
-              url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
-              title: titles[1],
-              description: descriptions[1],
-              rowSpan: rowSpan,
-              index: i++
-            });
-
-            // dce
-            cols.ids[row.value].push({
-              id: isHarmo ? '-' : row.value,
-              title: titles[2],
-              description: descriptions[2],
-              start: row.start,
-              current: currentYearMonth,
-              end: row.end,
-              progressClass: odd ? 'info' : 'warning',
-              url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
-              rowSpan: 1,
-              index: i++
-            });
-          } else {
-            var parts = $scope.bucket.split('-');
-            var itemBucket = parts[0];
-            if (itemBucket === BUCKET_TYPES.DATASET) {
-              itemBucket = itemBucket + (row.className.indexOf('Harmonization') > -1 ? '-harmonized' : '-collected');
-            } else {
-              itemBucket = itemBucket + (row.className.indexOf('Harmonization') > -1 ? '-harmonization' : '-individual');
-            }
-
-            cols.ids[row.value].push({
-              id: row.value,
-              url: getBucketUrl(itemBucket, row.value),
-              title: row.title,
-              description: row.description,
-              min: row.start,
-              start: row.start,
-              current: currentYear,
-              end: row.end,
-              max: row.end,
-              progressStart: 0,
-              progress: getProgress(row.start ? row.start + '-01' : currentYearMonth, row.end ? row.end + '-12' : currentYearMonth),
-              progressClass: odd ? 'info' : 'warning',
-              rowSpan: 1,
-              index: i++
-            });
-            odd = !odd;
-          }
-        });
-
-        // adjust the rowspans and the progress
-        if ($scope.bucket.startsWith('dce')) {
-          $scope.result.rows.forEach(function (row, i) {
-            row.hitsTitles = row.hits.map(function(hit){
-              return LocalizedValues.formatNumber(hit);
-            });
-            if (cols.ids[row.value][0].rowSpan > 0) {
-              cols.ids[row.value][0].rowSpan = rowSpans[cols.ids[row.value][0].id];
-            }
-            if (cols.ids[row.value][1].rowSpan > 0) {
-              cols.ids[row.value][1].rowSpan = rowSpans[cols.ids[row.value][1].id];
-            }
-            var ids = row.value.split(':');
-            if (minMax[ids[0]]) {
-              var min = minMax[ids[0]][0];
-              var max = minMax[ids[0]][1];
-              var start = cols.ids[row.value][2].start || currentYearMonth;
-              var end = cols.ids[row.value][2].end || currentYearMonth;
-              var diff = toTime(max, false) - toTime(min, true);
-              // set the DCE min and max dates of the study
-              cols.ids[row.value][2].min = min;
-              cols.ids[row.value][2].max = max;
-              // compute the progress
-              cols.ids[row.value][2].progressStart = 100 * (toTime(start, true) - toTime(min, true))/diff;
-              cols.ids[row.value][2].progress = 100 * (toTime(end, false) - toTime(start, true))/diff;
-              cols.ids[row.value].index = i;
-            }
-          });
-        }
-
-        return cols;
-      }
-
-      function mergeCriteriaItems(criteria) {
-        return criteria.reduce(function(prev, item) {
-          if (prev) {
-            RqlQueryService.updateCriteriaItem(prev, item);
-            return prev;
-          }
-
-          item.rqlQuery = RqlQueryUtils.buildRqlQuery(item);
-          return item;
-        }, null);
-      }
-
-      function updateStudyClassNameFilter(choice) {
-        StudyFilterShortcutService.filter(choice, $scope.lang);
-      }
-
-      function init() {
-        onLocationChange();
-      }
-
-      $scope.showMissing = true;
-      $scope.toggleMissing = function (value) {
-        $scope.showMissing = value;
-      };
-
-      $scope.groupByOptions = CoverageGroupByService;
-      $scope.bucketSelection = {
-        get studySelection() {
-          return this._studySelection;
-        },
-        set studySelection(value) {
-          this._studySelection = value;
-
-          if (!$scope.bucket || ($scope.bucket && ($scope.bucket.indexOf(BUCKET_TYPES.STUDY) > -1 || $scope.bucket.indexOf(BUCKET_TYPES.DCE) > -1))) {
-            updateBucket($scope.bucket.split('-')[0]);
-          } else if ($scope.bucket && $scope.bucket.indexOf(BUCKET_TYPES.DATASET) > -1) {
-            dsUpdateBucket($scope.bucket.split('-')[0]);
-          }
-
-          updateStudyClassNameFilter(value);
-        },
-        get dceBucketSelected() {
-          return this._dceBucketSelected;
-        },
-        set dceBucketSelected(value) {
-          var oldValue = this._dceBucketSelected;
-          this._dceBucketSelected = value;
-
-          onDceUpdateBucket(value, oldValue);
-        }
-      };
-
-      $scope.isStudyBucket = isStudyBucket;
-      $scope.isDatasetBucket = isDatasetBucket;
-      $scope.selectTab = selectTab;
-
-      $scope.selectBucket = function (bucket) {
-
-        $scope.bucket = bucket;
-        $scope.$parent.onBucketChanged(bucket);
-      };
-
-      $scope.$on('$locationChangeSuccess', onLocationChange);
-      $scope.rowspans = {};
-
-      $scope.getSpan = function (study, population) {
-        var length = 0;
-        if (population) {
-          var prefix = study + ':' + population;
-          length = $scope.result.rows.filter(function (row) {
-            return row.title.startsWith(prefix + ':');
-          }).length;
-          $scope.rowspans[prefix] = length;
-          return length;
-        } else {
-          length = $scope.result.rows.filter(function (row) {
-            return row.title.startsWith(study + ':');
-          }).length;
-          $scope.rowspans[study] = length;
-          return length;
-        }
-      };
-
-      $scope.hasSpan = function (study, population) {
-        if (population) {
-          return $scope.rowspans[study + ':' + population] > 0;
-        } else {
-          return $scope.rowspans[study] > 0;
-        }
-      };
-
-      $scope.hasVariableTarget = function () {
-        var query = $location.search().query;
-        return query && RqlQueryUtils.hasTargetQuery(RqlQueryService.parseQuery(query), RQL_NODE.VARIABLE);
-      };
-
-      $scope.hasSelected = function () {
-        return $scope.table && $scope.table.rows && $scope.table.rows.filter(function (r) {
-            return r.selected;
-          }).length;
-      };
-
-      $scope.selectAll = function() {
-        if ($scope.table && $scope.table.rows) {
-          $scope.table.rows.forEach(function(r){
-            r.selected = true;
-          });
-        }
-      };
-
-      $scope.selectNone = function() {
-        if ($scope.table && $scope.table.rows) {
-          $scope.table.rows.forEach(function(r){
-            r.selected = false;
-          });
-        }
-      };
-
-      $scope.selectFull = function() {
-        if ($scope.table && $scope.table.rows) {
-          $scope.table.rows.forEach(function(r){
-            if (r.hits) {
-              r.selected = r.hits.filter(function(h){
-                  return h === 0;
-                }).length === 0;
-            } else {
-              r.selected = false;
-            }
-          });
-        }
-      };
-
-      $scope.BUCKET_TYPES = BUCKET_TYPES;
-
-      $scope.downloadUrl = function () {
-        return PageUrlService.downloadCoverage($scope.query);
-      };
-
-      $scope.$watch('result', function () {
-        $scope.table = {cols: []};
-        vocabulariesTermsMap = {};
-
-        if ($scope.result && $scope.result.rows) {
-          var tableTmp = $scope.result;
-          tableTmp.cols = splitIds();
-          $scope.table = tableTmp;
-
-          vocabulariesTermsMap = decorateTermHeaders($scope.table.vocabularyHeaders, $scope.table.termHeaders, 'vocabularyName');
-          decorateTermHeaders($scope.table.taxonomyHeaders, $scope.table.termHeaders, 'taxonomyName');
-          decorateVocabularyHeaders($scope.table.taxonomyHeaders, $scope.table.vocabularyHeaders);
-        }
-      });
-
-      $scope.updateCriteria = function (id, term, idx, type) { //
-        var vocabulary = $scope.bucket.startsWith('dce') ? 'dceId' : 'id';
-        var criteria = {varItem: RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, term.taxonomyName, term.vocabularyName, term.entity.name)};
-
-        // if id is null, it is a click on the total count for the term
-        if (id) {
-          var groupBy = $scope.bucket.split('-')[0];
-          if (groupBy === 'dce' && id.endsWith(':.')) {
-            groupBy = 'study';
-            var studyId = id.split(':')[0];
-            criteria.item = RqlQueryService.createCriteriaItem(targetMap[groupBy], 'Mica_' + targetMap[groupBy], 'id', studyId);
-          } else {
-            criteria.item = RqlQueryService.createCriteriaItem(targetMap[groupBy], 'Mica_' + targetMap[groupBy], vocabulary, id);
-          }
-        } else if ($scope.bucket.endsWith('individual')) {
-          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.STUDY, 'Mica_' + QUERY_TARGETS.STUDY, 'className', 'Study');
-        } else if ($scope.bucket.endsWith('harmonization')) {
-          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.STUDY, 'Mica_' + QUERY_TARGETS.STUDY, 'className', 'HarmonizationStudy');
-        } else if ($scope.bucket.endsWith('collected')) {
-          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.DATASET, 'Mica_' + QUERY_TARGETS.DATASET, 'className', 'StudyDataset');
-        } else if ($scope.bucket.endsWith('harmonized')) {
-          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.DATASET, 'Mica_' + QUERY_TARGETS.DATASET, 'className', 'HarmonizationDataset');
-        }
-
-        $q.all(criteria).then(function (criteria) {
-          $scope.onUpdateCriteria(criteria.varItem, type, false, true);
-          if (criteria.item) {
-            $scope.onUpdateCriteria(criteria.item, type);
-          }
-          if (criteria.bucketItem) {
-            $scope.onUpdateCriteria(criteria.bucketItem, type);
-          }
-        });
-      };
-
-      $scope.isFullCoverageImpossibleOrCoverageAlreadyFull = function () {
-        var rows = $scope.table ? ($scope.table.rows || []) : [];
-        var rowsWithZeroHitColumn = 0;
-
-        if (rows.length === 0) {
-          return true;
-        }
-
-        rows.forEach(function (row) {
-          if (row.hits) {
-            if (row.hits.filter(function (hit) { return hit === 0; }).length > 0) {
-              rowsWithZeroHitColumn++;
-            }
-          }
-        });
-
-        if (rowsWithZeroHitColumn === 0) {
-          return true;
-        }
-
-        return rows.length === rowsWithZeroHitColumn;
-      };
-
-      $scope.selectFullAndFilter = function() {
-        var selected = [];
-        if ($scope.table && $scope.table.rows) {
-          $scope.table.rows.forEach(function(r){
-            if (r.hits) {
-              if (r.hits.filter(function(h){
-                  return h === 0;
-                }).length === 0) {
-                selected.push(r);
-              }
-            }
-          });
-          console.log('selected=' + Math.round(selected.length*100/$scope.table.rows.length) + '%');
-        }
-        updateFilterCriteriaInternal(selected, true);
-      };
-
-      $scope.updateFilterCriteria = function () {
-        updateFilterCriteriaInternal($scope.table.rows.filter(function (r) {
-          return r.selected;
-        }));
-      };
-
-      $scope.removeTerm = function(term) {
-        var remainingCriteriaItems = vocabulariesTermsMap[term.vocabularyName].filter(function(t) {
-            return t.entity.name !== term.entity.name;
-          }).map(function(t) {
-            return RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, t.taxonomyName, t.vocabularyName, t.entity.name);
-          });
-
-        $q.all(remainingCriteriaItems).then(function(criteriaItems) {
-          $scope.onUpdateCriteria(mergeCriteriaItems(criteriaItems), null, true, false, false);
-        });
-      };
-
-      $scope.removeVocabulary = function(vocabulary) {
-        RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, vocabulary.taxonomyName, vocabulary.entity.name).then(function(item){
-          $scope.onRemoveCriteria(item);
-        });
-      };
-
-      init();
-    }])
-
-  .controller('GraphicsResultController', [
-    'GraphicChartsConfig',
-    'GraphicChartsUtils',
-    'RqlQueryService',
-    '$filter',
-    '$scope',
-    'D3GeoConfig', 'D3ChartConfig',
-    function (GraphicChartsConfig,
-              GraphicChartsUtils,
-              RqlQueryService,
-              $filter,
-              $scope, D3GeoConfig, D3ChartConfig) {
-
-      $scope.hasChartObjects = function () {
-        return $scope.chartObjects && Object.keys($scope.chartObjects).length > 0;
-      };
-
-      var setChartObject = function (vocabulary, dtoObject, header, title, options, isTable) {
-
-        return GraphicChartsUtils.getArrayByAggregation(vocabulary, dtoObject)
-          .then(function (entries){
-            var data = entries.map(function (e) {
-              if (e.participantsNbr && isTable) {
-                return [e.title, e.value, e.participantsNbr];
-              }
-              else {
-                return [e.title, e.value];
-              }
-            });
-
-            if (data.length > 0) {
-              data.unshift(header);
-              angular.extend(options, {title: title});
-
-              return {
-                data: data,
-                entries: entries,
-                options: options,
-                vocabulary: vocabulary
-              };
-            }
-          });
-
-      };
-
-      var charOptions = GraphicChartsConfig.getOptions().ChartsOptions;
-
-      $scope.updateCriteria = function (key, vocabulary) {
-        RqlQueryService.createCriteriaItem('study', 'Mica_study', vocabulary, key).then(function (item) {
-          $scope.onUpdateCriteria(item, 'studies');
-        });
-      };
-
-      $scope.$watch('result', function (result) {
-        $scope.chartObjects = {};
-        $scope.noResults = true;
-
-        if (result && result.studyResultDto.totalHits) {
-          $scope.noResults = false;
-          setChartObject('populations-model-selectionCriteria-countriesIso',
-            result.studyResultDto,
-            [$filter('translate')(charOptions.geoChartOptions.header[0]), $filter('translate')(charOptions.geoChartOptions.header[1])],
-            $filter('translate')(charOptions.geoChartOptions.title) + ' (N=' + result.studyResultDto.totalHits + ')',
-            charOptions.geoChartOptions.options).then(function(geoStudies) {
-              if (geoStudies) {
-                var d3Config = new D3GeoConfig()
-                  .withData(geoStudies.entries)
-                  .withTitle($filter('translate')(charOptions.geoChartOptions.title) + ' (N=' + result.studyResultDto.totalHits + ')');
-                d3Config.withColor(charOptions.geoChartOptions.options.colors);
-                var chartObject = {
-                  geoChartOptions: {
-                    directiveTitle: geoStudies.options.title,
-                    headerTitle: $filter('translate')('graphics.geo-charts'),
-                    chartObject: {
-                      geoTitle: geoStudies.options.title,
-                      options: geoStudies.options,
-                      type: 'GeoChart',
-                      vocabulary: geoStudies.vocabulary,
-                      data: geoStudies.data,
-                      entries: geoStudies.entries,
-                      d3Config: d3Config
-                    }
-                  }
-                };
-                chartObject.geoChartOptions.getTable = function(){
-                  return chartObject.geoChartOptions.chartObject;
-                };
-                angular.extend($scope.chartObjects, chartObject);
-              }
-            });
-          // Study design chart.
-          setChartObject('model-methods-design',
-            result.studyResultDto,
-            [$filter('translate')(charOptions.studiesDesigns.header[0]),
-              $filter('translate')(charOptions.studiesDesigns.header[1])
-              ],
-            $filter('translate')(charOptions.studiesDesigns.title) + ' (N=' + result.studyResultDto.totalHits + ')',
-            charOptions.studiesDesigns.options).then(function(methodDesignStudies) {
-              if (methodDesignStudies) {
-                var d3Config = new D3ChartConfig(methodDesignStudies.vocabulary)
-                    .withType('multiBarHorizontalChart')
-                    .withTitle($filter('translate')(charOptions.studiesDesigns.title) + ' (N=' + result.studyResultDto.totalHits + ')')
-                    .withData(angular.copy(methodDesignStudies.entries), false, $filter('translate')('graphics.nbr-studies'));
-                d3Config.options.chart.showLegend = false;
-                d3Config.options.chart.color = charOptions.numberParticipants.options.colors;
-                var chartObject= {
-                  studiesDesigns: {
-                    //directiveTitle: methodDesignStudies.options.title ,
-                    headerTitle: $filter('translate')('graphics.study-design'),
-                    chartObject: {
-                      options: methodDesignStudies.options,
-                      type: 'BarChart',
-                      data: methodDesignStudies.data,
-                      vocabulary: methodDesignStudies.vocabulary,
-                      entries: methodDesignStudies.entries,
-                      d3Config: d3Config
-                    }
-                  }
-                };
-                angular.extend($scope.chartObjects, chartObject);
-              }
-            });
-
-          // Study design table.
-          setChartObject('model-methods-design',
-            result.studyResultDto,
-            [$filter('translate')(charOptions.studiesDesigns.header[0]),
-              $filter('translate')(charOptions.studiesDesigns.header[1]),
-              $filter('translate')(charOptions.studiesDesigns.header[2])
-            ],
-            $filter('translate')(charOptions.studiesDesigns.title) + ' (N=' + result.studyResultDto.totalHits + ')',
-            charOptions.studiesDesigns.options, true).then(function(methodDesignStudies) {
-            if (methodDesignStudies) {
-              var chartObject = {
-                  chartObjectTable: {
-                    options: methodDesignStudies.options,
-                    type: 'BarChart',
-                    data: methodDesignStudies.data,
-                    vocabulary: methodDesignStudies.vocabulary,
-                    entries: methodDesignStudies.entries
-                  }
-
-              };
-              chartObject.getTable= function(){
-                return chartObject.chartObjectTable;
-              };
-              angular.extend($scope.chartObjects.studiesDesigns, chartObject);
-            }
-          });
-          setChartObject('model-numberOfParticipants-participant-number-range',
-            result.studyResultDto,
-            [$filter('translate')(charOptions.numberParticipants.header[0]), $filter('translate')(charOptions.numberParticipants.header[1])],
-            $filter('translate')(charOptions.numberParticipants.title) + ' (N=' + result.studyResultDto.totalHits + ')',
-            charOptions.numberParticipants.options).then(function(numberParticipant) {
-              if (numberParticipant) {
-                var chartConfig = new D3ChartConfig(numberParticipant.vocabulary)
-                  .withType('pieChart')
-                  .withTitle($filter('translate')(charOptions.numberParticipants.title) + ' (N=' + result.studyResultDto.totalHits + ')')
-                  .withData(angular.copy(numberParticipant.entries), true);
-                chartConfig.options.chart.legendPosition = 'right';
-                chartConfig.options.chart.color = charOptions.numberParticipants.options.colors;
-                var chartObject = {
-                  numberParticipants: {
-                    headerTitle: $filter('translate')('graphics.number-participants'),
-                    chartObject: {
-                      options: numberParticipant.options,
-                      type: 'PieChart',
-                      data: numberParticipant.data,
-                      vocabulary: numberParticipant.vocabulary,
-                      entries: numberParticipant.entries,
-                      d3Config: chartConfig
-                    }
-                  }
-                };
-                chartObject.numberParticipants.getTable= function(){
-                  return chartObject.numberParticipants.chartObject;
-                };
-                angular.extend($scope.chartObjects, chartObject);
-              }
-            });
-
-          setChartObject('populations-dataCollectionEvents-model-bioSamples',
-            result.studyResultDto,
-            [$filter('translate')(charOptions.biologicalSamples.header[0]), $filter('translate')(charOptions.biologicalSamples.header[1])],
-            $filter('translate')(charOptions.biologicalSamples.title) + ' (N=' + result.studyResultDto.totalHits + ')',
-            charOptions.biologicalSamples.options).then(function(bioSamplesStudies) {
-              if (bioSamplesStudies) {
-                var d3Config = new D3ChartConfig(bioSamplesStudies.vocabulary)
-                    .withType('multiBarHorizontalChart')
-                    .withTitle($filter('translate')(charOptions.biologicalSamples.title) + ' (N=' + result.studyResultDto.totalHits + ')')
-                    .withData(angular.copy(bioSamplesStudies.entries), false, $filter('translate')('graphics.nbr-studies'));
-                d3Config.options.chart.showLegend = false;
-                d3Config.options.chart.color = charOptions.numberParticipants.options.colors;
-                var chartObject = {
-                  biologicalSamples: {
-                    headerTitle: $filter('translate')('graphics.bio-samples'),
-                    chartObject: {
-                      options: bioSamplesStudies.options,
-                      type: 'BarChart',
-                      data: bioSamplesStudies.data,
-                      vocabulary: bioSamplesStudies.vocabulary,
-                      entries: bioSamplesStudies.entries,
-                      d3Config: d3Config
-                    }
-                  }
-                };
-                chartObject.biologicalSamples.getTable= function(){
-                  return chartObject.biologicalSamples.chartObject;
-                };
-                angular.extend($scope.chartObjects, chartObject);
-              }
-            });
-        }
-      });
     }])
 
   .controller('SearchResultPaginationController', ['$scope', 'ngObibaMicaSearch', function ($scope, ngObibaMicaSearch) {
@@ -8519,38 +7522,6 @@ ngObibaMica.search
     };
   }])
 
-  .directive('coverageResultTable', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        result: '=',
-        loading: '=',
-        bucket: '=',
-        query: '=',
-        criteria: '=',
-        onUpdateCriteria: '=',
-        onRemoveCriteria: '='
-      },
-      controller: 'CoverageResultTableController',
-      templateUrl: 'search/views/coverage/coverage-search-result-table-template.html'
-    };
-  }])
-
-  .directive('graphicsResult', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        result: '=',
-        loading: '=',
-        onUpdateCriteria: '='
-      },
-      controller: 'GraphicsResultController',
-      templateUrl: 'search/views/graphics/graphics-search-result-template.html'
-    };
-  }])
-
   .directive('includeReplace', function () {
     return {
       require: 'ngInclude',
@@ -8573,32 +7544,6 @@ ngObibaMica.search
       }
     };
   })
-
-  .directive('resultPanel', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        type: '=',
-        bucket: '=',
-        query: '=',
-        criteria: '=',
-        display: '=',
-        result: '=',
-        lang: '=',
-        loading: '=',
-        searchTabsOrder: '=',
-        resultTabsOrder: '=',
-        onTypeChanged: '=',
-        onBucketChanged: '=',
-        onPaginate: '=',
-        onUpdateCriteria: '=',
-        onRemoveCriteria: '='
-      },
-      controller: 'SearchResultController',
-      templateUrl: 'search/views/search-result-panel-template.html'
-    };
-  }])
 
   .directive('criteriaRoot', [function(){
     return {
@@ -9970,7 +8915,1073 @@ ngObibaMica.search
     });
 })();
 
-;/*
+;'use strict';
+
+/* global BUCKET_TYPES */
+/* global STUDY_FILTER_CHOICES */
+/* global DISPLAY_TYPES */
+
+ngObibaMica.search
+  .controller('CoverageResultTableController', [
+    '$scope',
+    '$location',
+    '$q',
+    '$translate',
+    '$filter',
+    'LocalizedValues',
+    'PageUrlService',
+    'RqlQueryUtils',
+    'RqlQueryService',
+    'CoverageGroupByService',
+    'StudyFilterShortcutService',
+    'TaxonomyService',
+    'AlertService',
+    function ($scope,
+      $location,
+      $q,
+      $translate,
+      $filter,
+      LocalizedValues,
+      PageUrlService,
+      RqlQueryUtils,
+      RqlQueryService,
+      CoverageGroupByService,
+      StudyFilterShortcutService,
+      TaxonomyService,
+      AlertService) {
+      var targetMap = {}, vocabulariesTermsMap = {};
+
+      targetMap[BUCKET_TYPES.NETWORK] = QUERY_TARGETS.NETWORK;
+      targetMap[BUCKET_TYPES.STUDY] = QUERY_TARGETS.STUDY;
+      targetMap[BUCKET_TYPES.STUDY_INDIVIDUAL] = QUERY_TARGETS.STUDY;
+      targetMap[BUCKET_TYPES.STUDY_HARMONIZATION] = QUERY_TARGETS.STUDY;
+      targetMap[BUCKET_TYPES.DCE] = QUERY_TARGETS.VARIABLE;
+      targetMap[BUCKET_TYPES.DCE_INDIVIDUAL] = QUERY_TARGETS.VARIABLE;
+      targetMap[BUCKET_TYPES.DCE_HARMONIZATION] = QUERY_TARGETS.VARIABLE;
+      targetMap[BUCKET_TYPES.DATASCHEMA] = QUERY_TARGETS.DATASET;
+      targetMap[BUCKET_TYPES.DATASET] = QUERY_TARGETS.DATASET;
+      targetMap[BUCKET_TYPES.DATASET_COLLECTED] = QUERY_TARGETS.DATASET;
+      targetMap[BUCKET_TYPES.DATASET_HARMONIZED] = QUERY_TARGETS.DATASET;
+
+      function decorateVocabularyHeaders(headers, vocabularyHeaders) {
+        var count = 0, i = 0;
+        for (var j = 0; j < vocabularyHeaders.length; j++) {
+          if (count >= headers[i].termsCount) {
+            i++;
+            count = 0;
+          }
+
+          count += vocabularyHeaders[j].termsCount;
+          vocabularyHeaders[j].taxonomyName = headers[i].entity.name;
+        }
+      }
+
+      function decorateTermHeaders(headers, termHeaders, attr) {
+        var idx = 0;
+        return headers.reduce(function (result, h) {
+          result[h.entity.name] = termHeaders.slice(idx, idx + h.termsCount).map(function (t) {
+            if (h.termsCount > 1 && attr === 'vocabularyName') {
+              t.canRemove = true;
+            }
+
+            t[attr] = h.entity.name;
+
+            return t;
+          });
+
+          idx += h.termsCount;
+          return result;
+        }, {});
+      }
+
+      function dceUpdateBucket(val) {
+        if (val) {
+          $scope.selectBucket(BUCKET_TYPES.DCE);
+        } else if ($scope.bucket.startsWith('dce')) {
+          $scope.selectBucket(BUCKET_TYPES.STUDY);
+        }
+      }
+
+      function onDceUpdateBucket(val, old) {
+        if (val === old) {
+          return;
+        }
+
+        dceUpdateBucket(val);
+      }
+
+      function setInitialFilter() {
+        var result = StudyFilterShortcutService.getStudyClassNameChoices();
+
+        if (result.choseAll) {
+          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.ALL_STUDIES;
+        } else if (result.choseIndividual) {
+          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.INDIVIDUAL_STUDIES;
+        } else if (result.choseHarmonization) {
+          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
+        }
+
+        angular.extend($scope, result);
+
+        var bucket = $location.search().bucket;
+        if (bucket === BUCKET_TYPES.STUDY || bucket === BUCKET_TYPES.DCE) {
+          $scope.bucketSelection._dceBucketSelected = bucket === BUCKET_TYPES.DCE; // don't trigger the watch callback
+        }
+      }
+
+      function onLocationChange() {
+        var search = $location.search();
+        if (search.display && search.display === DISPLAY_TYPES.COVERAGE) {
+          $scope.bucket = search.bucket ? search.bucket : CoverageGroupByService.defaultBucket();
+          $scope.bucketStartsWithDce = $scope.bucket.startsWith('dce');
+          setInitialFilter();
+        }
+      }
+
+      function updateBucket(groupBy) {
+        if ($scope.groupByOptions.canShowVariableTypeFilter(groupBy)) {
+          $scope.selectBucket(groupBy);
+        } else if (BUCKET_TYPES.STUDY !== groupBy) {
+          $scope.selectBucket(BUCKET_TYPES.DCE);
+        }
+      }
+
+      function dsUpdateBucket(groupBy) {
+        $scope.selectBucket(groupBy);
+      }
+
+      function isStudyBucket() {
+        return $scope.bucket.indexOf('study') > -1 || $scope.bucket.indexOf('dce') > -1;
+      }
+
+      function isDatasetBucket() {
+        return $scope.bucket.indexOf('dataset') > -1;
+      }
+
+      function selectTab(tab) {
+        if (tab === BUCKET_TYPES.STUDY) {
+          updateBucket($scope.bucketSelection.dceBucketSelected ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
+        } else if (tab === BUCKET_TYPES.DATASET) {
+          dsUpdateBucket(BUCKET_TYPES.DATASET);
+        }
+      }
+
+      function getBucketUrl(bucket, id) {
+        switch (bucket) {
+          case BUCKET_TYPES.STUDY:
+          case BUCKET_TYPES.STUDY_INDIVIDUAL:
+          case BUCKET_TYPES.DCE:
+          case BUCKET_TYPES.DCE_INDIVIDUAL:
+            return PageUrlService.studyPage(id, 'individual');
+          case BUCKET_TYPES.STUDY_HARMONIZATION:
+          case BUCKET_TYPES.DCE_HARMONIZATION:
+            return PageUrlService.studyPage(id, 'harmonization');
+          case BUCKET_TYPES.NETWORK:
+            return PageUrlService.networkPage(id);
+          case BUCKET_TYPES.DATASCHEMA:
+          case BUCKET_TYPES.DATASET_HARMONIZED:
+            return PageUrlService.datasetPage(id, 'harmonized');
+          case BUCKET_TYPES.DATASET:
+          case BUCKET_TYPES.DATASET_COLLECTED:
+            return PageUrlService.datasetPage(id, 'collected');
+        }
+
+        return '';
+      }
+
+      function updateFilterCriteriaInternal(selected) {
+        var vocabulary = $scope.bucket.startsWith('dce') ? 'dceId' : 'id';
+        var growlMsgKey = 'search.criterion.created';
+
+        var rqlQuery = RqlQueryService.parseQuery($location.search().query);
+        var targetQuery = RqlQueryService.findTargetQuery(targetMap[$scope.bucket], rqlQuery);
+        if (!targetQuery) {
+          targetQuery = new RqlQuery(targetMap[$scope.bucket]);
+          rqlQuery.args.push(targetQuery);
+        }
+
+        var foundVocabularyQuery = RqlQueryService.findQueryInTargetByVocabulary(targetQuery, vocabulary);
+        var vocabularyQuery;
+
+        if (foundVocabularyQuery) {
+          growlMsgKey = 'search.criterion.updated';
+          vocabularyQuery = foundVocabularyQuery;
+          if (vocabularyQuery.name === RQL_NODE.EXISTS) {
+            vocabularyQuery.name = RQL_NODE.IN;
+          }
+        } else {
+          vocabularyQuery = new RqlQuery(RQL_NODE.IN);
+        }
+
+        vocabularyQuery.args = ['Mica_' + targetMap[$scope.bucket] + '.' + vocabulary];
+        vocabularyQuery.args.push(selected.map(function (selection) { return selection.value; }));
+
+        if (!foundVocabularyQuery) {
+          if (targetQuery.args.length > 0) {
+            var andQuery = new RqlQuery(RQL_NODE.AND);
+            targetQuery.args.forEach(function (arg) { andQuery.args.push(arg); });
+            andQuery.args.push(vocabularyQuery);
+            targetQuery.args = [andQuery];
+          } else {
+            targetQuery.args = [vocabularyQuery];
+          }
+        }
+
+        $location.search('query', new RqlQuery().serializeArgs(rqlQuery.args));
+
+        TaxonomyService.findVocabularyInTaxonomy(targetMap[$scope.bucket], 'Mica_' + targetMap[$scope.bucket], vocabulary)
+          .then(function (foundVocabulary) {
+            AlertService.growl({
+              id: 'SearchControllerGrowl',
+              type: 'info',
+              msgKey: growlMsgKey,
+              msgArgs: [foundVocabulary ?
+                LocalizedValues.forLocale(foundVocabulary.title, $translate.use()) :
+                vocabulary, $filter('translate')('taxonomy.target.' + targetMap[$scope.bucket])],
+              delay: 3000
+            });
+          });
+
+      }
+
+      function splitIds() {
+        var cols = {
+          colSpan: $scope.bucket.startsWith('dce') ? 3 : 1,
+          ids: {}
+        };
+
+        var rowSpans = {};
+
+        function appendRowSpan(id) {
+          var rowSpan;
+          if (!rowSpans[id]) {
+            rowSpan = 1;
+            rowSpans[id] = 1;
+          } else {
+            rowSpan = 0;
+            rowSpans[id] = rowSpans[id] + 1;
+          }
+          return rowSpan;
+        }
+
+        var minMax = {};
+
+        function appendMinMax(id, start, end) {
+          if (minMax[id]) {
+            if (start < minMax[id][0]) {
+              minMax[id][0] = start;
+            }
+            if (end > minMax[id][1]) {
+              minMax[id][1] = end;
+            }
+          } else {
+            minMax[id] = [start, end];
+          }
+        }
+
+        function toTime(yearMonth, start) {
+          var res;
+          if (yearMonth) {
+            if (yearMonth.indexOf('-') > 0) {
+              var ym = yearMonth.split('-');
+              if (!start) {
+                var m = parseInt(ym[1]);
+                if (m < 12) {
+                  ym[1] = m + 1;
+                } else {
+                  ym[0] = parseInt(ym[0]) + 1;
+                  ym[1] = 1;
+                }
+              }
+              var ymStr = ym[0] + '/' + ym[1] + '/01';
+              res = Date.parse(ymStr);
+            } else {
+              res = start ? Date.parse(yearMonth + '/01/01') : Date.parse(yearMonth + '/12/31');
+            }
+          }
+          return res;
+        }
+
+        var currentYear = new Date().getFullYear();
+        var currentMonth = new Date().getMonth() + 1;
+        var currentYearMonth = currentYear + '-' + currentMonth;
+        var currentDate = toTime(currentYearMonth, true);
+
+        function getProgress(startYearMonth, endYearMonth) {
+          var start = toTime(startYearMonth, true);
+          var end = endYearMonth ? toTime(endYearMonth, false) : currentDate;
+          var current = end < currentDate ? end : currentDate;
+          if (end === start) {
+            return 100;
+          } else {
+            return Math.round(startYearMonth ? 100 * (current - start) / (end - start) : 0);
+          }
+        }
+
+        var odd = true;
+        var groupId;
+        $scope.result.rows.forEach(function (row, i) {
+          row.hitsTitles = row.hits.map(function (hit) {
+            return LocalizedValues.formatNumber(hit);
+          });
+          cols.ids[row.value] = [];
+          if ($scope.bucket.startsWith('dce')) {
+            var ids = row.value.split(':');
+            var isHarmo = row.className.indexOf('Harmonization') > -1 || ids[2] === '.'; // would work for both HarmonizationDataset and HarmonizationStudy
+            var titles = row.title.split(':');
+            var descriptions = row.description.split(':');
+            var rowSpan;
+            var id;
+
+            // study
+            id = ids[0];
+            if (!groupId) {
+              groupId = id;
+            } else if (id !== groupId) {
+              odd = !odd;
+              groupId = id;
+            }
+            rowSpan = appendRowSpan(id);
+            appendMinMax(id, row.start || currentYearMonth, row.end || currentYearMonth);
+            cols.ids[row.value].push({
+              id: id,
+              url: PageUrlService.studyPage(id, isHarmo ? 'harmonization' : 'individual'),
+              title: titles[0],
+              description: descriptions[0],
+              rowSpan: rowSpan,
+              index: i++
+            });
+
+            // population
+            id = ids[0] + ':' + ids[1];
+            rowSpan = appendRowSpan(id);
+            cols.ids[row.value].push({
+              id: id,
+              url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
+              title: titles[1],
+              description: descriptions[1],
+              rowSpan: rowSpan,
+              index: i++
+            });
+
+            // dce
+            cols.ids[row.value].push({
+              id: isHarmo ? '-' : row.value,
+              title: titles[2],
+              description: descriptions[2],
+              start: row.start,
+              current: currentYearMonth,
+              end: row.end,
+              progressClass: odd ? 'info' : 'warning',
+              url: PageUrlService.studyPopulationPage(ids[0], isHarmo ? 'harmonization' : 'individual', ids[1]),
+              rowSpan: 1,
+              index: i++
+            });
+          } else {
+            var parts = $scope.bucket.split('-');
+            var itemBucket = parts[0];
+            if (itemBucket === BUCKET_TYPES.DATASET) {
+              itemBucket = itemBucket + (row.className.indexOf('Harmonization') > -1 ? '-harmonized' : '-collected');
+            } else {
+              itemBucket = itemBucket + (row.className.indexOf('Harmonization') > -1 ? '-harmonization' : '-individual');
+            }
+
+            cols.ids[row.value].push({
+              id: row.value,
+              url: getBucketUrl(itemBucket, row.value),
+              title: row.title,
+              description: row.description,
+              min: row.start,
+              start: row.start,
+              current: currentYear,
+              end: row.end,
+              max: row.end,
+              progressStart: 0,
+              progress: getProgress(row.start ? row.start + '-01' : currentYearMonth, row.end ? row.end + '-12' : currentYearMonth),
+              progressClass: odd ? 'info' : 'warning',
+              rowSpan: 1,
+              index: i++
+            });
+            odd = !odd;
+          }
+        });
+
+        // adjust the rowspans and the progress
+        if ($scope.bucket.startsWith('dce')) {
+          $scope.result.rows.forEach(function (row, i) {
+            row.hitsTitles = row.hits.map(function (hit) {
+              return LocalizedValues.formatNumber(hit);
+            });
+            if (cols.ids[row.value][0].rowSpan > 0) {
+              cols.ids[row.value][0].rowSpan = rowSpans[cols.ids[row.value][0].id];
+            }
+            if (cols.ids[row.value][1].rowSpan > 0) {
+              cols.ids[row.value][1].rowSpan = rowSpans[cols.ids[row.value][1].id];
+            }
+            var ids = row.value.split(':');
+            if (minMax[ids[0]]) {
+              var min = minMax[ids[0]][0];
+              var max = minMax[ids[0]][1];
+              var start = cols.ids[row.value][2].start || currentYearMonth;
+              var end = cols.ids[row.value][2].end || currentYearMonth;
+              var diff = toTime(max, false) - toTime(min, true);
+              // set the DCE min and max dates of the study
+              cols.ids[row.value][2].min = min;
+              cols.ids[row.value][2].max = max;
+              // compute the progress
+              cols.ids[row.value][2].progressStart = 100 * (toTime(start, true) - toTime(min, true)) / diff;
+              cols.ids[row.value][2].progress = 100 * (toTime(end, false) - toTime(start, true)) / diff;
+              cols.ids[row.value].index = i;
+            }
+          });
+        }
+
+        return cols;
+      }
+
+      function mergeCriteriaItems(criteria) {
+        return criteria.reduce(function (prev, item) {
+          if (prev) {
+            RqlQueryService.updateCriteriaItem(prev, item);
+            return prev;
+          }
+
+          item.rqlQuery = RqlQueryUtils.buildRqlQuery(item);
+          return item;
+        }, null);
+      }
+
+      function updateStudyClassNameFilter(choice) {
+        StudyFilterShortcutService.filter(choice, $scope.lang);
+      }
+
+      function init() {
+        onLocationChange();
+      }
+
+      $scope.showMissing = true;
+      $scope.toggleMissing = function (value) {
+        $scope.showMissing = value;
+      };
+
+      $scope.groupByOptions = CoverageGroupByService;
+      $scope.bucketSelection = {
+        get studySelection() {
+          return this._studySelection;
+        },
+        set studySelection(value) {
+          this._studySelection = value;
+
+          if (!$scope.bucket || ($scope.bucket && ($scope.bucket.indexOf(BUCKET_TYPES.STUDY) > -1 || $scope.bucket.indexOf(BUCKET_TYPES.DCE) > -1))) {
+            updateBucket($scope.bucket.split('-')[0]);
+          } else if ($scope.bucket && $scope.bucket.indexOf(BUCKET_TYPES.DATASET) > -1) {
+            dsUpdateBucket($scope.bucket.split('-')[0]);
+          }
+
+          updateStudyClassNameFilter(value);
+        },
+        get dceBucketSelected() {
+          return this._dceBucketSelected;
+        },
+        set dceBucketSelected(value) {
+          var oldValue = this._dceBucketSelected;
+          this._dceBucketSelected = value;
+
+          onDceUpdateBucket(value, oldValue);
+        }
+      };
+
+      $scope.isStudyBucket = isStudyBucket;
+      $scope.isDatasetBucket = isDatasetBucket;
+      $scope.selectTab = selectTab;
+
+      $scope.selectBucket = function (bucket) {
+
+        $scope.bucket = bucket;
+        $scope.$parent.onBucketChanged(bucket);
+      };
+
+      $scope.$on('$locationChangeSuccess', onLocationChange);
+      $scope.rowspans = {};
+
+      $scope.getSpan = function (study, population) {
+        var length = 0;
+        if (population) {
+          var prefix = study + ':' + population;
+          length = $scope.result.rows.filter(function (row) {
+            return row.title.startsWith(prefix + ':');
+          }).length;
+          $scope.rowspans[prefix] = length;
+          return length;
+        } else {
+          length = $scope.result.rows.filter(function (row) {
+            return row.title.startsWith(study + ':');
+          }).length;
+          $scope.rowspans[study] = length;
+          return length;
+        }
+      };
+
+      $scope.hasSpan = function (study, population) {
+        if (population) {
+          return $scope.rowspans[study + ':' + population] > 0;
+        } else {
+          return $scope.rowspans[study] > 0;
+        }
+      };
+
+      $scope.hasVariableTarget = function () {
+        var query = $location.search().query;
+        return query && RqlQueryUtils.hasTargetQuery(RqlQueryService.parseQuery(query), RQL_NODE.VARIABLE);
+      };
+
+      $scope.hasSelected = function () {
+        return $scope.table && $scope.table.rows && $scope.table.rows.filter(function (r) {
+          return r.selected;
+        }).length;
+      };
+
+      $scope.selectAll = function () {
+        if ($scope.table && $scope.table.rows) {
+          $scope.table.rows.forEach(function (r) {
+            r.selected = true;
+          });
+        }
+      };
+
+      $scope.selectNone = function () {
+        if ($scope.table && $scope.table.rows) {
+          $scope.table.rows.forEach(function (r) {
+            r.selected = false;
+          });
+        }
+      };
+
+      $scope.selectFull = function () {
+        if ($scope.table && $scope.table.rows) {
+          $scope.table.rows.forEach(function (r) {
+            if (r.hits) {
+              r.selected = r.hits.filter(function (h) {
+                return h === 0;
+              }).length === 0;
+            } else {
+              r.selected = false;
+            }
+          });
+        }
+      };
+
+      $scope.BUCKET_TYPES = BUCKET_TYPES;
+
+      $scope.downloadUrl = function () {
+        return PageUrlService.downloadCoverage($scope.query);
+      };
+
+      $scope.$watch('result', function () {
+        $scope.table = { cols: [] };
+        vocabulariesTermsMap = {};
+
+        if ($scope.result && $scope.result.rows) {
+          var tableTmp = $scope.result;
+          tableTmp.cols = splitIds();
+          $scope.table = tableTmp;
+
+          vocabulariesTermsMap = decorateTermHeaders($scope.table.vocabularyHeaders, $scope.table.termHeaders, 'vocabularyName');
+          decorateTermHeaders($scope.table.taxonomyHeaders, $scope.table.termHeaders, 'taxonomyName');
+          decorateVocabularyHeaders($scope.table.taxonomyHeaders, $scope.table.vocabularyHeaders);
+        }
+      });
+
+      $scope.updateCriteria = function (id, term, idx, type) { //
+        var vocabulary = $scope.bucket.startsWith('dce') ? 'dceId' : 'id';
+        var criteria = { varItem: RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, term.taxonomyName, term.vocabularyName, term.entity.name) };
+
+        // if id is null, it is a click on the total count for the term
+        if (id) {
+          var groupBy = $scope.bucket.split('-')[0];
+          if (groupBy === 'dce' && id.endsWith(':.')) {
+            groupBy = 'study';
+            var studyId = id.split(':')[0];
+            criteria.item = RqlQueryService.createCriteriaItem(targetMap[groupBy], 'Mica_' + targetMap[groupBy], 'id', studyId);
+          } else {
+            criteria.item = RqlQueryService.createCriteriaItem(targetMap[groupBy], 'Mica_' + targetMap[groupBy], vocabulary, id);
+          }
+        } else if ($scope.bucket.endsWith('individual')) {
+          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.STUDY, 'Mica_' + QUERY_TARGETS.STUDY, 'className', 'Study');
+        } else if ($scope.bucket.endsWith('harmonization')) {
+          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.STUDY, 'Mica_' + QUERY_TARGETS.STUDY, 'className', 'HarmonizationStudy');
+        } else if ($scope.bucket.endsWith('collected')) {
+          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.DATASET, 'Mica_' + QUERY_TARGETS.DATASET, 'className', 'StudyDataset');
+        } else if ($scope.bucket.endsWith('harmonized')) {
+          criteria.item = RqlQueryService.createCriteriaItem(QUERY_TARGETS.DATASET, 'Mica_' + QUERY_TARGETS.DATASET, 'className', 'HarmonizationDataset');
+        }
+
+        $q.all(criteria).then(function (criteria) {
+          $scope.onUpdateCriteria(criteria.varItem, type, false, true);
+          if (criteria.item) {
+            $scope.onUpdateCriteria(criteria.item, type);
+          }
+          if (criteria.bucketItem) {
+            $scope.onUpdateCriteria(criteria.bucketItem, type);
+          }
+        });
+      };
+
+      $scope.isFullCoverageImpossibleOrCoverageAlreadyFull = function () {
+        var rows = $scope.table ? ($scope.table.rows || []) : [];
+        var rowsWithZeroHitColumn = 0;
+
+        if (rows.length === 0) {
+          return true;
+        }
+
+        rows.forEach(function (row) {
+          if (row.hits) {
+            if (row.hits.filter(function (hit) { return hit === 0; }).length > 0) {
+              rowsWithZeroHitColumn++;
+            }
+          }
+        });
+
+        if (rowsWithZeroHitColumn === 0) {
+          return true;
+        }
+
+        return rows.length === rowsWithZeroHitColumn;
+      };
+
+      $scope.selectFullAndFilter = function () {
+        var selected = [];
+        if ($scope.table && $scope.table.rows) {
+          $scope.table.rows.forEach(function (r) {
+            if (r.hits) {
+              if (r.hits.filter(function (h) {
+                return h === 0;
+              }).length === 0) {
+                selected.push(r);
+              }
+            }
+          });
+          console.log('selected=' + Math.round(selected.length * 100 / $scope.table.rows.length) + '%');
+        }
+        updateFilterCriteriaInternal(selected, true);
+      };
+
+      $scope.updateFilterCriteria = function () {
+        updateFilterCriteriaInternal($scope.table.rows.filter(function (r) {
+          return r.selected;
+        }));
+      };
+
+      $scope.removeTerm = function (term) {
+        var remainingCriteriaItems = vocabulariesTermsMap[term.vocabularyName].filter(function (t) {
+          return t.entity.name !== term.entity.name;
+        }).map(function (t) {
+          return RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, t.taxonomyName, t.vocabularyName, t.entity.name);
+        });
+
+        $q.all(remainingCriteriaItems).then(function (criteriaItems) {
+          $scope.onUpdateCriteria(mergeCriteriaItems(criteriaItems), null, true, false, false);
+        });
+      };
+
+      $scope.removeVocabulary = function (vocabulary) {
+        RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, vocabulary.taxonomyName, vocabulary.entity.name).then(function (item) {
+          $scope.onRemoveCriteria(item);
+        });
+      };
+
+      init();
+    }])
+
+  .directive('coverageResultTable', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        result: '=',
+        loading: '=',
+        bucket: '=',
+        query: '=',
+        criteria: '=',
+        onUpdateCriteria: '=',
+        onRemoveCriteria: '='
+      },
+      controller: 'CoverageResultTableController',
+      templateUrl: 'search/components/result/coverage-result/component.html'
+    };
+  }]);
+;'use strict';
+
+ngObibaMica.search
+  .controller('GraphicsResultController', [
+    'GraphicChartsConfig',
+    'GraphicChartsUtils',
+    'RqlQueryService',
+    '$filter',
+    '$scope',
+    'D3GeoConfig', 
+    'D3ChartConfig',
+    function (GraphicChartsConfig,
+      GraphicChartsUtils,
+      RqlQueryService,
+      $filter,
+      $scope, D3GeoConfig, D3ChartConfig) {
+
+      $scope.hasChartObjects = function () {
+        return $scope.chartObjects && Object.keys($scope.chartObjects).length > 0;
+      };
+
+      var setChartObject = function (vocabulary, dtoObject, header, title, options, isTable) {
+
+        return GraphicChartsUtils.getArrayByAggregation(vocabulary, dtoObject)
+          .then(function (entries) {
+            var data = entries.map(function (e) {
+              if (e.participantsNbr && isTable) {
+                return [e.title, e.value, e.participantsNbr];
+              }
+              else {
+                return [e.title, e.value];
+              }
+            });
+
+            if (data.length > 0) {
+              data.unshift(header);
+              angular.extend(options, { title: title });
+
+              return {
+                data: data,
+                entries: entries,
+                options: options,
+                vocabulary: vocabulary
+              };
+            }
+          });
+
+      };
+
+      var charOptions = GraphicChartsConfig.getOptions().ChartsOptions;
+
+      $scope.updateCriteria = function (key, vocabulary) {
+        RqlQueryService.createCriteriaItem('study', 'Mica_study', vocabulary, key).then(function (item) {
+          $scope.onUpdateCriteria(item, 'studies');
+        });
+      };
+
+      $scope.$watch('result', function (result) {
+        $scope.chartObjects = {};
+        $scope.noResults = true;
+
+        if (result && result.studyResultDto.totalHits) {
+          $scope.noResults = false;
+          setChartObject('populations-model-selectionCriteria-countriesIso',
+            result.studyResultDto,
+            [$filter('translate')(charOptions.geoChartOptions.header[0]), $filter('translate')(charOptions.geoChartOptions.header[1])],
+            $filter('translate')(charOptions.geoChartOptions.title) + ' (N=' + result.studyResultDto.totalHits + ')',
+            charOptions.geoChartOptions.options).then(function (geoStudies) {
+              if (geoStudies) {
+                var d3Config = new D3GeoConfig()
+                  .withData(geoStudies.entries)
+                  .withTitle($filter('translate')(charOptions.geoChartOptions.title) + ' (N=' + result.studyResultDto.totalHits + ')');
+                d3Config.withColor(charOptions.geoChartOptions.options.colors);
+                var chartObject = {
+                  geoChartOptions: {
+                    directiveTitle: geoStudies.options.title,
+                    headerTitle: $filter('translate')('graphics.geo-charts'),
+                    chartObject: {
+                      geoTitle: geoStudies.options.title,
+                      options: geoStudies.options,
+                      type: 'GeoChart',
+                      vocabulary: geoStudies.vocabulary,
+                      data: geoStudies.data,
+                      entries: geoStudies.entries,
+                      d3Config: d3Config
+                    }
+                  }
+                };
+                chartObject.geoChartOptions.getTable = function () {
+                  return chartObject.geoChartOptions.chartObject;
+                };
+                angular.extend($scope.chartObjects, chartObject);
+              }
+            });
+          // Study design chart.
+          setChartObject('model-methods-design',
+            result.studyResultDto,
+            [$filter('translate')(charOptions.studiesDesigns.header[0]),
+            $filter('translate')(charOptions.studiesDesigns.header[1])
+            ],
+            $filter('translate')(charOptions.studiesDesigns.title) + ' (N=' + result.studyResultDto.totalHits + ')',
+            charOptions.studiesDesigns.options).then(function (methodDesignStudies) {
+              if (methodDesignStudies) {
+                var d3Config = new D3ChartConfig(methodDesignStudies.vocabulary)
+                  .withType('multiBarHorizontalChart')
+                  .withTitle($filter('translate')(charOptions.studiesDesigns.title) + ' (N=' + result.studyResultDto.totalHits + ')')
+                  .withData(angular.copy(methodDesignStudies.entries), false, $filter('translate')('graphics.nbr-studies'));
+                d3Config.options.chart.showLegend = false;
+                d3Config.options.chart.color = charOptions.numberParticipants.options.colors;
+                var chartObject = {
+                  studiesDesigns: {
+                    //directiveTitle: methodDesignStudies.options.title ,
+                    headerTitle: $filter('translate')('graphics.study-design'),
+                    chartObject: {
+                      options: methodDesignStudies.options,
+                      type: 'BarChart',
+                      data: methodDesignStudies.data,
+                      vocabulary: methodDesignStudies.vocabulary,
+                      entries: methodDesignStudies.entries,
+                      d3Config: d3Config
+                    }
+                  }
+                };
+                angular.extend($scope.chartObjects, chartObject);
+              }
+            });
+
+          // Study design table.
+          setChartObject('model-methods-design',
+            result.studyResultDto,
+            [$filter('translate')(charOptions.studiesDesigns.header[0]),
+            $filter('translate')(charOptions.studiesDesigns.header[1]),
+            $filter('translate')(charOptions.studiesDesigns.header[2])
+            ],
+            $filter('translate')(charOptions.studiesDesigns.title) + ' (N=' + result.studyResultDto.totalHits + ')',
+            charOptions.studiesDesigns.options, true).then(function (methodDesignStudies) {
+              if (methodDesignStudies) {
+                var chartObject = {
+                  chartObjectTable: {
+                    options: methodDesignStudies.options,
+                    type: 'BarChart',
+                    data: methodDesignStudies.data,
+                    vocabulary: methodDesignStudies.vocabulary,
+                    entries: methodDesignStudies.entries
+                  }
+
+                };
+                chartObject.getTable = function () {
+                  return chartObject.chartObjectTable;
+                };
+                angular.extend($scope.chartObjects.studiesDesigns, chartObject);
+              }
+            });
+          setChartObject('model-numberOfParticipants-participant-number-range',
+            result.studyResultDto,
+            [$filter('translate')(charOptions.numberParticipants.header[0]), $filter('translate')(charOptions.numberParticipants.header[1])],
+            $filter('translate')(charOptions.numberParticipants.title) + ' (N=' + result.studyResultDto.totalHits + ')',
+            charOptions.numberParticipants.options).then(function (numberParticipant) {
+              if (numberParticipant) {
+                var chartConfig = new D3ChartConfig(numberParticipant.vocabulary)
+                  .withType('pieChart')
+                  .withTitle($filter('translate')(charOptions.numberParticipants.title) + ' (N=' + result.studyResultDto.totalHits + ')')
+                  .withData(angular.copy(numberParticipant.entries), true);
+                chartConfig.options.chart.legendPosition = 'right';
+                chartConfig.options.chart.color = charOptions.numberParticipants.options.colors;
+                var chartObject = {
+                  numberParticipants: {
+                    headerTitle: $filter('translate')('graphics.number-participants'),
+                    chartObject: {
+                      options: numberParticipant.options,
+                      type: 'PieChart',
+                      data: numberParticipant.data,
+                      vocabulary: numberParticipant.vocabulary,
+                      entries: numberParticipant.entries,
+                      d3Config: chartConfig
+                    }
+                  }
+                };
+                chartObject.numberParticipants.getTable = function () {
+                  return chartObject.numberParticipants.chartObject;
+                };
+                angular.extend($scope.chartObjects, chartObject);
+              }
+            });
+
+          setChartObject('populations-dataCollectionEvents-model-bioSamples',
+            result.studyResultDto,
+            [$filter('translate')(charOptions.biologicalSamples.header[0]), $filter('translate')(charOptions.biologicalSamples.header[1])],
+            $filter('translate')(charOptions.biologicalSamples.title) + ' (N=' + result.studyResultDto.totalHits + ')',
+            charOptions.biologicalSamples.options).then(function (bioSamplesStudies) {
+              if (bioSamplesStudies) {
+                var d3Config = new D3ChartConfig(bioSamplesStudies.vocabulary)
+                  .withType('multiBarHorizontalChart')
+                  .withTitle($filter('translate')(charOptions.biologicalSamples.title) + ' (N=' + result.studyResultDto.totalHits + ')')
+                  .withData(angular.copy(bioSamplesStudies.entries), false, $filter('translate')('graphics.nbr-studies'));
+                d3Config.options.chart.showLegend = false;
+                d3Config.options.chart.color = charOptions.numberParticipants.options.colors;
+                var chartObject = {
+                  biologicalSamples: {
+                    headerTitle: $filter('translate')('graphics.bio-samples'),
+                    chartObject: {
+                      options: bioSamplesStudies.options,
+                      type: 'BarChart',
+                      data: bioSamplesStudies.data,
+                      vocabulary: bioSamplesStudies.vocabulary,
+                      entries: bioSamplesStudies.entries,
+                      d3Config: d3Config
+                    }
+                  }
+                };
+                chartObject.biologicalSamples.getTable = function () {
+                  return chartObject.biologicalSamples.chartObject;
+                };
+                angular.extend($scope.chartObjects, chartObject);
+              }
+            });
+        }
+      });
+    }])
+
+  .directive('graphicsResult', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        result: '=',
+        loading: '=',
+        onUpdateCriteria: '='
+      },
+      controller: 'GraphicsResultController',
+      templateUrl: 'search/components/result/graphics-result/component.html'
+    };
+  }]);;'use strict';
+
+/* global DISPLAY_TYPES */
+/* global QUERY_TYPES */
+
+ngObibaMica.search
+  .controller('SearchResultController', [
+    '$scope',
+    'ngObibaMicaSearch',
+    'ngObibaMicaUrl',
+    'RqlQueryService',
+    'RqlQueryUtils',
+    'ngObibaMicaSearchTemplateUrl',
+    function ($scope,
+      ngObibaMicaSearch,
+      ngObibaMicaUrl,
+      RqlQueryService,
+      RqlQueryUtils,
+      ngObibaMicaSearchTemplateUrl) {
+
+      function updateType(type) {
+        Object.keys($scope.activeTarget).forEach(function (key) {
+          $scope.activeTarget[key].active = type === key;
+        });
+      }
+
+      $scope.targetTypeMap = $scope.$parent.taxonomyTypeMap;
+      $scope.QUERY_TARGETS = QUERY_TARGETS;
+      $scope.QUERY_TYPES = QUERY_TYPES;
+      $scope.options = ngObibaMicaSearch.getOptions();
+      $scope.activeTarget = {};
+      $scope.activeTarget[QUERY_TYPES.VARIABLES] = { active: false, name: QUERY_TARGETS.VARIABLE, totalHits: 0 };
+      $scope.activeTarget[QUERY_TYPES.DATASETS] = { active: false, name: QUERY_TARGETS.DATASET, totalHits: 0 };
+      $scope.activeTarget[QUERY_TYPES.STUDIES] = { active: false, name: QUERY_TARGETS.STUDY, totalHits: 0 };
+      $scope.activeTarget[QUERY_TYPES.NETWORKS] = { active: false, name: QUERY_TARGETS.NETWORK, totalHits: 0 };
+
+      $scope.getUrlTemplate = function (tab) {
+        switch (tab) {
+          case 'list':
+            console.log(ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultList'));
+            return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultList');
+          case 'coverage':
+            console.log(ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultCoverage'));
+            return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultCoverage');
+          case 'graphics':
+            console.log(ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultGraphics'));
+            return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultGraphics');
+        }
+      };
+
+      $scope.selectType = function (type) {
+        updateType(type);
+        $scope.type = type;
+        $scope.$parent.onTypeChanged(type);
+      };
+
+      $scope.getTotalHits = function (type) {
+        if (!$scope.result.list || !$scope.result.list[type + 'ResultDto']) {
+          return '...';
+        }
+        return $scope.result.list[type + 'ResultDto'].totalHits;
+      };
+
+      $scope.getReportUrl = function () {
+
+        if ($scope.query === null) {
+          return $scope.query;
+        }
+
+        var parsedQuery = RqlQueryService.parseQuery($scope.query);
+        var target = typeToTarget($scope.type);
+        var targetQuery = parsedQuery.args.filter(function (query) {
+          return query.name === target;
+        }).pop();
+        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, 100000));
+        var queryWithoutLimit = new RqlQuery().serializeArgs(parsedQuery.args);
+
+        return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithoutLimit));
+      };
+
+      $scope.getStudySpecificReportUrl = function () {
+
+        if ($scope.query === null) {
+          return $scope.query;
+        }
+
+        var parsedQuery = RqlQueryService.parseQuery($scope.query);
+        var target = typeToTarget($scope.type);
+        var targetQuery = parsedQuery.args.filter(function (query) {
+          return query.name === target;
+        }).pop();
+        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, 100000));
+        var queryWithoutLimit = new RqlQuery().serializeArgs(parsedQuery.args);
+
+        return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvReportResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithoutLimit));
+      };
+
+      $scope.$watchCollection('result', function () {
+        if ($scope.result.list) {
+          $scope.activeTarget[QUERY_TYPES.VARIABLES].totalHits = $scope.result.list.variableResultDto.totalHits;
+          $scope.activeTarget[QUERY_TYPES.DATASETS].totalHits = $scope.result.list.datasetResultDto.totalHits;
+          $scope.activeTarget[QUERY_TYPES.STUDIES].totalHits = $scope.result.list.studyResultDto.totalHits;
+          $scope.activeTarget[QUERY_TYPES.NETWORKS].totalHits = $scope.result.list.networkResultDto.totalHits;
+        }
+      });
+
+
+      $scope.$watch('type', function (type) {
+        updateType(type);
+      });
+
+      $scope.DISPLAY_TYPES = DISPLAY_TYPES;
+    }])
+
+  .directive('resultPanel', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        type: '=',
+        bucket: '=',
+        query: '=',
+        criteria: '=',
+        display: '=',
+        result: '=',
+        lang: '=',
+        loading: '=',
+        searchTabsOrder: '=',
+        resultTabsOrder: '=',
+        onTypeChanged: '=',
+        onBucketChanged: '=',
+        onPaginate: '=',
+        onUpdateCriteria: '=',
+        onRemoveCriteria: '='
+      },
+      controller: 'SearchResultController',
+      templateUrl: 'search/components/result/search-result/component.html'
+    };
+  }]);;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
  * This program and the accompanying materials
@@ -12126,7 +12137,7 @@ ngObibaMica.fileBrowser
       }
     };
   }]);
-;angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/search-result-list-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/classifications-view.html', 'search/views/classifications/taxonomies-facets-view.html', 'search/views/classifications/taxonomies-view.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-panel-template.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/term-panel-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/classifications/vocabulary-panel-template.html', 'search/views/coverage/coverage-search-result-table-template.html', 'search/views/criteria/criteria-node-template.html', 'search/views/criteria/criteria-root-template.html', 'search/views/criteria/criteria-target-template.html', 'search/views/criteria/criterion-dropdown-template.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/criterion-match-template.html', 'search/views/criteria/criterion-numeric-template.html', 'search/views/criteria/criterion-string-terms-template.html', 'search/views/criteria/search-criteria-region-template.html', 'search/views/criteria/target-template.html', 'search/views/graphics/graphics-search-result-template.html', 'search/views/list/datasets-search-result-table-template.html', 'search/views/list/networks-search-result-table-template.html', 'search/views/list/pagination-template.html', 'search/views/list/search-result-pagination-template.html', 'search/views/list/studies-search-result-table-template.html', 'search/views/list/variables-search-result-table-template.html', 'search/views/result-tabs-order-template-view.html', 'search/views/search-layout.html', 'search/views/search-result-coverage-template.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search-result-panel-template.html', 'search/views/search-study-filter-template.html', 'search/views/search.html', 'search/views/search2.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
+;angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/result/coverage-result/component.html', 'search/components/result/graphics-result/component.html', 'search/components/result/search-result/component.html', 'search/components/result/search-result/coverage.html', 'search/components/result/search-result/graphics.html', 'search/components/result/search-result/list.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/classifications-view.html', 'search/views/classifications/taxonomies-facets-view.html', 'search/views/classifications/taxonomies-view.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-panel-template.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/term-panel-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/classifications/vocabulary-panel-template.html', 'search/views/criteria/criteria-node-template.html', 'search/views/criteria/criteria-root-template.html', 'search/views/criteria/criteria-target-template.html', 'search/views/criteria/criterion-dropdown-template.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/criterion-match-template.html', 'search/views/criteria/criterion-numeric-template.html', 'search/views/criteria/criterion-string-terms-template.html', 'search/views/criteria/search-criteria-region-template.html', 'search/views/criteria/target-template.html', 'search/views/list/datasets-search-result-table-template.html', 'search/views/list/networks-search-result-table-template.html', 'search/views/list/pagination-template.html', 'search/views/list/search-result-pagination-template.html', 'search/views/list/studies-search-result-table-template.html', 'search/views/list/variables-search-result-table-template.html', 'search/views/result-tabs-order-template-view.html', 'search/views/search-layout.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search-study-filter-template.html', 'search/views/search.html', 'search/views/search2.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
 
 angular.module("access/views/data-access-request-documents-view.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("access/views/data-access-request-documents-view.html",
@@ -13478,64 +13489,6 @@ angular.module("lists/views/region-criteria/search-criteria-region-template.html
     "</div>");
 }]);
 
-angular.module("lists/views/search-result-list-template.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("lists/views/search-result-list-template.html",
-    "<!--\n" +
-    "  ~ Copyright (c) 2018 OBiBa. All rights reserved.\n" +
-    "  ~\n" +
-    "  ~ This program and the accompanying materials\n" +
-    "  ~ are made available under the terms of the GNU Public License v3.0.\n" +
-    "  ~\n" +
-    "  ~ You should have received a copy of the GNU General Public License\n" +
-    "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
-    "  -->\n" +
-    "\n" +
-    "\n" +
-    "<div ng-show=\"display === 'list'\">\n" +
-    "    <!--ToDo using the entity-counts component to diusplay some counts int lists page-->\n" +
-    "    <!--<entity-counts taxonomy-type-map=\"targetTypeMap\" result-tabs-order=\"['study', 'variable', 'network']\" target=\"target\" result=\"result\"></entity-counts>-->\n" +
-    "    <div class=\"row voffset3\">\n" +
-    "        <div class=\"col-md-2\">\n" +
-    "            <span ng-show=\"options.obibaListOptions.countCaption\" role=\"presentation\" ng-repeat=\"res in resultTabsOrder\"\n" +
-    "                  ng-class=\"{active: activeTarget[targetTypeMap[res]].active && resultTabsOrder.length > 1, disabled: resultTabsOrder.length === 1}\"\n" +
-    "                  ng-if=\"options[targetTypeMap[res]].showSearchTab\">\n" +
-    "                <h4 ng-if=\"resultTabsOrder.length === 1\" class=\"pull-left\">\n" +
-    "                    {{totalHits = getTotalHits(res);\"\"}}\n" +
-    "                    {{singleLabel = \"search.\" + res + \".label\";\"\"}}\n" +
-    "                    {{totalHits | localizedNumber }}  {{totalHits>1?targetTypeMap[res]:singleLabel | translate}}\n" +
-    "                </h4>\n" +
-    "            </span>\n" +
-    "            </div>\n" +
-    "        <div class=\"col-md-10\">\n" +
-    "            <div ng-show=\"options.obibaListOptions.searchForm\">\n" +
-    "                <list-search-widget type=\"type\"></list-search-widget>\n" +
-    "            </div>\n" +
-    "            <div class=\"pull-right hoffset1\">\n" +
-    "                <div ng-repeat=\"res in resultTabsOrder\"\n" +
-    "                     ng-show=\"activeTarget[targetTypeMap[res]].active\"\n" +
-    "                     class=\"inline\" test-ref=\"pager\">\n" +
-    "                  <span search-result-pagination\n" +
-    "                        show-total=\"false\"\n" +
-    "                        target=\"activeTarget[targetTypeMap[res]].name\"\n" +
-    "                        total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
-    "                        on-change=\"onPaginate\">\n" +
-    "                  </span>\n" +
-    "                </div>\n" +
-    "            </div>\n" +
-    "            <span ng-repeat=\"res in resultTabsOrder\"\n" +
-    "                  ng-show=\"activeTarget[targetTypeMap[res]].active && activeTarget[targetTypeMap[res]].totalHits > 0 && options.obibaListOptions.searchForm\">\n" +
-    "                                <list-sort-widget target=\"type\" class=\"pull-right\"></list-sort-widget>\n" +
-    "            </span>\n" +
-    "        </div>\n" +
-    "    </div>\n" +
-    "    <div class=\"row\">\n" +
-    "        <ng-include include-replace ng-repeat=\"res in resultTabsOrder\"\n" +
-    "                    src=\"'search/views/search-result-list-' + res + '-template.html'\"></ng-include>\n" +
-    "    </div>\n" +
-    "</div>\n" +
-    "");
-}]);
-
 angular.module("lists/views/sort-widget/sort-widget-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("lists/views/sort-widget/sort-widget-template.html",
     "<div class=\"btn-group dropdown\">\n" +
@@ -13834,6 +13787,312 @@ angular.module("search/components/meta-taxonomy/meta-taxonomy-filter-panel/compo
     "  </uib-accordion>\n" +
     "</div>\n" +
     "");
+}]);
+
+angular.module("search/components/result/coverage-result/component.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/result/coverage-result/component.html",
+    "<div class=\"coverage\">\n" +
+    "\n" +
+    "  <div ng-if=\"hasVariableTarget()\">\n" +
+    "    <ul class=\"nav nav-pills pull-left\">\n" +
+    "      <li ng-if=\"groupByOptions.canShowStudy() && groupByOptions.canShowDataset()\" ng-class=\"{'active': bucket.startsWith('study') || bucketStartsWithDce}\"\n" +
+    "        class=\"studies\">\n" +
+    "        <a href ng-click=\"selectTab('study')\" translate>{{groupByOptions.studyTitle()}}</a>\n" +
+    "      </li>\n" +
+    "      <li ng-if=\"groupByOptions.canShowStudy() && groupByOptions.canShowDataset()\" ng-class=\"{'active': bucket.startsWith('dataset')}\"\n" +
+    "        class=\"datasets\">\n" +
+    "        <a href ng-click=\"selectTab('dataset')\" translate>{{groupByOptions.datasetTitle()}}</a>\n" +
+    "      </li>\n" +
+    "    </ul>\n" +
+    "\n" +
+    "    <div ng-class=\"{'pull-right': groupByOptions.canShowStudy() && groupByOptions.canShowDataset()}\">\n" +
+    "      <a ng-if=\"hasSelected()\" href class=\"btn btn-default\" ng-click=\"updateFilterCriteria()\">\n" +
+    "        <i class=\"fa fa-filter\"></i> {{'search.filter' | translate}}\n" +
+    "      </a>\n" +
+    "\n" +
+    "      <span ng-if=\"table.taxonomyHeaders.length > 0\">\n" +
+    "        <a href class=\"btn btn-info btn-responsive\" ng-click=\"selectFullAndFilter()\" ng-hide=\"isFullCoverageImpossibleOrCoverageAlreadyFull()\">\n" +
+    "          {{'search.coverage-select.full' | translate}}\n" +
+    "        </a>\n" +
+    "        <a obiba-file-download url=\"downloadUrl()\" target=\"_self\" download class=\"btn btn-info btn-responsive\" href>\n" +
+    "          <i class=\"fa fa-download\"></i> {{'download' | translate}}\n" +
+    "        </a>\n" +
+    "      </span>\n" +
+    "    </div>\n" +
+    "\n" +
+    "    <div class=\"clearfix\"></div>\n" +
+    "\n" +
+    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}\" ng-if=\"groupByOptions.canShowDce(bucket)\">\n" +
+    "      <label class=\"checkbox-inline\">\n" +
+    "        <input type=\"checkbox\" ng-model=\"bucketSelection.dceBucketSelected\">\n" +
+    "        <span translate>search.coverage-buckets.dce</span>\n" +
+    "      </label>\n" +
+    "    </div>\n" +
+    "\n" +
+    "    <div class=\"voffset2\" ng-if=\"groupByOptions.canShowStudy()\">\n" +
+    "      <div class=\"btn btn-group\" style=\"padding: 0\">\n" +
+    "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'all'\" translate>all</label>\n" +
+    "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'individual'\" translate>search.coverage-buckets.individual</label>\n" +
+    "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'harmonization'\" translate>search.coverage-buckets.harmonization</label>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "\n" +
+    "  <p class=\"help-block\" ng-if=\"!loading && !table.taxonomyHeaders\">\n" +
+    "    <span ng-if=\"!hasVariableTarget()\" translate>search.no-coverage</span>\n" +
+    "    <span ng-if=\"hasVariableTarget()\" translate>search.no-results</span>\n" +
+    "  </p>\n" +
+    "\n" +
+    "  <div ng-if=\"loading\" class=\"loading\"></div>\n" +
+    "\n" +
+    "  <div class=\"table-responsive\" ng-if=\"!loading && table.taxonomyHeaders.length > 0\">\n" +
+    "    <table class=\"table table-bordered table-striped\">\n" +
+    "      <thead>\n" +
+    "        <tr>\n" +
+    "          <th rowspan=\"2\" width=\"50\" style=\"text-align: center\">\n" +
+    "            <div class=\"btn-group voffset1\" uib-dropdown>\n" +
+    "              <div uib-dropdown-toggle>\n" +
+    "                <span class=\"fa fa-square-o\"></span>\n" +
+    "                <span class=\"fa fa-caret-down\"></span>\n" +
+    "              </div>\n" +
+    "              <ul uib-dropdown-menu role=\"menu\">\n" +
+    "                <li role=\"menuitem\">\n" +
+    "                  <a href ng-click=\"selectAll()\" translate>search.coverage-select.all</a>\n" +
+    "                </li>\n" +
+    "                <li role=\"menuitem\">\n" +
+    "                  <a href ng-click=\"selectNone()\" translate>search.coverage-select.none</a>\n" +
+    "                </li>\n" +
+    "                <li role=\"menuitem\">\n" +
+    "                  <a href ng-click=\"selectFull()\" translate>search.coverage-select.full</a>\n" +
+    "                </li>\n" +
+    "              </ul>\n" +
+    "            </div>\n" +
+    "          </th>\n" +
+    "          <th rowspan=\"{{bucketStartsWithDce ? 1 : 2}}\" colspan=\"{{table.cols.colSpan}}\" translate>\n" +
+    "            {{'search.coverage-buckets.' + bucket}}\n" +
+    "          </th>\n" +
+    "          <th ng-repeat=\"header in ::table.vocabularyHeaders\" colspan=\"{{::header.termsCount}}\">\n" +
+    "            <span uib-popover=\"{{header.entity.descriptions[0].value}}\" popover-title=\"{{header.entity.titles[0].value}}\" popover-placement=\"bottom\"\n" +
+    "              popover-trigger=\"'mouseenter'\">\n" +
+    "              {{header.entity.titles[0].value}}\n" +
+    "            </span>\n" +
+    "            <small>\n" +
+    "              <a href ng-click=\"removeVocabulary(header)\">\n" +
+    "                <i class=\"fa fa-times\"></i>\n" +
+    "              </a>\n" +
+    "            </small>\n" +
+    "          </th>\n" +
+    "        </tr>\n" +
+    "        <tr>\n" +
+    "          <th ng-if=\"bucketStartsWithDce\" translate>search.coverage-dce-cols.study</th>\n" +
+    "          <th ng-if=\"bucketStartsWithDce\" colspan=\"{{choseHarmonization && !choseAll ? 2 : 1}}\" translate>search.coverage-dce-cols.population</th>\n" +
+    "          <th ng-if=\"bucketStartsWithDce\" ng-hide=\"choseHarmonization && !choseAll\" translate>search.coverage-dce-cols.dce</th>\n" +
+    "          <th ng-repeat=\"header in ::table.termHeaders\">\n" +
+    "            <span uib-popover=\"{{header.entity.descriptions[0].value}}\" popover-title=\"{{header.entity.titles[0].value}}\" popover-placement=\"bottom\"\n" +
+    "              popover-trigger=\"'mouseenter'\">\n" +
+    "              {{header.entity.titles[0].value}}\n" +
+    "            </span>\n" +
+    "            <small>\n" +
+    "              <a ng-if=\"header.canRemove\" href ng-click=\"removeTerm(header)\">\n" +
+    "                <i class=\"fa fa-times\"></i>\n" +
+    "              </a>\n" +
+    "            </small>\n" +
+    "          </th>\n" +
+    "        </tr>\n" +
+    "      </thead>\n" +
+    "      <tbody>\n" +
+    "        <tr ng-repeat=\"row in ::table.rows track by row.value\" ng-show=\"showMissing || table.termHeaders.length == row.hits.length\">\n" +
+    "          <td style=\"text-align: center\">\n" +
+    "            <input type=\"checkbox\" ng-model=\"row.selected\">\n" +
+    "          </td>\n" +
+    "          <td ng-repeat=\"col in ::table.cols.ids[row.value] track by col.index\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\"\n" +
+    "            ng-hide=\"col.id === '-' && (choseHarmonization && !choseAll)\">\n" +
+    "            <span ng-if=\"col.id === '-'\">-</span>\n" +
+    "            <a ng-hide=\"col.rowSpan === 0  || col.id === '-'\" href=\"{{col.url}}\" uib-popover-html=\"col.description === col.title ? null : col.description\"\n" +
+    "              popover-title=\"{{col.title}}\" popover-placement=\"bottom\" popover-trigger=\"'mouseenter'\">{{col.title}}</a>\n" +
+    "            <div style=\"text-align: center\" ng-if=\"col.start && bucketStartsWithDce\">\n" +
+    "              <div>\n" +
+    "                <small class=\"help-block no-margin\" ng-if=\"::col.end\">\n" +
+    "                  {{::col.start}} {{'to' | translate}} {{::col.end}}\n" +
+    "                </small>\n" +
+    "                <small class=\"help-block no-margin\" ng-if=\"!col.end\">\n" +
+    "                  {{::col.start}}, {{'search.coverage-end-date-ongoing' | translate | lowercase}}\n" +
+    "                </small>\n" +
+    "              </div>\n" +
+    "              <div class=\"progress no-margin\">\n" +
+    "                <div class=\"progress-bar progress-bar-transparent\" role=\"progressbar\" aria-valuenow=\"{{::col.start}}\" aria-valuemin=\"{{::col.min}}\"\n" +
+    "                  aria-valuemax=\"{{::col.start}}\" style=\"{{'width: ' + col.progressStart + '%'}}\">\n" +
+    "                </div>\n" +
+    "                <div class=\"{{'progress-bar progress-bar-' + col.progressClass}}\" role=\"progressbar\" aria-valuenow=\"{{col.current}}\" aria-valuemin=\"{{::col.start}}\"\n" +
+    "                  aria-valuemax=\"{{::col.end ? col.end : col.current}}\" style=\"{{'width: ' + col.progress + '%'}}\">\n" +
+    "                </div>\n" +
+    "              </div>\n" +
+    "            </div>\n" +
+    "          </td>\n" +
+    "          <td ng-repeat=\"h in ::table.termHeaders\" title=\"{{h.entity.titles[0].value}}\">\n" +
+    "            <a href ng-click=\"updateCriteria(row.value, h, $index, 'variables')\">\n" +
+    "              <span class=\"label label-info\" ng-show=\"row.hitsTitles[$index]\">{{row.hitsTitles[$index]}}</span>\n" +
+    "            </a>\n" +
+    "            <span ng-show=\"!row.hitsTitles[$index]\">0</span>\n" +
+    "          </td>\n" +
+    "        </tr>\n" +
+    "      </tbody>\n" +
+    "      <tfoot>\n" +
+    "        <tr>\n" +
+    "          <th></th>\n" +
+    "          <th colspan=\"{{table.cols.colSpan}}\" translate>all</th>\n" +
+    "          <th ng-repeat=\"header in ::table.termHeaders\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
+    "            <a href ng-click=\"updateCriteria(null, header, $index, 'variables')\">\n" +
+    "              <localized-number value=\"header.hits\"></localized-number>\n" +
+    "            </a>\n" +
+    "          </th>\n" +
+    "        </tr>\n" +
+    "      </tfoot>\n" +
+    "    </table>\n" +
+    "  </div>\n" +
+    "</div>");
+}]);
+
+angular.module("search/components/result/graphics-result/component.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/result/graphics-result/component.html",
+    "<div>\n" +
+    "  <div ng-if=\"loading\" class=\"loading\"></div>\n" +
+    "\n" +
+    "  <p class=\"help-block\" ng-if=\"!loading && !noResults && !hasChartObjects()\" translate>search.no-graphic-result</p>\n" +
+    "  <p class=\"help-block\" ng-if=\"!loading && noResults\" translate>search.no-results</p>\n" +
+    "\n" +
+    "  <div ng-repeat=\"chart in chartObjects\" class=\"panel panel-default\">\n" +
+    "    <div class=\"panel-heading\">\n" +
+    "      {{chart.headerTitle}}\n" +
+    "    </div>\n" +
+    "    <div class=\"panel-body\">\n" +
+    "      <div class=\"row\">\n" +
+    "        <div class=\"col-xs-12 col-lg-6\">\n" +
+    "          <div ng-if=\"chart.chartObject.type === 'GeoChart'\">\n" +
+    "            <obiba-geo config=\"chart.chartObject.d3Config\"></obiba-geo>\n" +
+    "          </div>\n" +
+    "          <div ng-if=\"chart.chartObject.type !== 'GeoChart'\">\n" +
+    "            <obiba-nv-chart chart-config=\"chart.chartObject.d3Config\"></obiba-nv-chart>\n" +
+    "          </div>\n" +
+    "        </div>\n" +
+    "        <div class=\"col-xs-12 col-lg-6\">\n" +
+    "          <div class=\"table-responsive\" ng-if=\"chart.getTable().data  &&  chart.getTable().data.length>1\">\n" +
+    "            <table style=\"max-height: 400px;\" class=\"table table-bordered table-striped\" fixed-header=\"chart.getTable().data\">\n" +
+    "              <thead>\n" +
+    "                <tr>\n" +
+    "                  <th>{{chart.getTable().data[0][0]}}</th>\n" +
+    "                  <th>{{chart.getTable().data[0][1]}}</th>\n" +
+    "                  <th ng-if=\"chart.getTable().data[0][2]\">{{chart.getTable().data[0][2]}}</th>\n" +
+    "                </tr>\n" +
+    "              </thead>\n" +
+    "              <tbody>\n" +
+    "                <tr ng-repeat=\"row in chart.getTable().entries\">\n" +
+    "                  <td>{{row.title}}</td>\n" +
+    "                  <td>\n" +
+    "                    <a href ng-click=\"updateCriteria(row.key, chart.getTable().vocabulary)\">\n" +
+    "                      <localized-number value=\"row.value\"></localized-number>\n" +
+    "                    </a>\n" +
+    "                  </td>\n" +
+    "                  <td ng-if=\"row.participantsNbr\">{{row.participantsNbr}}</td>\n" +
+    "                </tr>\n" +
+    "              </tbody>\n" +
+    "            </table>\n" +
+    "          </div>\n" +
+    "        </div>\n" +
+    "      </div>\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "</div>");
+}]);
+
+angular.module("search/components/result/search-result/component.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/result/search-result/component.html",
+    "<div class=\"search-result-tabs\">\n" +
+    "  <ng-include include-replace ng-repeat=\"tab in searchTabsOrder\" src=\"getUrlTemplate(tab)\"></ng-include>\n" +
+    "</div>");
+}]);
+
+angular.module("search/components/result/search-result/coverage.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/result/search-result/coverage.html",
+    "<!--\n" +
+    "  ~ Copyright (c) 2018 OBiBa. All rights reserved.\n" +
+    "  ~\n" +
+    "  ~ This program and the accompanying materials\n" +
+    "  ~ are made available under the terms of the GNU Public License v3.0.\n" +
+    "  ~\n" +
+    "  ~ You should have received a copy of the GNU General Public License\n" +
+    "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
+    "  -->\n" +
+    "\n" +
+    "<div ng-show=\"display === 'coverage'\">\n" +
+    "  <coverage-result-table\n" +
+    "    result=\"result.coverage\"\n" +
+    "    loading=\"loading\"\n" +
+    "    bucket=\"bucket\"\n" +
+    "    query=\"query\"\n" +
+    "    criteria=\"criteria\"\n" +
+    "    class=\"voffset2\"\n" +
+    "    on-update-criteria=\"onUpdateCriteria\"\n" +
+    "    on-remove-criteria=\"onRemoveCriteria\"></coverage-result-table>\n" +
+    "</div>\n" +
+    "  ");
+}]);
+
+angular.module("search/components/result/search-result/graphics.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/result/search-result/graphics.html",
+    "<!--\n" +
+    "  ~ Copyright (c) 2018 OBiBa. All rights reserved.\n" +
+    "  ~\n" +
+    "  ~ This program and the accompanying materials\n" +
+    "  ~ are made available under the terms of the GNU Public License v3.0.\n" +
+    "  ~\n" +
+    "  ~ You should have received a copy of the GNU General Public License\n" +
+    "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
+    "  -->\n" +
+    "\n" +
+    "<div ng-show=\"display === 'graphics'\">\n" +
+    "  <graphics-result on-update-criteria=\"onUpdateCriteria\" result=\"result.graphics\" loading=\"loading\" class=\"voffset2 graphics-tab\"></graphics-result>\n" +
+    "</div>");
+}]);
+
+angular.module("search/components/result/search-result/list.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/result/search-result/list.html",
+    "<!--\n" +
+    "  ~ Copyright (c) 2018 OBiBa. All rights reserved.\n" +
+    "  ~\n" +
+    "  ~ This program and the accompanying materials\n" +
+    "  ~ are made available under the terms of the GNU Public License v3.0.\n" +
+    "  ~\n" +
+    "  ~ You should have received a copy of the GNU General Public License\n" +
+    "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
+    "  -->\n" +
+    "\n" +
+    "<div ng-show=\"display === 'list'\" class=\"list-table\">\n" +
+    "  <result-tabs-order-count options=\"options\" result-tabs-order=\"resultTabsOrder\" active-target=\"activeTarget\" target-type-map=\"targetTypeMap\">\n" +
+    "  </result-tabs-order-count>\n" +
+    "  \n" +
+    "  <div class=\"voffset2\" ng-class=\"{'pull-right': options.studies.showSearchTab, 'pull-left': !options.studies.showSearchTab, 'hoffset2': !options.studies.showSearchTab}\">\n" +
+    "    <a obiba-file-download url=\"getStudySpecificReportUrl()\" target=\"_self\" ng-if=\"type=='studies'\" download class=\"btn btn-info\"\n" +
+    "      href>\n" +
+    "      <i class=\"fa fa-download\"></i> {{'report-group.study.button-name' | translate}}\n" +
+    "    </a>\n" +
+    "    <a obiba-file-download url=\"getReportUrl()\" target=\"_self\" download class=\"btn btn-info\" href>\n" +
+    "      <i class=\"fa fa-download\"></i> {{'download' | translate}}\n" +
+    "    </a>\n" +
+    "  </div>\n" +
+    "\n" +
+    "  <div class=\"clearfix\" ng-if=\"options.studies.showSearchTab\" />\n" +
+    "\n" +
+    "  <div class=\"tab-content\">\n" +
+    "    <div class=\"pull-left\" study-filter-shortcut ng-if=\"options.studies.showSearchTab\"></div>\n" +
+    "    <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"pull-right voffset2\" test-ref=\"pager\">\n" +
+    "      <span search-result-pagination target=\"activeTarget[targetTypeMap[res]].name\" total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
+    "        on-change=\"onPaginate\"></span>\n" +
+    "    </div>\n" +
+    "    <div class=\"clearfix\" />\n" +
+    "    <ng-include include-replace ng-repeat=\"res in resultTabsOrder\" src=\"'search/views/search-result-list-' + res + '-template.html'\"></ng-include>\n" +
+    "  </div>\n" +
+    "</div>");
 }]);
 
 angular.module("search/components/taxonomy/taxonomy-filter-detail/component.html", []).run(["$templateCache", function($templateCache) {
@@ -14592,168 +14851,6 @@ angular.module("search/views/classifications/vocabulary-panel-template.html", []
     "</div>");
 }]);
 
-angular.module("search/views/coverage/coverage-search-result-table-template.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("search/views/coverage/coverage-search-result-table-template.html",
-    "<div class=\"coverage\">\n" +
-    "\n" +
-    "  <div ng-if=\"hasVariableTarget()\">\n" +
-    "    <ul class=\"nav nav-pills pull-left\">\n" +
-    "      <li ng-if=\"groupByOptions.canShowStudy() && groupByOptions.canShowDataset()\"\n" +
-    "        ng-class=\"{'active': bucket.startsWith('study') || bucketStartsWithDce}\" class=\"studies\">\n" +
-    "        <a href ng-click=\"selectTab('study')\" translate>{{groupByOptions.studyTitle()}}</a>\n" +
-    "      </li>\n" +
-    "      <li ng-if=\"groupByOptions.canShowStudy() && groupByOptions.canShowDataset()\"\n" +
-    "        ng-class=\"{'active': bucket.startsWith('dataset')}\" class=\"datasets\">\n" +
-    "        <a href ng-click=\"selectTab('dataset')\" translate>{{groupByOptions.datasetTitle()}}</a>\n" +
-    "      </li>\n" +
-    "    </ul>\n" +
-    "\n" +
-    "    <div ng-class=\"{'pull-right': groupByOptions.canShowStudy() && groupByOptions.canShowDataset()}\">\n" +
-    "      <a ng-if=\"hasSelected()\" href class=\"btn btn-default\" ng-click=\"updateFilterCriteria()\">\n" +
-    "        <i class=\"fa fa-filter\"></i> {{'search.filter' | translate}}\n" +
-    "      </a>\n" +
-    "\n" +
-    "      <span ng-if=\"table.taxonomyHeaders.length > 0\" >\n" +
-    "        <a href class=\"btn btn-info btn-responsive\" ng-click=\"selectFullAndFilter()\" ng-hide=\"isFullCoverageImpossibleOrCoverageAlreadyFull()\">\n" +
-    "          {{'search.coverage-select.full' | translate}}\n" +
-    "        </a>\n" +
-    "        <a obiba-file-download url=\"downloadUrl()\" target=\"_self\" download class=\"btn btn-info btn-responsive\" href>\n" +
-    "          <i class=\"fa fa-download\"></i> {{'download' | translate}}\n" +
-    "        </a>\n" +
-    "      </span>\n" +
-    "    </div>\n" +
-    "\n" +
-    "    <div class=\"clearfix\"></div>\n" +
-    "\n" +
-    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket) && groupByOptions.canShowStudyType()}\" ng-if=\"!singleStudy && groupByOptions.canShowDce(bucket)\">\n" +
-    "      <label class=\"checkbox-inline\">\n" +
-    "        <input type=\"checkbox\" ng-model=\"bucketSelection.dceBucketSelected\">\n" +
-    "        <span translate>search.coverage-buckets.dce</span>\n" +
-    "      </label>\n" +
-    "    </div>\n" +
-    "\n" +
-    "    <div class=\"voffset2\" ng-if=\"!singleStudy && groupByOptions.canShowStudyType()\">\n" +
-    "      <div class=\"btn btn-group\" style=\"padding: 0\">\n" +
-    "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'all'\" translate>all</label>\n" +
-    "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'individual'\" translate>search.coverage-buckets.individual</label>\n" +
-    "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'harmonization'\" translate>search.coverage-buckets.harmonization</label>\n" +
-    "      </div>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "\n" +
-    "  <p class=\"help-block\" ng-if=\"!loading && !table.taxonomyHeaders\">\n" +
-    "    <span ng-if=\"!hasVariableTarget()\" translate>search.no-coverage</span>\n" +
-    "    <span ng-if=\"hasVariableTarget()\" translate>search.no-results</span>\n" +
-    "  </p>\n" +
-    "\n" +
-    "  <div ng-if=\"loading\" class=\"loading\"></div>\n" +
-    "\n" +
-    "  <div class=\"table-responsive\" ng-if=\"!loading && table.taxonomyHeaders.length > 0\">\n" +
-    "    <table class=\"table table-bordered table-striped\">\n" +
-    "      <thead>\n" +
-    "      <tr>\n" +
-    "        <th rowspan=\"2\" width=\"50\" style=\"text-align: center\">\n" +
-    "          <div class=\"btn-group voffset1\" uib-dropdown>\n" +
-    "            <div uib-dropdown-toggle>\n" +
-    "              <span class=\"fa fa-square-o\"></span>\n" +
-    "              <span class=\"fa fa-caret-down\"></span>\n" +
-    "            </div>\n" +
-    "            <ul uib-dropdown-menu role=\"menu\">\n" +
-    "              <li role=\"menuitem\"><a href ng-click=\"selectAll()\" translate>search.coverage-select.all</a></li>\n" +
-    "              <li role=\"menuitem\"><a href ng-click=\"selectNone()\" translate>search.coverage-select.none</a></li>\n" +
-    "              <li role=\"menuitem\"><a href ng-click=\"selectFull()\" translate>search.coverage-select.full</a></li>\n" +
-    "            </ul>\n" +
-    "          </div>\n" +
-    "        </th>\n" +
-    "        <th rowspan=\"{{bucketStartsWithDce ? 1 : 2}}\" colspan=\"{{table.cols.colSpan}}\" translate>\n" +
-    "          {{'search.coverage-buckets.' + bucket}}\n" +
-    "        </th>\n" +
-    "        <th ng-repeat=\"header in ::table.vocabularyHeaders\" colspan=\"{{::header.termsCount}}\">\n" +
-    "          <span\n" +
-    "            uib-popover=\"{{header.entity.descriptions[0].value}}\"\n" +
-    "            popover-title=\"{{header.entity.titles[0].value}}\"\n" +
-    "            popover-placement=\"bottom\"\n" +
-    "            popover-trigger=\"'mouseenter'\">\n" +
-    "          {{header.entity.titles[0].value}}\n" +
-    "          </span>\n" +
-    "          <small>\n" +
-    "            <a href ng-click=\"removeVocabulary(header)\"><i class=\"fa fa-times\"></i></a>\n" +
-    "          </small>\n" +
-    "        </th>\n" +
-    "      </tr>\n" +
-    "      <tr>\n" +
-    "        <th ng-if=\"bucketStartsWithDce && !singleStudy\" translate>search.coverage-dce-cols.study</th>\n" +
-    "        <th ng-if=\"bucketStartsWithDce\" colspan=\"{{choseHarmonization && !choseAll ? 2 : 1}}\" translate>search.coverage-dce-cols.population</th>\n" +
-    "        <th ng-if=\"bucketStartsWithDce\" ng-hide=\"choseHarmonization && !choseAll\" translate>search.coverage-dce-cols.dce</th>\n" +
-    "        <th ng-repeat=\"header in ::table.termHeaders\">\n" +
-    "          <span\n" +
-    "            uib-popover=\"{{header.entity.descriptions[0].value}}\"\n" +
-    "            popover-title=\"{{header.entity.titles[0].value}}\"\n" +
-    "            popover-placement=\"bottom\"\n" +
-    "            popover-trigger=\"'mouseenter'\">\n" +
-    "          {{header.entity.titles[0].value}}\n" +
-    "          </span>\n" +
-    "          <small>\n" +
-    "            <a ng-if=\"header.canRemove\" href ng-click=\"removeTerm(header)\"><i class=\"fa fa-times\"></i></a>\n" +
-    "          </small>\n" +
-    "        </th>\n" +
-    "      </tr>\n" +
-    "      </thead>\n" +
-    "      <tbody>\n" +
-    "      <tr ng-repeat=\"row in ::table.rows track by row.value\" ng-show=\"showMissing || table.termHeaders.length == row.hits.length\">\n" +
-    "        <td style=\"text-align: center\">\n" +
-    "          <input type=\"checkbox\" ng-model=\"row.selected\">\n" +
-    "        </td>\n" +
-    "        <td ng-repeat=\"col in ::table.cols.ids[row.value] track by col.index\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\" ng-hide=\"col.id === '-' && (singleStudy || choseHarmonization && !choseAll)\">\n" +
-    "          <span ng-if=\"col.id === '-'\">-</span>\n" +
-    "          <a ng-hide=\"col.rowSpan === 0  || col.id === '-'\" href=\"{{col.url}}\"\n" +
-    "            uib-popover-html=\"col.description === col.title ? null : col.description\"\n" +
-    "            popover-title=\"{{col.title}}\"\n" +
-    "            popover-placement=\"bottom\"\n" +
-    "            popover-trigger=\"'mouseenter'\">{{col.title}}</a>\n" +
-    "          <div style=\"text-align: center\" ng-if=\"col.start && bucketStartsWithDce\">\n" +
-    "            <div>\n" +
-    "              <small class=\"help-block no-margin\" ng-if=\"::col.end\">\n" +
-    "                {{::col.start}} {{'to' | translate}} {{::col.end}}\n" +
-    "              </small>\n" +
-    "              <small class=\"help-block no-margin\" ng-if=\"!col.end\">\n" +
-    "                {{::col.start}}, {{'search.coverage-end-date-ongoing' | translate | lowercase}}\n" +
-    "              </small>\n" +
-    "            </div>\n" +
-    "            <div class=\"progress no-margin\">\n" +
-    "              <div class=\"progress-bar progress-bar-transparent\" role=\"progressbar\"\n" +
-    "                aria-valuenow=\"{{::col.start}}\" aria-valuemin=\"{{::col.min}}\"\n" +
-    "                aria-valuemax=\"{{::col.start}}\" style=\"{{'width: ' + col.progressStart + '%'}}\">\n" +
-    "              </div>\n" +
-    "              <div class=\"{{'progress-bar progress-bar-' + col.progressClass}}\" role=\"progressbar\"\n" +
-    "                aria-valuenow=\"{{col.current}}\" aria-valuemin=\"{{::col.start}}\"\n" +
-    "                aria-valuemax=\"{{::col.end ? col.end : col.current}}\" style=\"{{'width: ' + col.progress + '%'}}\">\n" +
-    "              </div>\n" +
-    "            </div>\n" +
-    "          </div>\n" +
-    "        </td>\n" +
-    "          <td ng-repeat=\"h in ::table.termHeaders\" title=\"{{h.entity.titles[0].value}}\">\n" +
-    "            <a href ng-click=\"updateCriteria(row.value, h, $index, 'variables')\"><span class=\"label label-info\"\n" +
-    "              ng-show=\"row.hitsTitles[$index]\">{{row.hitsTitles[$index]}}</span></a>\n" +
-    "            <span ng-show=\"!row.hitsTitles[$index]\">0</span>\n" +
-    "          </td>\n" +
-    "      </tr>\n" +
-    "      </tbody>\n" +
-    "      <tfoot>\n" +
-    "      <tr>\n" +
-    "        <th></th>\n" +
-    "        <th colspan=\"{{table.cols.colSpan}}\" translate>all</th>\n" +
-    "        <th ng-repeat=\"header in ::table.termHeaders\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
-    "          <a href ng-click=\"updateCriteria(null, header, $index, 'variables')\"><localized-number value=\"header.hits\"></localized-number></a>\n" +
-    "        </th>\n" +
-    "      </tr>\n" +
-    "      </tfoot>\n" +
-    "    </table>\n" +
-    "  </div>\n" +
-    "</div>\n" +
-    "");
-}]);
-
 angular.module("search/views/criteria/criteria-node-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/criteria/criteria-node-template.html",
     "<span>\n" +
@@ -15031,54 +15128,6 @@ angular.module("search/views/criteria/target-template.html", []).run(["$template
     "  -->\n" +
     "\n" +
     "<span></span>");
-}]);
-
-angular.module("search/views/graphics/graphics-search-result-template.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("search/views/graphics/graphics-search-result-template.html",
-    "<div>\n" +
-    "  <div ng-if=\"loading\" class=\"loading\"></div>\n" +
-    "\n" +
-    "  <p class=\"help-block\" ng-if=\"!loading && !noResults && !hasChartObjects()\" translate>search.no-graphic-result</p>\n" +
-    "  <p class=\"help-block\" ng-if=\"!loading && noResults\" translate>search.no-results</p>\n" +
-    "\n" +
-    "  <div ng-repeat=\"chart in chartObjects\" class=\"panel panel-default\">\n" +
-    "    <div class=\"panel-heading\">\n" +
-    "      {{chart.headerTitle}}\n" +
-    "    </div>\n" +
-    "    <div class=\"panel-body\">\n" +
-    "      <div class=\"row\">\n" +
-    "        <div class=\"col-xs-12 col-lg-6\">\n" +
-    "          <div ng-if=\"chart.chartObject.type === 'GeoChart'\">\n" +
-    "            <obiba-geo config=\"chart.chartObject.d3Config\"></obiba-geo>\n" +
-    "          </div>\n" +
-    "          <div ng-if=\"chart.chartObject.type !== 'GeoChart'\">\n" +
-    "            <obiba-nv-chart chart-config=\"chart.chartObject.d3Config\"></obiba-nv-chart>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "        <div class=\"col-xs-12 col-lg-6\">\n" +
-    "          <div class=\"table-responsive\" ng-if=\"chart.getTable().data  &&  chart.getTable().data.length>1\">\n" +
-    "            <table style=\"max-height: 400px;\" class=\"table table-bordered table-striped\" fixed-header=\"chart.getTable().data\">\n" +
-    "              <thead>\n" +
-    "              <tr>\n" +
-    "                <th>{{chart.getTable().data[0][0]}}</th>\n" +
-    "                <th>{{chart.getTable().data[0][1]}}</th>\n" +
-    "                <th ng-if=\"chart.getTable().data[0][2]\">{{chart.getTable().data[0][2]}}</th>\n" +
-    "              </tr>\n" +
-    "              </thead>\n" +
-    "              <tbody>\n" +
-    "              <tr ng-repeat=\"row in chart.getTable().entries\">\n" +
-    "                <td>{{row.title}}</td>\n" +
-    "                <td><a href ng-click=\"updateCriteria(row.key, chart.getTable().vocabulary)\"><localized-number value=\"row.value\"></localized-number></a></td>\n" +
-    "                <td ng-if=\"row.participantsNbr\">{{row.participantsNbr}}</td>\n" +
-    "              </tr>\n" +
-    "              </tbody>\n" +
-    "            </table>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "      </div>\n" +
-    "    </div>\n" +
-    "  </div>\n" +
-    "</div>");
 }]);
 
 angular.module("search/views/list/datasets-search-result-table-template.html", []).run(["$templateCache", function($templateCache) {
@@ -15511,32 +15560,6 @@ angular.module("search/views/search-layout.html", []).run(["$templateCache", fun
     "</div>");
 }]);
 
-angular.module("search/views/search-result-coverage-template.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("search/views/search-result-coverage-template.html",
-    "<!--\n" +
-    "  ~ Copyright (c) 2018 OBiBa. All rights reserved.\n" +
-    "  ~\n" +
-    "  ~ This program and the accompanying materials\n" +
-    "  ~ are made available under the terms of the GNU Public License v3.0.\n" +
-    "  ~\n" +
-    "  ~ You should have received a copy of the GNU General Public License\n" +
-    "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
-    "  -->\n" +
-    "\n" +
-    "<div ng-show=\"display === 'coverage'\">\n" +
-    "  <coverage-result-table\n" +
-    "    result=\"result.coverage\"\n" +
-    "    loading=\"loading\"\n" +
-    "    bucket=\"bucket\"\n" +
-    "    query=\"query\"\n" +
-    "    criteria=\"criteria\"\n" +
-    "    class=\"voffset2\"\n" +
-    "    on-update-criteria=\"onUpdateCriteria\"\n" +
-    "    on-remove-criteria=\"onRemoveCriteria\"></coverage-result-table>\n" +
-    "</div>\n" +
-    "");
-}]);
-
 angular.module("search/views/search-result-graphics-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/search-result-graphics-template.html",
     "<!--\n" +
@@ -15610,50 +15633,6 @@ angular.module("search/views/search-result-list-study-template.html", []).run(["
     "</div>");
 }]);
 
-angular.module("search/views/search-result-list-template.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("search/views/search-result-list-template.html",
-    "<!--\n" +
-    "  ~ Copyright (c) 2018 OBiBa. All rights reserved.\n" +
-    "  ~\n" +
-    "  ~ This program and the accompanying materials\n" +
-    "  ~ are made available under the terms of the GNU Public License v3.0.\n" +
-    "  ~\n" +
-    "  ~ You should have received a copy of the GNU General Public License\n" +
-    "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
-    "  -->\n" +
-    "\n" +
-    "<div ng-show=\"display === 'list'\" class=\"list-table\">\n" +
-    "    <result-tabs-order-count\n" +
-    "            options=\"options\"\n" +
-    "            result-tabs-order=\"resultTabsOrder\"\n" +
-    "            active-target=\"activeTarget\"\n" +
-    "            target-type-map=\"targetTypeMap\">\n" +
-    "    </result-tabs-order-count>\n" +
-    "    <div class=\"voffset2\" ng-class=\"{'pull-right': options.studies.showSearchTab, 'pull-left': !options.studies.showSearchTab, 'hoffset2': !options.studies.showSearchTab}\">\n" +
-    "        <a obiba-file-download url=\"getStudySpecificReportUrl()\" target=\"_self\" ng-if=\"type=='studies'\" download class=\"btn btn-info\" href>\n" +
-    "            <i class=\"fa fa-download\"></i> {{'report-group.study.button-name' | translate}}\n" +
-    "        </a>\n" +
-    "        <a obiba-file-download url=\"getReportUrl()\" target=\"_self\" download class=\"btn btn-info\" href>\n" +
-    "            <i class=\"fa fa-download\"></i> {{'download' | translate}}\n" +
-    "        </a>\n" +
-    "    </div>\n" +
-    "    <div class=\"clearfix\" ng-if=\"options.studies.showSearchTab\"/>\n" +
-    "    <div class=\"tab-content\">\n" +
-    "        <div class=\"pull-left\" study-filter-shortcut ng-if=\"options.studies.showSearchTab && options.studies.studiesColumn.showStudiesTypeColumn\"></div>\n" +
-    "        <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"pull-right voffset2\" test-ref=\"pager\">\n" +
-    "          <span search-result-pagination\n" +
-    "                target=\"activeTarget[targetTypeMap[res]].name\"\n" +
-    "                total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
-    "                on-change=\"onPaginate\"></span>\n" +
-    "        </div>\n" +
-    "        <div class=\"clearfix\"/>\n" +
-    "        <ng-include include-replace ng-repeat=\"res in resultTabsOrder\"\n" +
-    "                    src=\"'search/views/search-result-list-' + res + '-template.html'\"></ng-include>\n" +
-    "    </div>\n" +
-    "</div>\n" +
-    "");
-}]);
-
 angular.module("search/views/search-result-list-variable-template.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/views/search-result-list-variable-template.html",
     "<!--\n" +
@@ -15669,15 +15648,6 @@ angular.module("search/views/search-result-list-variable-template.html", []).run
     "<div class=\"tab-pane\" ng-show=\"options.variables.showSearchTab\" ng-class=\"{'active': activeTarget.variables.active}\">\n" +
     "  <variables-result-table lang=\"lang\" loading=\"loading\"\n" +
     "      summaries=\"result.list.variableResultDto['obiba.mica.DatasetVariableResultDto.result'].summaries\"></variables-result-table>\n" +
-    "</div>\n" +
-    "");
-}]);
-
-angular.module("search/views/search-result-panel-template.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("search/views/search-result-panel-template.html",
-    "<div class=\"search-result-tabs\">\n" +
-    "  <ng-include include-replace ng-repeat=\"tab in searchTabsOrder\"\n" +
-    "              src=\"getUrlTemplate(tab)\"></ng-include>\n" +
     "</div>\n" +
     "");
 }]);
