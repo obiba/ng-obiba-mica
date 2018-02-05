@@ -98,7 +98,7 @@ var ngObibaMica;
       'searchDatasetsResultTable': 'search/views/list/datasets-search-result-table-template.html',
       'searchCriteriaRegionTemplate': 'search/components/criteria/item-region/region/component.html',
       'vocabularyFilterDetailHeading': 'search/components/vocabulary-filter-detail-heading/component.html',
-      'CriterionDropdownTemplate': 'search/components/criteria/item-region/dropdown/component.html',
+      'CriterionDropdownTemplate': 'search/views/criteria/criterion-dropdown-template.html',
       'searchResultList': 'search/components/result/search-result/list.html',
       'searchInputList': 'lists/views/input-search-widget/input-search-widget-template.html',
       'searchResultCoverage': 'search/components/result/search-result/coverage.html',
