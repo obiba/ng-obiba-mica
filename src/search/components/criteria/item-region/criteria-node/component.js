@@ -22,7 +22,7 @@ ngObibaMica.search
         advanced: '='
       },
       controller: 'CriterionLogicalController',
-      templateUrl: 'search/components/criteria/item-region/criteria-node/component.html'
+      templateUrl: 'search/components/criteria/item-region/node/component.html'
     };
   }])
 
