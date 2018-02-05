@@ -506,40 +506,6 @@ ngObibaMica.search
         }
       };
     }])
-  
-  /**
-   * This directive serves as the container for each time of criterion based on a vocabulary type.
-   * Specialize contents types as directives and share the state with this container.
-   */
-  .directive('criterionDropdown', ['$document', '$timeout', 'ngObibaMicaSearchTemplateUrl', function ($document, $timeout, ngObibaMicaSearchTemplateUrl) {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        criterion: '=',
-        query: '='
-      },
-      controller: 'CriterionDropdownController',
-      templateUrl: ngObibaMicaSearchTemplateUrl.getTemplateUrl('CriterionDropdownTemplate'),
-      link: function( $scope, $element){
-        var onDocumentClick = function (event) {
-          var isChild = document.querySelector('#'+$scope.criterion.id.replace('.','-')+'-dropdown-'+$scope.timestamp)
-            .contains(event.target);
-
-          if (!isChild) {
-            $timeout(function() {
-              $scope.$apply('closeDropdown()');
-            });
-          }
-        };
-
-        $document.on('click', onDocumentClick);
-        $element.on('$destroy', function () {
-          $document.off('click', onDocumentClick);
-        });
-      }
-    };
-  }])
 
   .directive('taxonomiesFacetsPanel',[function() {
     return {
