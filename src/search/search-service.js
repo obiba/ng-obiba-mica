@@ -398,25 +398,4 @@ ngObibaMica.search
       return '';
     };
 
-  }])
-
-  .factory('CriteriaNodeCompileService', ['$templateCache', '$compile', function($templateCache, $compile){
-
-    return {
-      compile: function(scope, element) {
-        var template = '';
-        if (scope.item.type === RQL_NODE.OR || scope.item.type === RQL_NODE.AND || scope.item.type === RQL_NODE.NAND || scope.item.type === RQL_NODE.NOR) {
-          template = angular.element($templateCache.get('search/views/criteria/criteria-node-template.html'));
-        } else {
-          template = angular.element('<criterion-dropdown criterion="item" query="query"></criterion-dropdown>');
-        }
-
-        if (scope.item.rqlQuery.args) {
-          $compile(template)(scope, function(cloned){
-            element.replaceWith(cloned);
-          });
-        }
-      }
-    };
-
   }]);

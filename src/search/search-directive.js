@@ -474,39 +474,6 @@ ngObibaMica.search
     };
   }])
 
-  .directive('criteriaNode', [function(){
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        item: '=',
-        query: '=',
-        advanced: '='
-      },
-      controller: 'CriterionLogicalController',
-      templateUrl: 'search/views/criteria/criteria-node-template.html'
-    };
-  }])
-
-  /**
-   * This directive creates a hierarchical structure matching that of a RqlQuery tree.
-   */
-  .directive('criteriaLeaf', ['CriteriaNodeCompileService', function(CriteriaNodeCompileService){
-      return {
-        restrict: 'EA',
-        replace: true,
-        scope: {
-          item: '=',
-          query: '=',
-          advanced: '='
-        },
-        controller: 'CriterionLogicalController',
-        link: function(scope, element) {
-          CriteriaNodeCompileService.compile(scope, element);
-        }
-      };
-    }])
-
   .directive('taxonomiesFacetsPanel',[function() {
     return {
       restrict: 'EA',
