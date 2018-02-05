@@ -5527,94 +5527,7 @@ ngObibaMica.search
       };
     }])
 
-  .controller('StringCriterionTermsController', [
-    '$scope',
-    'RqlQueryService',
-    'LocalizedValues',
-    'StringUtils',
-    'JoinQuerySearchResource',
-    'RqlQueryUtils',
-    'SearchContext',
-    '$filter',
-    function ($scope,
-              RqlQueryService,
-              LocalizedValues,
-              StringUtils,
-              JoinQuerySearchResource,
-              RqlQueryUtils,
-              SearchContext,
-              $filter) {
-      $scope.lang = SearchContext.currentLocale();
-
-      var isSelected = function (name) {
-        return $scope.checkboxTerms.indexOf(name) !== -1;
-      };
-
-      var updateSelection = function () {
-        $scope.state.dirty = true;
-        $scope.criterion.rqlQuery.name = $scope.selectedFilter;
-        var selected = [];
-        if($scope.selectedFilter !== RQL_NODE.MISSING && $scope.selectedFilter !== RQL_NODE.EXISTS) {
-          Object.keys($scope.checkboxTerms).forEach(function (key) {
-            if ($scope.checkboxTerms[key]) {
-              selected.push(key);
-            }
-          });
-        }
-        if (selected.length === 0 && $scope.selectedFilter !== RQL_NODE.MISSING) {
-          $scope.criterion.rqlQuery.name = RQL_NODE.EXISTS;
-        }
-        RqlQueryUtils.updateQuery($scope.criterion.rqlQuery, selected);
-      };
-
-      var updateFilter = function () {
-        updateSelection();
-      };
-
-      var isInOutFilter = function () {
-        return $scope.selectedFilter === RQL_NODE.IN || $scope.selectedFilter === RQL_NODE.OUT;
-      };
-
-      var isContainsFilter = function () {
-        return $scope.selectedFilter === RQL_NODE.CONTAINS;
-      };
-
-      var onOpen = function () {
-        $scope.state.loading = true;
-        var target = $scope.criterion.target;
-        var joinQuery = RqlQueryService.prepareCriteriaTermsQuery($scope.query, $scope.criterion, $scope.lang);
-
-        JoinQuerySearchResource[targetToType(target)]({query: joinQuery}).$promise.then(function (joinQueryResponse) {
-          $scope.state.loading = false;
-          $scope.terms = RqlQueryService.getTargetAggregations(joinQueryResponse, $scope.criterion, $scope.lang);
-          if ($scope.terms) {
-            $scope.terms.forEach(function (term) {
-              $scope.checkboxTerms[term.key] = $scope.isSelectedTerm(term);
-            });
-
-            $scope.terms = $filter('orderBySelection')($scope.terms, $scope.checkboxTerms);
-          }
-        });
-      };
-
-      $scope.isSelectedTerm = function (term) {
-        return $scope.criterion.selectedTerms && $scope.criterion.selectedTerms.indexOf(term.key) !== -1;
-      };
-
-      $scope.state.addOnOpen(onOpen);
-      $scope.checkboxTerms = {};
-      $scope.RQL_NODE = RQL_NODE;
-      $scope.selectedFilter = $scope.criterion.type;
-      $scope.isSelected = isSelected;
-      $scope.updateFilter = updateFilter;
-      $scope.localize = function (values) {
-        return LocalizedValues.forLocale(values, $scope.criterion.lang);
-      };
-      $scope.truncate = StringUtils.truncate;
-      $scope.isInOutFilter = isInOutFilter;
-      $scope.isContainsFilter = isContainsFilter;
-      $scope.updateSelection = updateSelection;
-    }])
+  
   .controller('ResultTabsOrderCountController', [function(){
   }]);
 ;/*
@@ -6171,23 +6084,6 @@ ngObibaMica.search
           $document.off('click', onDocumentClick);
         });
       }
-    };
-  }])
-
-  /**
-   * Directive specialized for vocabulary of type String
-   */
-  .directive('stringCriterionTerms', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        criterion: '=',
-        query: '=',
-        state: '='
-      },
-      controller: 'StringCriterionTermsController',
-      templateUrl: 'search/views/criteria/criterion-string-terms-template.html'
     };
   }])
 
@@ -8472,6 +8368,113 @@ ngObibaMica.search
       },
       controller: 'searchCriteriaRegionController',
       templateUrl: ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchCriteriaRegionTemplate')
+    };
+  }]);;'use strict';
+
+ngObibaMica.search
+  .controller('StringCriterionTermsController', [
+    '$scope',
+    'RqlQueryService',
+    'LocalizedValues',
+    'StringUtils',
+    'JoinQuerySearchResource',
+    'RqlQueryUtils',
+    'SearchContext',
+    '$filter',
+    function ($scope,
+      RqlQueryService,
+      LocalizedValues,
+      StringUtils,
+      JoinQuerySearchResource,
+      RqlQueryUtils,
+      SearchContext,
+      $filter) {
+      $scope.lang = SearchContext.currentLocale();
+
+      var isSelected = function (name) {
+        return $scope.checkboxTerms.indexOf(name) !== -1;
+      };
+
+      var updateSelection = function () {
+        $scope.state.dirty = true;
+        $scope.criterion.rqlQuery.name = $scope.selectedFilter;
+        var selected = [];
+        if ($scope.selectedFilter !== RQL_NODE.MISSING && $scope.selectedFilter !== RQL_NODE.EXISTS) {
+          Object.keys($scope.checkboxTerms).forEach(function (key) {
+            if ($scope.checkboxTerms[key]) {
+              selected.push(key);
+            }
+          });
+        }
+        if (selected.length === 0 && $scope.selectedFilter !== RQL_NODE.MISSING) {
+          $scope.criterion.rqlQuery.name = RQL_NODE.EXISTS;
+        }
+        RqlQueryUtils.updateQuery($scope.criterion.rqlQuery, selected);
+      };
+
+      var updateFilter = function () {
+        updateSelection();
+      };
+
+      var isInOutFilter = function () {
+        return $scope.selectedFilter === RQL_NODE.IN || $scope.selectedFilter === RQL_NODE.OUT;
+      };
+
+      var isContainsFilter = function () {
+        return $scope.selectedFilter === RQL_NODE.CONTAINS;
+      };
+
+      var onOpen = function () {
+        $scope.state.loading = true;
+        var target = $scope.criterion.target;
+        var joinQuery = RqlQueryService.prepareCriteriaTermsQuery($scope.query, $scope.criterion, $scope.lang);
+
+        JoinQuerySearchResource[targetToType(target)]({ query: joinQuery }).$promise.then(function (joinQueryResponse) {
+          $scope.state.loading = false;
+          $scope.terms = RqlQueryService.getTargetAggregations(joinQueryResponse, $scope.criterion, $scope.lang);
+          if ($scope.terms) {
+            $scope.terms.forEach(function (term) {
+              $scope.checkboxTerms[term.key] = $scope.isSelectedTerm(term);
+            });
+
+            $scope.terms = $filter('orderBySelection')($scope.terms, $scope.checkboxTerms);
+          }
+        });
+      };
+
+      $scope.isSelectedTerm = function (term) {
+        return $scope.criterion.selectedTerms && $scope.criterion.selectedTerms.indexOf(term.key) !== -1;
+      };
+
+      $scope.state.addOnOpen(onOpen);
+      $scope.checkboxTerms = {};
+      $scope.RQL_NODE = RQL_NODE;
+      $scope.selectedFilter = $scope.criterion.type;
+      $scope.isSelected = isSelected;
+      $scope.updateFilter = updateFilter;
+      $scope.localize = function (values) {
+        return LocalizedValues.forLocale(values, $scope.criterion.lang);
+      };
+      $scope.truncate = StringUtils.truncate;
+      $scope.isInOutFilter = isInOutFilter;
+      $scope.isContainsFilter = isContainsFilter;
+      $scope.updateSelection = updateSelection;
+    }])
+
+  /**
+   * Directive specialized for vocabulary of type String
+   */
+  .directive('stringCriterionTerms', [function () {
+    return {
+      restrict: 'EA',
+      replace: true,
+      scope: {
+        criterion: '=',
+        query: '=',
+        state: '='
+      },
+      controller: 'StringCriterionTermsController',
+      templateUrl: 'search/components/criteria/item-region/string-terms/component.html'
     };
   }]);;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -12181,7 +12184,7 @@ ngObibaMica.fileBrowser
       }
     };
   }]);
-;angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/item-region/region/component.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/result/coverage-result/component.html', 'search/components/result/graphics-result/component.html', 'search/components/result/pagination/component.html', 'search/components/result/search-result/component.html', 'search/components/result/search-result/coverage.html', 'search/components/result/search-result/graphics.html', 'search/components/result/search-result/list.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/classifications-view.html', 'search/views/classifications/taxonomies-facets-view.html', 'search/views/classifications/taxonomies-view.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-panel-template.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/term-panel-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/classifications/vocabulary-panel-template.html', 'search/views/criteria/criteria-node-template.html', 'search/views/criteria/criteria-root-template.html', 'search/views/criteria/criteria-target-template.html', 'search/views/criteria/criterion-dropdown-template.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/criterion-match-template.html', 'search/views/criteria/criterion-numeric-template.html', 'search/views/criteria/criterion-string-terms-template.html', 'search/views/criteria/target-template.html', 'search/views/list/datasets-search-result-table-template.html', 'search/views/list/networks-search-result-table-template.html', 'search/views/list/pagination-template.html', 'search/views/list/studies-search-result-table-template.html', 'search/views/list/variables-search-result-table-template.html', 'search/views/result-tabs-order-template-view.html', 'search/views/search-layout.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search-study-filter-template.html', 'search/views/search.html', 'search/views/search2.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
+;angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/item-region/region/component.html', 'search/components/criteria/item-region/string-terms/component.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/result/coverage-result/component.html', 'search/components/result/graphics-result/component.html', 'search/components/result/pagination/component.html', 'search/components/result/search-result/component.html', 'search/components/result/search-result/coverage.html', 'search/components/result/search-result/graphics.html', 'search/components/result/search-result/list.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/classifications-view.html', 'search/views/classifications/taxonomies-facets-view.html', 'search/views/classifications/taxonomies-view.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-panel-template.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/term-panel-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/classifications/vocabulary-panel-template.html', 'search/views/criteria/criteria-node-template.html', 'search/views/criteria/criteria-root-template.html', 'search/views/criteria/criteria-target-template.html', 'search/views/criteria/criterion-dropdown-template.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/criterion-match-template.html', 'search/views/criteria/criterion-numeric-template.html', 'search/views/criteria/target-template.html', 'search/views/list/datasets-search-result-table-template.html', 'search/views/list/networks-search-result-table-template.html', 'search/views/list/pagination-template.html', 'search/views/list/studies-search-result-table-template.html', 'search/views/list/variables-search-result-table-template.html', 'search/views/result-tabs-order-template-view.html', 'search/views/search-layout.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search-study-filter-template.html', 'search/views/search.html', 'search/views/search2.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
 
 angular.module("access/views/data-access-request-documents-view.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("access/views/data-access-request-documents-view.html",
@@ -13688,6 +13691,83 @@ angular.module("search/components/criteria/item-region/region/component.html", [
     "</div>");
 }]);
 
+angular.module("search/components/criteria/item-region/string-terms/component.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/criteria/item-region/string-terms/component.html",
+    "<ul class=\"dropdown-menu query-dropdown-menu\" aria-labelledby=\"{{criterion.vocabulary.name}}-button\">\n" +
+    "    <ng-include src=\"'search/views/criteria/criterion-header-template.html'\"></ng-include>\n" +
+    "    <li class=\"btn-group\">\n" +
+    "      <ul class=\"criteria-list-item\">\n" +
+    "        <li>\n" +
+    "          <label title=\"{{'search.any-help' | translate}}\">\n" +
+    "            <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.EXISTS}}\">\n" +
+    "            {{'search.any' | translate}}\n" +
+    "          </label>\n" +
+    "        </li>\n" +
+    "        <li>\n" +
+    "          <label title=\"{{'search.none-help' | translate}}\">\n" +
+    "            <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.MISSING}}\">\n" +
+    "            {{'search.none' | translate}}\n" +
+    "          </label>\n" +
+    "        </li>\n" +
+    "        <li>\n" +
+    "          <label title=\"{{'search.in-help' | translate}}\">\n" +
+    "            <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.IN}}\">\n" +
+    "            {{'search.in' | translate}}\n" +
+    "          </label>\n" +
+    "        </li>\n" +
+    "        <li>\n" +
+    "          <label title=\"{{'search.out-help' | translate}}\">\n" +
+    "            <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.OUT}}\">\n" +
+    "            {{'search.out' | translate}}\n" +
+    "          </label>\n" +
+    "        </li>\n" +
+    "        <li ng-show=\"criterion.vocabulary.repeatable\">\n" +
+    "          <label title=\"{{'search.contains-help' | translate}}\">\n" +
+    "            <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.CONTAINS}}\">\n" +
+    "            {{'search.contains' | translate}}\n" +
+    "          </label>\n" +
+    "        </li>\n" +
+    "      </ul>\n" +
+    "    </li>\n" +
+    "    <li ng-show=\"isInOutFilter() || isContainsFilter()\" class='divider'></li>\n" +
+    "    <li class=\"criteria-list-item\" ng-show=\"state.loading\">\n" +
+    "      <p class=\"voffset2 loading\">\n" +
+    "      </p>\n" +
+    "    </li>\n" +
+    "    <li ng-show=\"isInOutFilter() || isContainsFilter()\">\n" +
+    "      <ul ng-show=\"!state.loading\" class=\"no-padding criteria-list-terms\">\n" +
+    "        <li class=\"criteria-list-item\" ng-show=\"terms && terms.length>10\">\n" +
+    "          <span class=\"input-group input-group-sm no-padding-top\">\n" +
+    "            <input ng-model=\"searchText\" type=\"text\" class=\"form-control\" aria-describedby=\"term-search\">\n" +
+    "            <span class=\"input-group-addon\" id=\"term-search\"><i class=\"fa fa-search\"></i></span>\n" +
+    "          </span>\n" +
+    "        </li>\n" +
+    "        <li ng-show=\"terms && terms.length>10\"></li>\n" +
+    "        <li class=\"criteria-list-item\"\n" +
+    "          ng-show=\"isInOutFilter() || isContainsFilter()\"\n" +
+    "          ng-repeat=\"term in terms | regex:searchText:['key','title','description']\"\n" +
+    "          uib-popover=\"{{term.description ? term.description : (truncate(term.title) === term.title ? null : term.title)}}\"\n" +
+    "          popover-title=\"{{term.description ? term.title : null}}\"\n" +
+    "          popover-placement=\"bottom\"\n" +
+    "          popover-trigger=\"'mouseenter'\">\n" +
+    "            <span>\n" +
+    "              <label class=\"control-label\">\n" +
+    "                <input ng-model=\"checkboxTerms[term.key]\"\n" +
+    "                  type=\"checkbox\"\n" +
+    "                  ng-click=\"updateSelection()\">\n" +
+    "                <span>{{truncate(term.title ? term.title : term.key)}}</span>\n" +
+    "              </label>\n" +
+    "            </span>\n" +
+    "            <span class=\"pull-right\">\n" +
+    "              <span class=\"agg-term-count\" ng-show=\"isSelectedTerm(term)\">{{term.count}}</span>\n" +
+    "              <span class=\"agg-term-count-default\" ng-show=\"!isSelectedTerm(term)\">{{term.count}}</span>\n" +
+    "            </span>\n" +
+    "        </li>\n" +
+    "      </ul>\n" +
+    "    </li>\n" +
+    "  </ul>");
+}]);
+
 angular.module("search/components/criteria/match-vocabulary-filter-detail/component.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/components/criteria/match-vocabulary-filter-detail/component.html",
     "<input type=\"text\" class=\"form-control\"\n" +
@@ -15095,83 +15175,6 @@ angular.module("search/views/criteria/criterion-numeric-template.html", []).run(
     "        <input type=\"number\" class=\"form-control\" id=\"{{criterion.vocabulary.name}}-to\" placeholder=\"{{max}}\" ng-model=\"to\" style=\"width:150px\">\n" +
     "      </div>\n" +
     "    </form>\n" +
-    "  </li>\n" +
-    "</ul>");
-}]);
-
-angular.module("search/views/criteria/criterion-string-terms-template.html", []).run(["$templateCache", function($templateCache) {
-  $templateCache.put("search/views/criteria/criterion-string-terms-template.html",
-    "<ul class=\"dropdown-menu query-dropdown-menu\" aria-labelledby=\"{{criterion.vocabulary.name}}-button\">\n" +
-    "  <ng-include src=\"'search/views/criteria/criterion-header-template.html'\"></ng-include>\n" +
-    "  <li class=\"btn-group\">\n" +
-    "    <ul class=\"criteria-list-item\">\n" +
-    "      <li>\n" +
-    "        <label title=\"{{'search.any-help' | translate}}\">\n" +
-    "          <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.EXISTS}}\">\n" +
-    "          {{'search.any' | translate}}\n" +
-    "        </label>\n" +
-    "      </li>\n" +
-    "      <li>\n" +
-    "        <label title=\"{{'search.none-help' | translate}}\">\n" +
-    "          <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.MISSING}}\">\n" +
-    "          {{'search.none' | translate}}\n" +
-    "        </label>\n" +
-    "      </li>\n" +
-    "      <li>\n" +
-    "        <label title=\"{{'search.in-help' | translate}}\">\n" +
-    "          <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.IN}}\">\n" +
-    "          {{'search.in' | translate}}\n" +
-    "        </label>\n" +
-    "      </li>\n" +
-    "      <li>\n" +
-    "        <label title=\"{{'search.out-help' | translate}}\">\n" +
-    "          <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.OUT}}\">\n" +
-    "          {{'search.out' | translate}}\n" +
-    "        </label>\n" +
-    "      </li>\n" +
-    "      <li ng-show=\"criterion.vocabulary.repeatable\">\n" +
-    "        <label title=\"{{'search.contains-help' | translate}}\">\n" +
-    "          <input ng-click=\"updateFilter()\" type=\"radio\" ng-model=\"selectedFilter\" value=\"{{RQL_NODE.CONTAINS}}\">\n" +
-    "          {{'search.contains' | translate}}\n" +
-    "        </label>\n" +
-    "      </li>\n" +
-    "    </ul>\n" +
-    "  </li>\n" +
-    "  <li ng-show=\"isInOutFilter() || isContainsFilter()\" class='divider'></li>\n" +
-    "  <li class=\"criteria-list-item\" ng-show=\"state.loading\">\n" +
-    "    <p class=\"voffset2 loading\">\n" +
-    "    </p>\n" +
-    "  </li>\n" +
-    "  <li ng-show=\"isInOutFilter() || isContainsFilter()\">\n" +
-    "    <ul ng-show=\"!state.loading\" class=\"no-padding criteria-list-terms\">\n" +
-    "      <li class=\"criteria-list-item\" ng-show=\"terms && terms.length>10\">\n" +
-    "        <span class=\"input-group input-group-sm no-padding-top\">\n" +
-    "          <input ng-model=\"searchText\" type=\"text\" class=\"form-control\" aria-describedby=\"term-search\">\n" +
-    "          <span class=\"input-group-addon\" id=\"term-search\"><i class=\"fa fa-search\"></i></span>\n" +
-    "        </span>\n" +
-    "      </li>\n" +
-    "      <li ng-show=\"terms && terms.length>10\"></li>\n" +
-    "      <li class=\"criteria-list-item\"\n" +
-    "        ng-show=\"isInOutFilter() || isContainsFilter()\"\n" +
-    "        ng-repeat=\"term in terms | regex:searchText:['key','title','description']\"\n" +
-    "        uib-popover=\"{{term.description ? term.description : (truncate(term.title) === term.title ? null : term.title)}}\"\n" +
-    "        popover-title=\"{{term.description ? term.title : null}}\"\n" +
-    "        popover-placement=\"bottom\"\n" +
-    "        popover-trigger=\"'mouseenter'\">\n" +
-    "          <span>\n" +
-    "            <label class=\"control-label\">\n" +
-    "              <input ng-model=\"checkboxTerms[term.key]\"\n" +
-    "                type=\"checkbox\"\n" +
-    "                ng-click=\"updateSelection()\">\n" +
-    "              <span>{{truncate(term.title ? term.title : term.key)}}</span>\n" +
-    "            </label>\n" +
-    "          </span>\n" +
-    "          <span class=\"pull-right\">\n" +
-    "            <span class=\"agg-term-count\" ng-show=\"isSelectedTerm(term)\">{{term.count}}</span>\n" +
-    "            <span class=\"agg-term-count-default\" ng-show=\"!isSelectedTerm(term)\">{{term.count}}</span>\n" +
-    "          </span>\n" +
-    "      </li>\n" +
-    "    </ul>\n" +
     "  </li>\n" +
     "</ul>");
 }]);

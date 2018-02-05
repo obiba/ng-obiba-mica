@@ -558,23 +558,6 @@ ngObibaMica.search
   /**
    * Directive specialized for vocabulary of type String
    */
-  .directive('stringCriterionTerms', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        criterion: '=',
-        query: '=',
-        state: '='
-      },
-      controller: 'StringCriterionTermsController',
-      templateUrl: 'search/views/criteria/criterion-string-terms-template.html'
-    };
-  }])
-
-  /**
-   * Directive specialized for vocabulary of type String
-   */
   .directive('matchCriterion', [function () {
     return {
       restrict: 'EA',
