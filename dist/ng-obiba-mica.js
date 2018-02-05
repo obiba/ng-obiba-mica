@@ -2943,6 +2943,215 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
 
 'use strict';
 
+(function () {
+  ngObibaMica.search
+    .factory('DocumentSuggestionResource', ['$resource', 'ngObibaMicaUrl',
+      function ($resource, ngObibaMicaUrl) {
+        return $resource(ngObibaMicaUrl.getUrl('DocumentSuggestion'), {}, {
+          'query': {
+            method: 'GET',
+            errorHandler: true,
+            isArray: true
+          }
+        });
+      }]);
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+
+  ngObibaMica.search.factory('JoinQueryCoverageResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      var resourceUrl = ngObibaMicaUrl.getUrl('JoinQueryCoverageResource');
+      var method = resourceUrl.indexOf(':query') === -1 ? 'POST' : 'GET';
+      var contentType = method === 'POST' ? 'application/x-www-form-urlencoded' : 'application/json';
+      var requestTransformer = function (obj) {
+        var str = [];
+        for (var p in obj) {
+          str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+        }
+        return str.join('&');
+      };
+      return $resource(resourceUrl, {}, {
+        'get': {
+          method: method,
+          headers: {
+            'Content-Type': contentType
+          },
+          transformRequest: requestTransformer,
+          errorHandler: true
+        }
+      });
+    }]);
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+
+  ngObibaMica.search.factory('JoinQuerySearchResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      var resourceUrl = ngObibaMicaUrl.getUrl('JoinQuerySearchResource');
+      var actionFactory = function (type) {
+        var method = resourceUrl.indexOf(':query') === -1 ? 'POST' : 'GET';
+        var contentType = method === 'POST' ? 'application/x-www-form-urlencoded' : 'application/json';
+        var requestTransformer = function (obj) {
+          var str = [];
+          for (var p in obj) {
+            str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+          }
+          return str.join('&');
+        };
+        return {
+          method: method,
+          headers: {
+            'Content-Type': contentType
+          },
+          errorHandler: true,
+          params: { type: type },
+          transformRequest: requestTransformer
+        };
+      };
+      return $resource(resourceUrl, {}, {
+        'variables': actionFactory('variables'),
+        'studies': actionFactory('studies'),
+        'networks': actionFactory('networks'),
+        'datasets': actionFactory('datasets')
+      });
+    }]);
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+
+  ngObibaMica.search
+    .factory('TaxonomiesResource', ['$resource', 'ngObibaMicaUrl', '$cacheFactory',
+      function ($resource, ngObibaMicaUrl, $cacheFactory) {
+        return $resource(ngObibaMicaUrl.getUrl('TaxonomiesResource'), {}, {
+          'get': {
+            method: 'GET',
+            isArray: true,
+            errorHandler: true,
+            cache: $cacheFactory('taxonomiesResource')
+          }
+        });
+      }]);
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+
+  ngObibaMica.search
+    .factory('TaxonomiesSearchResource', ['$resource', 'ngObibaMicaUrl',
+      function ($resource, ngObibaMicaUrl) {
+        return $resource(ngObibaMicaUrl.getUrl('TaxonomiesSearchResource'), {}, {
+          'get': {
+            method: 'GET',
+            isArray: true,
+            errorHandler: true
+          }
+        });
+      }]);
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+  ngObibaMica.search
+    .factory('TaxonomyResource', ['$resource', 'ngObibaMicaUrl', '$cacheFactory',
+      function ($resource, ngObibaMicaUrl, $cacheFactory) {
+        return $resource(ngObibaMicaUrl.getUrl('TaxonomyResource'), {}, {
+          'get': {
+            method: 'GET',
+            errorHandler: true,
+            cache: $cacheFactory('taxonomyResource')
+          }
+        });
+      }]);
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+  ngObibaMica.search.factory('VocabularyResource', ['$resource', 'ngObibaMicaUrl',
+    function ($resource, ngObibaMicaUrl) {
+      return $resource(ngObibaMicaUrl.getUrl('VocabularyResource'), {}, {
+        'get': {
+          method: 'GET',
+          errorHandler: true
+        }
+      });
+    }]);
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
 ngObibaMica.search
 
   .filter('regex', function() {
@@ -3039,115 +3248,8 @@ var STUDY_FILTER_CHOICES = {
  * Module services and factories
  */
 ngObibaMica.search
-  .factory('TaxonomiesSearchResource', ['$resource', 'ngObibaMicaUrl',
-    function ($resource, ngObibaMicaUrl) {
-      return $resource(ngObibaMicaUrl.getUrl('TaxonomiesSearchResource'), {}, {
-        'get': {
-          method: 'GET',
-          isArray: true,
-          errorHandler: true
-        }
-      });
-    }])
 
-  .factory('TaxonomiesResource', ['$resource', 'ngObibaMicaUrl', '$cacheFactory',
-    function ($resource, ngObibaMicaUrl, $cacheFactory) {
-      return $resource(ngObibaMicaUrl.getUrl('TaxonomiesResource'), {}, {
-        'get': {
-          method: 'GET',
-          isArray: true,
-          errorHandler: true,
-          cache: $cacheFactory('taxonomiesResource')
-        }
-      });
-    }])
-
-  .factory('TaxonomyResource', ['$resource', 'ngObibaMicaUrl', '$cacheFactory',
-    function ($resource, ngObibaMicaUrl, $cacheFactory) {
-      return $resource(ngObibaMicaUrl.getUrl('TaxonomyResource'), {}, {
-        'get': {
-          method: 'GET',
-          errorHandler: true,
-          cache: $cacheFactory('taxonomyResource')
-        }
-      });
-    }])
-
-  .factory('JoinQuerySearchResource', ['$resource', 'ngObibaMicaUrl',
-    function ($resource, ngObibaMicaUrl) {
-      var resourceUrl = ngObibaMicaUrl.getUrl('JoinQuerySearchResource');
-      var actionFactory = function(type) {
-        var method = resourceUrl.indexOf(':query') === -1 ? 'POST' : 'GET';
-        var contentType = method === 'POST' ? 'application/x-www-form-urlencoded' : 'application/json';
-        var requestTransformer = function(obj) {
-          var str = [];
-          for(var p in obj) {
-            str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
-          }
-          return str.join('&');
-        };
-        return {
-          method: method,
-          headers: {
-            'Content-Type': contentType
-          },
-          errorHandler: true,
-          params: {type: type},
-          transformRequest : requestTransformer
-        };
-      };
-      return $resource(resourceUrl, {}, {
-        'variables': actionFactory('variables'),
-        'studies': actionFactory('studies'),
-        'networks': actionFactory('networks'),
-        'datasets': actionFactory('datasets')
-      });
-    }])
-
-  .factory('JoinQueryCoverageResource', ['$resource', 'ngObibaMicaUrl',
-    function ($resource, ngObibaMicaUrl) {
-      var resourceUrl = ngObibaMicaUrl.getUrl('JoinQueryCoverageResource');
-      var method = resourceUrl.indexOf(':query') === -1 ? 'POST' : 'GET';
-      var contentType = method === 'POST' ? 'application/x-www-form-urlencoded' : 'application/json';
-      var requestTransformer = function(obj) {
-        var str = [];
-        for(var p in obj) {
-          str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
-        }
-        return str.join('&');
-      };
-      return $resource(resourceUrl, {}, {
-        'get': {
-          method: method,
-          headers: {
-            'Content-Type': contentType
-          },
-          transformRequest : requestTransformer,
-          errorHandler: true
-        }
-      });
-    }])
-
-  .factory('VocabularyResource', ['$resource', 'ngObibaMicaUrl',
-    function ($resource, ngObibaMicaUrl) {
-      return $resource(ngObibaMicaUrl.getUrl('VocabularyResource'), {}, {
-        'get': {
-          method: 'GET',
-          errorHandler: true
-        }
-      });
-    }])
-
-  .factory('DocumentSuggestionResource', ['$resource', 'ngObibaMicaUrl',
-    function ($resource, ngObibaMicaUrl) {
-      return $resource(ngObibaMicaUrl.getUrl('DocumentSuggestion'), {}, {
-        'query': {
-          method: 'GET',
-          errorHandler: true,
-          isArray: true
-        }
-      });
-    }])
+  
 
   .service('StudyFilterShortcutService', ['$location', 'RqlQueryService',
     function ($location, RqlQueryService) {
