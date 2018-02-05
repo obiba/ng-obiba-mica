@@ -37,13 +37,10 @@ ngObibaMica.search
       $scope.getUrlTemplate = function (tab) {
         switch (tab) {
           case 'list':
-            console.log(ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultList'));
             return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultList');
           case 'coverage':
-            console.log(ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultCoverage'));
             return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultCoverage');
           case 'graphics':
-            console.log(ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultGraphics'));
             return ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchResultGraphics');
         }
       };

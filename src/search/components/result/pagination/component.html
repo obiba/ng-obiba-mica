@@ -1,0 +1,13 @@
+<div ng-show="totalHits > 10">
+  <div class="pull-left">
+    <select class="form-control input-sm form-select" ng-model="pagination.selected" ng-options="size.label for size in pageSizes"
+      ng-change="pageSizeChanged()"></select>
+  </div>
+  <div class="pull-right" style="margin-left: 5px">
+
+    <span ng-show="maxSize > 1" uib-pagination total-items="totalHits" max-size="maxSize" ng-model="pagination.currentPage" boundary-links="true"
+      force-ellipses="true" items-per-page="pagination.selected.value" previous-text="&lsaquo;" next-text="&rsaquo;" first-text="&laquo;"
+      last-text="&raquo;" template-url="search/views/list/pagination-template.html" ng-change="pageChanged()">
+    </span>
+  </div>
+</div>

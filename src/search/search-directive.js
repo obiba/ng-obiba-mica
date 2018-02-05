@@ -520,18 +520,7 @@ ngObibaMica.search
       templateUrl: 'search/views/criteria/criterion-numeric-template.html'
     };
   }])
-  .directive('searchCriteriaRegion', ['ngObibaMicaSearchTemplateUrl', function(ngObibaMicaSearchTemplateUrl){
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        options: '=',
-        search: '='
-      },
-      controller: 'searchCriteriaRegionController',
-      templateUrl: ngObibaMicaSearchTemplateUrl.getTemplateUrl('searchCriteriaRegionTemplate')
-    };
-  }])
+  
   /**
    * This directive serves as the container for each time of criterion based on a vocabulary type.
    * Specialize contents types as directives and share the state with this container.
@@ -597,21 +586,6 @@ ngObibaMica.search
       },
       controller: 'MatchCriterionTermsController',
       templateUrl: 'search/views/criteria/criterion-match-template.html'
-    };
-  }])
-
-  .directive('searchResultPagination', [function() {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        showTotal: '=',
-        target: '=',
-        totalHits: '=',
-        onChange: '='
-      },
-      controller: 'SearchResultPaginationController',
-      templateUrl: 'search/views/list/search-result-pagination-template.html'
     };
   }])
 

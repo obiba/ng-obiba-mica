@@ -2013,23 +2013,7 @@ ngObibaMica.search
       $scope.closeDropdown = closeDropdown;
       $scope.VocabularyService = VocabularyService;
     }])
-  .controller('searchCriteriaRegionController', ['$scope', 'RqlQueryService', function ($scope,RqlQueryService) {
-    var canShow = false;
-
-    $scope.$watchCollection('search.criteria', function () {
-        $scope.renderableTargets = RqlQueryService.getRenderableTargetCriteriaFromRoot($scope.search.criteria);
-    });
-
-    $scope.$watchCollection('search.criteriaItemMap', function () {
-      if ($scope.search.criteriaItemMap) {
-        canShow = Object.keys($scope.search.criteriaItemMap).length > 1;
-      }
-    });
-    var canShowCriteriaRegion = function () {
-      return ($scope.options.studyTaxonomiesOrder.length || $scope.options.datasetTaxonomiesOrder.length || $scope.options.networkTaxonomiesOrder.length) && canShow;
-    };
-    $scope.canShowCriteriaRegion = canShowCriteriaRegion;
-  }])
+  
   .controller('MatchCriterionTermsController', [
     '$scope',
     'RqlQueryService',
@@ -2195,65 +2179,5 @@ ngObibaMica.search
       $scope.isContainsFilter = isContainsFilter;
       $scope.updateSelection = updateSelection;
     }])
-
-  .controller('SearchResultPaginationController', ['$scope', 'ngObibaMicaSearch', function ($scope, ngObibaMicaSearch) {
-
-    function updateMaxSize() {
-      $scope.maxSize = Math.min(3, Math.ceil($scope.totalHits / $scope.pagination.selected.value));
-    }
-
-    function calculateRange() {
-      var pageSize = $scope.pagination.selected.value;
-      var current = $scope.pagination.currentPage;
-      $scope.pagination.from = pageSize * (current - 1) + 1;
-      $scope.pagination.to = Math.min($scope.totalHits, pageSize * current);
-    }
-
-    function canShow() {
-      return angular.isUndefined($scope.showTotal) ||  true === $scope.showTotal;
-    }
-
-    var pageChanged = function () {
-      calculateRange();
-      if ($scope.onChange) {
-        $scope.onChange(
-          $scope.target,
-          ($scope.pagination.currentPage - 1) * $scope.pagination.selected.value,
-          $scope.pagination.selected.value
-        );
-      }
-    };
-
-    var pageSizeChanged = function () {
-      updateMaxSize();
-      $scope.pagination.currentPage = 1;
-      pageChanged();
-    };
-
-    $scope.canShow = canShow;
-    $scope.pageChanged = pageChanged;
-    $scope.pageSizeChanged = pageSizeChanged;
-    $scope.pageSizes = [
-      {label: '10', value: 10},
-      {label: '20', value: 20},
-      {label: '50', value: 50},
-      {label: '100', value: 100}
-    ];
-
-    var listPageSize = ngObibaMicaSearch.getDefaultListPageSize($scope.target);
-    var initialTargetPageSize = $scope.pageSizes.filter(function(p) {
-      return p.value === listPageSize;
-    });
-
-    $scope.pagination = {
-      selected: initialTargetPageSize.length>0 ? initialTargetPageSize[0] : $scope.pageSizes[0],
-      currentPage: 1
-    };
-
-    $scope.$watch('totalHits', function () {
-      updateMaxSize();
-      calculateRange();
-    });
-  }])
   .controller('ResultTabsOrderCountController', [function(){
   }]);
