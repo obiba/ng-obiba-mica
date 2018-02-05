@@ -2776,470 +2776,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
 
 'use strict';
 
-/* exported RqlQueryUtils */
-function RqlQueryUtils(VocabularyService) {
-
-  /**
-   * Finds the parent node to which new queries can be added
-   *
-   * @param targetNode
-   * @returns {*}
-   */
-  function findValidParentNode(targetNode) {
-    var target = targetNode.args.filter(function (query) {
-      switch (query.name) {
-        case RQL_NODE.AND:
-        case RQL_NODE.NAND:
-        case RQL_NODE.OR:
-        case RQL_NODE.NOR:
-        case RQL_NODE.NOT:
-        case RQL_NODE.CONTAINS:
-        case RQL_NODE.IN:
-        case RQL_NODE.OUT:
-        case RQL_NODE.EQ:
-        case RQL_NODE.GT:
-        case RQL_NODE.GE:
-        case RQL_NODE.LT:
-        case RQL_NODE.LE:
-        case RQL_NODE.BETWEEN:
-        case RQL_NODE.EXISTS:
-        case RQL_NODE.MISSING:
-          return true;
-        case RQL_NODE.MATCH:
-          return query.args.length > 1;
-      }
-
-      return false;
-    }).pop();
-
-    if (target) {
-      return targetNode.args.findIndex(function (arg) {
-        return arg.name === target.name;
-      });
-    }
-
-    return -1;
-  }
-
-  function vocabularyTermNames(vocabulary) {
-    return vocabulary && vocabulary.terms ? vocabulary.terms.map(function (term) {
-      return term.name;
-    }) : [];
-  }
-
-  function hasTargetQuery(rootRql, target) {
-    return rootRql.args.filter(function (query) {
-      switch (query.name) {
-        case RQL_NODE.VARIABLE:
-        case RQL_NODE.DATASET:
-        case RQL_NODE.STUDY:
-        case RQL_NODE.NETWORK:
-          return target ? target === query.name : true;
-        default:
-          return false;
-      }
-    }).length > 0;
-  }
-
-  function variableQuery() {
-    return new RqlQuery(QUERY_TARGETS.VARIABLE);
-  }
-
-  function eqQuery(field, term) {
-    var query = new RqlQuery(RQL_NODE.EQ);
-    query.args.push(term);
-    return query;
-  }
-
-  function orQuery(left, right) {
-    var query = new RqlQuery(RQL_NODE.OR);
-    query.args = [left, right];
-    return query;
-  }
-
-  function aggregate(fields) {
-    var query = new RqlQuery(RQL_NODE.AGGREGATE);
-    fields.forEach(function (field) {
-      query.args.push(field);
-    });
-    return query;
-  }
-
-  function fields(fields) {
-    var query = new RqlQuery(RQL_NODE.FIELDS);
-    query.args.push(fields);
-    return query;
-  }
-
-  function limit(from, size) {
-    var query = new RqlQuery(RQL_NODE.LIMIT);
-    query.args.push(from);
-    query.args.push(size);
-    return query;
-  }
-
-  function fieldQuery(name, field, terms) {
-    var query = new RqlQuery(name);
-    query.args.push(field);
-
-    if (terms && terms.length > 0) {
-      query.args.push(terms);
-    }
-
-    return query;
-  }
-
-  function inQuery(field, terms) {
-    var hasValues = terms && terms.length > 0;
-    var name = hasValues ? RQL_NODE.IN : RQL_NODE.EXISTS;
-    return fieldQuery(name, field, terms);
-  }
-
-  function matchQuery(field, queryString) {
-    var query = new RqlQuery(RQL_NODE.MATCH);
-    query.args.push(queryString || '*');
-    query.args.push(field);
-    return query;
-  }
-
-  function isFreeTextMatch(query) {
-    return query.name === RQL_NODE.MATCH && query.args.length === 1;
-  }
-
-  function updateMatchQuery(query, queryString) {
-    query.args[0] = queryString || '*';
-    return query;
-  }
-
-  function rangeQuery(field, from, to) {
-    var query = new RqlQuery(RQL_NODE.BETWEEN);
-    query.args.push(field);
-    updateRangeQuery(query, from, to);
-    return query;
-  }
-
-  function updateQueryInternal(query, terms) {
-    var hasValues = terms && terms.length > 0;
-
-    if (hasValues) {
-      query.args[1] = terms;
-    } else {
-      query.args.splice(1, 1);
-    }
-
-    return query;
-  }
-
-  function mergeInQueryArgValues(query, terms, replace) {
-    var hasValues = terms && terms.length > 0;
-
-    if (hasValues) {
-      var current = query.args[1];
-
-      if (!current || replace) {
-        query.args[1] = terms;
-      } else {
-        if (!(current instanceof Array)) {
-          current = [current];
-        }
-
-        var unique = terms.filter(function (term) {
-          return current.indexOf(term) === -1;
-        });
-
-        query.args[1] = current.concat(unique);
-      }
-    } else {
-      query.args.splice(1, 1);
-    }
-
-    return query;
-  }
-
-  function updateRangeQuery(query, from, to, missing) {
-    if (missing) {
-      query.name = RQL_NODE.MISSING;
-      query.args.splice(1, 1);
-    } else if (angular.isDefined(from) && from !== null && angular.isDefined(to) && to !== null) {
-      query.name = RQL_NODE.BETWEEN;
-      query.args[1] = [from, to];
-    } else if (angular.isDefined(from) && from !== null) {
-      query.name = RQL_NODE.GE;
-      query.args[1] = from;
-    } else if (angular.isDefined(to) && to !== null) {
-      query.name = RQL_NODE.LE;
-      query.args[1] = to;
-    } else {
-      query.name = RQL_NODE.EXISTS;
-      query.args.splice(1, 1);
-    }
-  }
-
-  /**
-   * Creates a RqlQuery from an item
-   *
-   * @param item
-   * @returns {RqlQuery}
-   */
-  function buildRqlQuery(item) {
-    if (VocabularyService.isNumericVocabulary(item.vocabulary)) {
-      return rangeQuery(criteriaId(item.taxonomy, item.vocabulary), null, null);
-    } else if (VocabularyService.isMatchVocabulary(item.vocabulary)) {
-      return matchQuery(criteriaId(item.taxonomy, item.vocabulary), null);
-    } else {
-      var args;
-      if (Array.isArray(item.selectedTerms) && item.selectedTerms.length > 0) {
-        args = item.selectedTerms;
-      } else if (item.term) {
-        args = item.term.name;
-      }
-
-      return inQuery(
-        criteriaId(item.taxonomy, item.vocabulary),
-        args
-      );
-    }
-  }
-
-  /**
-   * Adds a new query to the parent query node
-   *
-   * @param parentQuery
-   * @param query
-   * @returns {*}
-   */
-  function addQuery(parentQuery, query, logicalOp) {
-    if (parentQuery.args.length === 0) {
-      parentQuery.args.push(query);
-    } else {
-      var parentIndex = findValidParentNode(parentQuery);
-
-      if (parentIndex === -1) {
-        parentQuery.args.push(query);
-      } else {
-        var oldArg = parentQuery.args.splice(parentIndex, 1).pop();
-        // check if the field is from the target's taxonomy, in which case the criteria is
-        // added with a AND operator otherwise it is a OR
-        if (!logicalOp && query.args && query.args.length > 0) {
-          var targetTaxo = 'Mica_' + parentQuery.name;
-
-          if (!isFreeTextMatch(query)) {
-            var criteriaVocabulary = query.name === 'match' ? query.args[1] : query.args[0];
-            logicalOp = criteriaVocabulary.startsWith(targetTaxo + '.') ? RQL_NODE.AND : RQL_NODE.OR;
-          }
-        }
-        var orQuery = new RqlQuery(logicalOp || RQL_NODE.AND);
-        orQuery.args.push(oldArg, query);
-        parentQuery.args.push(orQuery);
-      }
-    }
-
-    return parentQuery;
-  }
-
-  /**
-   * Update repeatable vocabularies as follows:
-   *
-   * IN(q, [a,b]) OR [c] => CONTAINS(q, [a,c]) OR CONTAINS(q, [b,c])
-   * CONTAINS(q, [a,b]) OR [c] => CONTAINS(q, [a,b,c])
-   * EXISTS(q) OR [c] => CONTAINS(q, [c])
-   *
-   * @param existingItemWrapper
-   * @param terms
-   */
-  function updateRepeatableQueryArgValues(existingItem, terms) {
-    existingItem.items().forEach(function (item) {
-      var query = item.rqlQuery;
-      switch (query.name) {
-        case RQL_NODE.EXISTS:
-          query.name = RQL_NODE.CONTAINS;
-          mergeInQueryArgValues(query, terms, false);
-          break;
-
-        case RQL_NODE.CONTAINS:
-          mergeInQueryArgValues(query, terms, false);
-          break;
-
-        case RQL_NODE.IN:
-          var values = query.args[1] ? [].concat(query.args[1]) : [];
-          if (values.length === 1) {
-            query.name = RQL_NODE.CONTAINS;
-            mergeInQueryArgValues(query, terms, false);
-            break;
-          }
-
-          var field = query.args[0];
-          var contains = values.filter(function (value) {
-            // remove duplicates (e.g. CONTAINS(q, [a,a])
-            return terms.indexOf(value) < 0;
-          }).map(function (value) {
-            return fieldQuery(RQL_NODE.CONTAINS, field, [].concat(value, terms));
-          });
-
-          var orRql;
-          if (contains.length > 1) {
-            var firstTwo = contains.splice(0, 2);
-            orRql = orQuery(firstTwo[0], firstTwo[1]);
-
-            contains.forEach(function (value) {
-              orRql = orQuery(value, orRql);
-            });
-
-            query.name = orRql.name;
-            query.args = orRql.args;
-          } else {
-            query.name = RQL_NODE.CONTAINS;
-            query.args = contains[0].args;
-          }
-      }
-    });
-
-  }
-
-  function updateQueryArgValues(query, terms, replace) {
-    switch (query.name) {
-      case RQL_NODE.EXISTS:
-      case RQL_NODE.MISSING:
-        query.name = RQL_NODE.IN;
-        mergeInQueryArgValues(query, terms, replace);
-        break;
-      case RQL_NODE.CONTAINS:
-      case RQL_NODE.IN:
-        mergeInQueryArgValues(query, terms, replace);
-        break;
-      case RQL_NODE.BETWEEN:
-      case RQL_NODE.GE:
-      case RQL_NODE.LE:
-        query.args[1] = terms;
-        break;
-      case RQL_NODE.MATCH:
-        query.args[0] = terms;
-        break;
-    }
-  }
-
-  function updateQuery(query, values) {
-    switch (query.name) {
-      case RQL_NODE.CONTAINS:
-      case RQL_NODE.IN:
-      case RQL_NODE.OUT:
-      case RQL_NODE.EXISTS:
-      case RQL_NODE.MISSING:
-        updateQueryInternal(query, values);
-        break;
-    }
-  }
-
-  function addLocaleQuery(rqlQuery, locale) {
-    var found = rqlQuery.args.filter(function (arg) {
-      return arg.name === RQL_NODE.LOCALE;
-    }).pop();
-
-    if (!found) {
-      var localeQuery = new RqlQuery('locale');
-      localeQuery.args.push(locale);
-      rqlQuery.args.push(localeQuery);
-    }
-  }
-
-  function addFields(targetQuery, fieldsQuery) {
-    if (targetQuery && targetQuery.args) {
-      var found = targetQuery.args.filter(function (arg) {
-        return arg.name === RQL_NODE.FIELDS;
-      }).pop();
-
-      if (found) {
-        found.args = fieldsQuery.args;
-      } else {
-        targetQuery.args.push(fieldsQuery);
-      }
-    }
-  }
-
-  function addLimit(targetQuery, limitQuery) {
-    if (targetQuery && targetQuery.args) {
-      var found = targetQuery.args.filter(function (arg) {
-        return arg.name === RQL_NODE.LIMIT;
-      }).pop();
-
-      if (found) {
-        found.args = limitQuery.args;
-      } else {
-        targetQuery.args.push(limitQuery);
-      }
-    }
-  }
-
-  /**
-   * Adds a sort criteria on given fields
-   *
-   * @param targetQuery
-   * @param sort field name or an array of field names
-   */
-  function addSort(targetQuery, sort) {
-    var sortQuery = targetQuery.args.filter(function (arg) {
-      return arg.name === RQL_NODE.SORT;
-    }).pop();
-
-    if (!sortQuery) {
-      sortQuery = new RqlQuery('sort');
-      targetQuery.args.push(sortQuery);
-    }
-
-    sortQuery.args = Array.isArray(sort) ? sort : [sort];
-  }
-
-  /**
-   * Helper finding the vocabulary field, return name if none was found
-   *
-   * @param taxonomy
-   * @param vocabulary
-   * @returns {*}
-   */
-  function criteriaId(taxonomy, vocabulary) {
-    return taxonomy.name + '.' + vocabulary.name;
-  }
-
-  // exports
-  this.vocabularyTermNames = vocabularyTermNames;
-  this.hasTargetQuery = hasTargetQuery;
-  this.variableQuery = variableQuery;
-  this.eqQuery = eqQuery;
-  this.orQuery = orQuery;
-  this.aggregate = aggregate;
-  this.fields = fields;
-  this.limit = limit;
-  this.fieldQuery = fieldQuery;
-  this.inQuery = inQuery;
-  this.matchQuery = matchQuery;
-  this.isFreeTextMatch = isFreeTextMatch;
-  this.updateMatchQuery = updateMatchQuery;
-  this.rangeQuery = rangeQuery;
-  this.updateQueryInternal = updateQueryInternal;
-  this.mergeInQueryArgValues = mergeInQueryArgValues;
-  this.updateRangeQuery = updateRangeQuery;
-  this.buildRqlQuery = buildRqlQuery;
-  this.addQuery = addQuery;
-  this.updateRepeatableQueryArgValues = updateRepeatableQueryArgValues;
-  this.updateQueryArgValues = updateQueryArgValues;
-  this.updateQuery = updateQuery;
-  this.addLocaleQuery = addLocaleQuery;
-  this.addFields = addFields;
-  this.addLimit = addLimit;
-  this.addSort = addSort;
-  this.criteriaId = criteriaId;
-};/*
- * Copyright (c) 2018 OBiBa. All rights reserved.
- *
- * This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
 (function() {
 
 
@@ -3477,999 +3013,6 @@ ngObibaMica.search
       return RqlQueryService.getRenderableTargetCriteria(targets);
     };
   }]);;/*
- * Copyright (c) 2018 OBiBa. All rights reserved.
- *
- * This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-'use strict';
-
-/* global DISPLAY_TYPES */
-/* global CriteriaItem */
-/* global CriteriaItemBuilder */
-/* global CriteriaBuilder */
-/* global RqlQueryUtils */
-
-/* exported QUERY_TYPES */
-var QUERY_TYPES = {
-  NETWORKS: 'networks',
-  STUDIES: 'studies',
-  DATASETS: 'datasets',
-  VARIABLES: 'variables'
-};
-
-/* exported QUERY_TARGETS */
-var QUERY_TARGETS = {
-  NETWORK: 'network',
-  STUDY: 'study',
-  DATASET: 'dataset',
-  VARIABLE: 'variable',
-  TAXONOMY: 'taxonomy'
-};
-
-/* exported BUCKET_TYPES */
-var BUCKET_TYPES = {
-  NETWORK: 'network',
-  STUDY: 'study',
-  STUDY_INDIVIDUAL: 'study-individual',
-  STUDY_HARMONIZATION: 'study-harmonization',
-  DCE: 'dce',
-  DCE_INDIVIDUAL: 'dce-individual',
-  DCE_HARMONIZATION: 'dce-harmonization',
-  DATASET: 'dataset',
-  DATASET_COLLECTED: 'dataset-collected',
-  DATASET_HARMONIZED: 'dataset-harmonized',
-  DATASCHEMA: 'dataschema'
-};
-
-/* exported RQL_NODE */
-var RQL_NODE = {
-  // target nodes
-  VARIABLE: 'variable',
-  DATASET: 'dataset',
-  STUDY: 'study',
-  NETWORK: 'network',
-
-  /* target children */
-  LIMIT: 'limit',
-  SORT: 'sort',
-  AND: 'and',
-  NAND: 'nand',
-  OR: 'or',
-  NOR: 'nor',
-  NOT: 'not',
-  FACET: 'facet',
-  LOCALE: 'locale',
-  AGGREGATE: 'aggregate',
-  BUCKET: 'bucket',
-  FIELDS: 'fields',
-  FILTER: 'filter',
-
-  /* leaf criteria nodes */
-  CONTAINS: 'contains',
-  IN: 'in',
-  OUT: 'out',
-  EQ: 'eq',
-  GT: 'gt',
-  GE: 'ge',
-  LT: 'lt',
-  LE: 'le',
-  BETWEEN: 'between',
-  MATCH: 'match',
-  EXISTS: 'exists',
-  MISSING: 'missing'
-};
-
-/* exported SORT_FIELDS */
-var SORT_FIELDS = {
-  ACRONYM: 'acronym',
-  NAME: 'name',
-  CONTAINER_ID: 'containerId',
-  POPULATION_WEIGHT: 'populationWeight',
-  DATA_COLLECTION_EVENT_WEIGHT: 'dataCollectionEventWeight',
-  POPULATION_ID: 'populationId',
-  DATASET_ID: 'datasetId',
-  VARIABLE_TYPE: 'variableType',
-  INDEX: 'index',
-  STUDY_TABLE: {
-    POPULATION_WEIGHT: 'studyTable.populationWeight',
-    DATA_COLLECTION_EVENT_WEIGHT: 'studyTable.dataCollectionEventWeight',
-    STUDY_ID: 'studyTable.studyId',
-    POPULATION_ID: 'studyTable.populationId'
-  }
-};
-
-/* exported targetToType */
-function targetToType(target) {
-  switch (target.toLocaleString()) {
-    case QUERY_TARGETS.NETWORK:
-      return QUERY_TYPES.NETWORKS;
-    case QUERY_TARGETS.STUDY:
-      return QUERY_TYPES.STUDIES;
-    case QUERY_TARGETS.DATASET:
-      return QUERY_TYPES.DATASETS;
-    case QUERY_TARGETS.VARIABLE:
-      return QUERY_TYPES.VARIABLES;
-  }
-
-  throw new Error('Invalid target: ' + target);
-}
-
-/* exported targetToType */
-function typeToTarget(type) {
-  switch (type.toLocaleString()) {
-    case QUERY_TYPES.NETWORKS:
-      return QUERY_TARGETS.NETWORK;
-    case QUERY_TYPES.STUDIES:
-      return QUERY_TARGETS.STUDY;
-    case QUERY_TYPES.DATASETS:
-      return QUERY_TARGETS.DATASET;
-    case QUERY_TYPES.VARIABLES:
-      return QUERY_TARGETS.VARIABLE;
-  }
-
-  throw new Error('Invalid type: ' + type);
-}
-
-
-ngObibaMica.search
-
-  .service('RqlQueryUtils', ['VocabularyService', function (VocabularyService) {
-    var utils = new RqlQueryUtils(VocabularyService);
-    return utils;
-  }])
-
-  .service('RqlQueryService', [
-    '$q',
-    '$log',
-    'TaxonomiesResource',
-    'TaxonomyResource',
-    'LocalizedValues',
-    'RqlQueryUtils',
-    'VocabularyService',
-    'ngObibaMicaSearch',
-    function ($q,
-              $log,
-              TaxonomiesResource,
-              TaxonomyResource,
-              LocalizedValues,
-              RqlQueryUtils,
-              VocabularyService,
-              ngObibaMicaSearch) {
-      var taxonomiesCache = {
-        variable: null,
-        dataset: null,
-        study: null,
-        network: null
-      };
-
-      var self = this;
-      var searchOptions = ngObibaMicaSearch.getOptions();
-      this.findItemNodeById = function(root, targetId, result, strict) {
-        if (root && root.children && result) {
-          return root.children.some(function(child) {
-            if (strict ? targetId === child.id : targetId.indexOf(child.id) > -1) {
-              result.item = child;
-              return true;
-            }
-
-            return self.findItemNodeById(child, targetId, result, strict);
-          });
-        }
-
-        return false;
-      };
-
-      this.findItemNode = function(root, item, result) {
-        return self.findItemNodeById(root, item.id, result);
-      };
-
-      function findTargetCriteria(target, rootCriteria) {
-        return rootCriteria.children.filter(function (child) {
-          return child.target === target;
-        }).pop();
-      }
-
-      function findCriteriaItemFromTreeById(target, targetId, rootCriteria, strict) {
-        var targetItem = findTargetCriteria(target, rootCriteria);
-        var result = {};
-        if (self.findItemNodeById(targetItem, targetId, result, strict)) {
-          return result.item;
-        }
-
-        return null;
-      }
-
-      function findCriteriaItemFromTree(item, rootCriteria) {
-        var targetItem = findTargetCriteria(item.target, rootCriteria);
-        var result = {};
-        if (self.findItemNode(targetItem, item, result)) {
-          return result.item;
-        }
-
-        return null;
-      }
-
-      function findTargetQuery(target, query) {
-        return query.args.filter(function (arg) {
-          return arg.name === target;
-        }).pop();
-      }
-
-      function findQueryInTargetByTaxonomyVocabulary(target, taxonomy, vocabulary) {
-        if (!target) {
-          return null;
-        }
-
-        function search(parent, rx, result) {
-          return parent.args.some(function(arg) {
-            if (null !== rx.exec(arg)) {
-              result.parent = parent;
-              return true;
-            }
-
-            if (arg instanceof RqlQuery) {
-              return search(arg, rx, result);
-            }
-
-            return false;
-
-          });
-        }
-
-        var result = {};
-        search(target, new RegExp((taxonomy ? taxonomy : '') + '\\.' + vocabulary+'$'), result);
-        return result.parent;
-      }
-
-      function findQueryInTargetByVocabulary(target, vocabulary) {
-        return findQueryInTargetByTaxonomyVocabulary(target, null, vocabulary);
-      }
-
-      function getSourceFields(context, target) {
-        switch (context) {
-          case DISPLAY_TYPES.LIST:
-            switch (target) {
-              case QUERY_TARGETS.STUDY:
-                return RqlQueryUtils.fields(searchOptions.studies.fields);
-
-              case QUERY_TARGETS.VARIABLE:
-                return RqlQueryUtils.fields(
-                  [
-                    'attributes.label.*',
-                    'variableType',
-                    'datasetId',
-                    'datasetAcronym'
-                  ]);
-
-              case QUERY_TARGETS.DATASET:
-                return RqlQueryUtils.fields(searchOptions.datasets.fields);
-
-              case QUERY_TARGETS.NETWORK:
-                return RqlQueryUtils.fields(searchOptions.networks.fields);
-            }
-            break;
-        }
-
-        return null;
-      }
-
-      this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
-      this.findCriteriaItemFromTree = findCriteriaItemFromTree;
-      this.findTargetCriteria = findTargetCriteria;
-      this.findTargetQuery = findTargetQuery;
-      this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
-      this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
-
-      function isOperator(name) {
-        switch (name) {
-          case RQL_NODE.AND:
-          case RQL_NODE.NAND:
-          case RQL_NODE.OR:
-          case RQL_NODE.NOR:
-            return true;
-        }
-
-        return false;
-      }
-
-      function isLeaf(name) {
-        switch (name) {
-          case RQL_NODE.CONTAINS:
-          case RQL_NODE.IN:
-          case RQL_NODE.OUT:
-          case RQL_NODE.EQ:
-          case RQL_NODE.GT:
-          case RQL_NODE.GE:
-          case RQL_NODE.LT:
-          case RQL_NODE.LE:
-          case RQL_NODE.BETWEEN:
-          case RQL_NODE.MATCH:
-          case RQL_NODE.EXISTS:
-          case RQL_NODE.MISSING:
-            return true;
-        }
-
-        return false;
-      }
-
-      function isLeafCriteria(item) {
-        return isLeaf(item.type);
-      }
-
-      function deleteNode(item) {
-        var parent = item.parent;
-        var query = item.rqlQuery;
-        var queryArgs = query.args;
-        var parentQuery = item.parent.rqlQuery;
-        var index = parentQuery.args.indexOf(query);
-        var indexChild = parent.children.indexOf(item);
-
-        if (index === -1 || indexChild === -1) {
-          throw new Error('Criteria node not found: ' + item);
-        }
-
-        parent.children.splice(indexChild, 1);
-        item.children.forEach(function (c) {
-          c.parent = parent;
-        });
-        parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
-
-        parentQuery.args.splice(index, 1);
-
-        if (queryArgs) {
-          if (queryArgs instanceof Array) {
-            parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
-          } else {
-            parentQuery.args.splice(index, 0, queryArgs);
-          }
-        }
-
-        if (parent.parent !== null && parentQuery.args.length === 0) {
-          deleteNode(parent);
-        }
-      }
-
-      function deleteNodeCriteriaWithOrphans(item) {
-        var parent = item.parent;
-        var query = item.rqlQuery;
-        var queryArgs = query.args;
-        var parentQuery = item.parent.rqlQuery;
-        var index = parentQuery.args.indexOf(query);
-        var indexChild = parent.children.indexOf(item);
-
-        if (index === -1 || indexChild === -1) {
-          throw new Error('Criteria node not found: ' + item);
-        }
-
-        parent.children.splice(indexChild, 1);
-        item.children.forEach(function (c) {
-          c.parent = parent;
-        });
-        parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
-
-        parentQuery.args.splice(index, 1);
-
-        if (queryArgs) {
-          if (queryArgs instanceof Array) {
-            parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
-          } else {
-            parentQuery.args.splice(index, 0, queryArgs);
-          }
-        }
-
-        if (parentQuery.args.length === 0) {
-          deleteNode(parent);
-        }
-      }
-
-      function deleteLeafCriteria(item) {
-        var parent = item.parent;
-        if (!parent) {
-          throw new Error('Cannot remove criteria when parent is NULL');
-        }
-
-        var query = item.rqlQuery;
-        var parentQuery = item.parent.rqlQuery;
-        var index = parentQuery.args.indexOf(query);
-
-        if (index === -1) {
-          throw new Error('Criteria node not found: ' + item);
-        }
-
-        parentQuery.args.splice(index, 1);
-
-        if ([RQL_NODE.OR, RQL_NODE.AND, RQL_NODE.NAND, RQL_NODE.NOR].indexOf(parent.type) !== -1) {
-          deleteNodeCriteriaWithOrphans(parent);
-        } else if (parentQuery.args.length === 0) {
-          deleteNode(parent);
-        }
-
-      }
-
-      /**
-       * NOTE: once the FreeTextMatch has a UI this is no longer needed.
-       *
-       * @param query
-       * @returns boolean if target has more than a FreeTextMatch
-       */
-      function queryHasCriteria(query) {
-        if (query && query.args) {
-          var leafQueries = query.args.filter(function(arg) {
-            return isLeaf(arg.name) || isOperator(arg.name);
-          });
-
-          if (leafQueries.length === 1 && RqlQueryUtils.isFreeTextMatch(leafQueries[0])) {
-            return false;
-          }
-
-          return leafQueries.length > 0;
-        }
-
-        return false;
-      }
-
-      function getRenderableTargetCriteria(targets) {
-        return (targets || []).filter(function(target){
-          return queryHasCriteria(target.rqlQuery);
-        });
-      }
-
-      function getRenderableTargetCriteriaFromRoot(rootCriteria) {
-        return rootCriteria ?
-          getRenderableTargetCriteria(rootCriteria.children) :
-          [];
-      }
-
-      this.getRenderableTargetCriteria = getRenderableTargetCriteria;
-      this.getRenderableTargetCriteriaFromRoot = getRenderableTargetCriteriaFromRoot;
-
-      this.parseQuery = function(query) {
-        try {
-          return new RqlParser().parse(query);
-        } catch (e) {
-          $log.error(e.message);
-        }
-
-        return new RqlQuery();
-      };
-
-      /**
-       * Removes the item from criteria item tree. This should be from a leaf.
-       * @param item
-       */
-      this.removeCriteriaItem = function (item) {
-        if (isLeafCriteria(item)) {
-          deleteLeafCriteria(item);
-        } else {
-          deleteNode(item);
-        }
-      };
-
-      /**
-       * Creates a criteria item
-       * @param target
-       * @param taxonomy
-       * @param vocabulary
-       * @param term
-       * @param lang
-       * @returns A criteria item
-       */
-      this.createCriteriaItem = function (target, taxonomy, vocabulary, term, lang) {
-        function createBuilder(taxonomy, vocabulary, term) {
-          return new CriteriaItemBuilder(LocalizedValues, lang)
-            .target(target)
-            .taxonomy(taxonomy)
-            .vocabulary(vocabulary)
-            .term(term);
-        }
-
-        if (angular.isString(taxonomy)) {
-          return TaxonomyResource.get({
-            target: target,
-            taxonomy: taxonomy
-          }).$promise.then(function (taxonomy) {
-            vocabulary = taxonomy.vocabularies.filter(function (v) {
-              return v.name === vocabulary || VocabularyService.vocabularyAlias(v) === vocabulary;
-            })[0];
-            term = vocabulary && vocabulary.terms ?
-              vocabulary.terms.filter(function (t) {return t.name === term; })[0] :
-              null;
-
-            return createBuilder(taxonomy, vocabulary, term).build();
-          });
-        }
-
-        return createBuilder(taxonomy, vocabulary, term).build();
-      };
-
-      /**
-       * Adds new item to the item tree
-       *
-       * @param rootItem
-       * @param item
-       */
-      this.addCriteriaItem = function (rootRql, newItem, logicalOp) {
-        var target = rootRql.args.filter(function (query) {
-          return newItem.target === query.name;
-        }).pop();
-
-        if (!target) {
-          target = new RqlQuery(RQL_NODE[newItem.target.toUpperCase()]);
-          rootRql.args.push(target);
-        }
-
-        var rqlQuery = newItem.rqlQuery ? newItem.rqlQuery : RqlQueryUtils.buildRqlQuery(newItem);
-        return RqlQueryUtils.addQuery(target, rqlQuery, logicalOp);
-      };
-
-      /**
-       * Update an existing item to the item tree
-       *
-       * @param rootItem
-       * @param item
-       */
-      this.updateCriteriaItem = function (existingItem, newItem, replace) {
-        var newTerms;
-        var isRepeatable = existingItem.isRepeatable();
-        var isMatchNode = !isRepeatable && existingItem.rqlQuery.name === RQL_NODE.MATCH;
-
-        if(replace && newItem.rqlQuery) {
-          existingItem.rqlQuery.name = newItem.rqlQuery.name;
-        }
-        
-        if (newItem.rqlQuery) {
-          newTerms = newItem.rqlQuery.args[isMatchNode ? 0 : 1];
-        } else if (newItem.term) {
-          newTerms = [newItem.term.name];
-        } else {
-          existingItem = isRepeatable ? existingItem.first() : existingItem;
-          existingItem.rqlQuery.name = RQL_NODE.EXISTS;
-          existingItem.rqlQuery.args.splice(1, 1);
-        }
-
-        if (newTerms) {
-          if (isRepeatable) {
-            RqlQueryUtils.updateRepeatableQueryArgValues(existingItem, newTerms);
-          } else {
-            RqlQueryUtils.updateQueryArgValues(existingItem.rqlQuery, newTerms, replace);
-          }
-        }
-      };
-
-      this.getTaxonomyByTarget = function(target) {
-        var deferred = $q.defer();
-        var taxonomy = taxonomiesCache[target];
-        if (taxonomy) {
-          deferred.resolve(taxonomy);
-        } else {
-          TaxonomiesResource.get({
-            target: target
-          }).$promise.then(function (response) {
-            taxonomiesCache[target] = response;
-            deferred.resolve(response);
-          });
-        }
-
-        return deferred.promise;
-      };
-
-      /**
-       * Builders registry
-       *
-       * @type {{variable: builders.variable, study: builders.study}}
-       */
-      this.builders = function (target, rootRql, rootItem, lang) {
-        var deferred = $q.defer();
-
-        function build(rootRql, rootItem) {
-          var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang);
-          builder.initialize(target);
-          builder.build();
-          deferred.resolve({root: builder.getRootItem(), map: builder.getLeafItemMap()});
-        }
-
-        self.getTaxonomyByTarget(target).then(function(){
-          build(rootRql, rootItem);
-        });
-
-        return deferred.promise;
-      };
-
-      /**
-       * Builds the criteria tree
-       *
-       * @param rootRql
-       * @param lang
-       * @returns {*}
-       */
-      this.createCriteria = function (rootRql, lang) {
-        var deferred = $q.defer();
-        var rootItem = new CriteriaItemBuilder().type(RQL_NODE.AND).rqlQuery(rootRql).build();
-        var leafItemMap = {};
-
-        if (!RqlQueryUtils.hasTargetQuery(rootRql)) {
-          deferred.resolve({root: rootItem, map: leafItemMap});
-          return deferred.promise;
-        }
-
-        var queries = [];
-        var self = this;
-        var resolvedCount = 0;
-
-        rootRql.args.forEach(function (node) {
-          if (QUERY_TARGETS[node.name.toUpperCase()]) {
-            queries.push(node);
-          }
-        });
-
-        queries.forEach(function (node) {
-          self.builders(node.name, node, rootItem, lang).then(function (result) {
-            rootItem.children.push(result.root);
-            leafItemMap = angular.extend(leafItemMap, result.map);
-            resolvedCount++;
-            if (resolvedCount === queries.length) {
-              deferred.resolve({root: rootItem, map: leafItemMap});
-            }
-          });
-        });
-
-        return deferred.promise;
-      };
-
-      /**
-       * Append the aggregate and facet for criteria term listing.
-       *
-       * @param query
-       * @para
-       * @returns the new query
-       */
-      this.prepareCriteriaTermsQuery = function (query, item, lang) {
-        function iterReplaceQuery(query, criteriaId, newQuery) {
-          if (!query || !query.args) {
-            return null;
-          }
-
-          if ((query.name === RQL_NODE.IN || query.name === RQL_NODE.MISSING || query.name === RQL_NODE.CONTAINS) && query.args[0] === criteriaId) {
-            return query;
-          }
-
-          for (var i = query.args.length; i--;) {
-            var res = iterReplaceQuery(query.args[i], criteriaId, newQuery);
-
-            if (res) {
-              query.args[i] = newQuery;
-            }
-          }
-        }
-
-        var parsedQuery = this.parseQuery(query);
-        var targetQuery = parsedQuery.args.filter(function (node) {
-          return node.name === item.target;
-        }).pop();
-
-        if (targetQuery) {
-          var anyQuery = new RqlQuery(RQL_NODE.EXISTS),
-            criteriaId = RqlQueryUtils.criteriaId(item.taxonomy, item.vocabulary);
-
-          anyQuery.args.push(criteriaId);
-          iterReplaceQuery(targetQuery, criteriaId, anyQuery);
-          targetQuery.args.push(RqlQueryUtils.aggregate([criteriaId]));
-          targetQuery.args.push(RqlQueryUtils.limit(0, 0));
-        }
-
-        parsedQuery.args.push(new RqlQuery(RQL_NODE.FACET));
-
-        if (lang) {
-          RqlQueryUtils.addLocaleQuery(parsedQuery, lang);
-        }
-
-        return parsedQuery.serializeArgs(parsedQuery.args);
-      };
-
-      this.getTargetQuerySort = function (type, query) {
-        var target = typeToTarget(type);
-        var targetQuery = findTargetQuery(target, query);
-        var sort = null;
-        if (targetQuery) {
-          sort = targetQuery.args.filter(function (arg) {
-            return arg.name === RQL_NODE.SORT;
-          }).pop();
-        }
-
-        return sort;
-      };
-
-      function prepareSearchQueryInternal(context, type, query, pagination, lang, sort, addFieldsQuery) {
-        var rqlQuery = angular.copy(query);
-        var target = typeToTarget(type);
-        RqlQueryUtils.addLocaleQuery(rqlQuery, lang);
-        var targetQuery = findTargetQuery(target, rqlQuery);
-
-        if (!targetQuery) {
-          targetQuery = new RqlQuery(target);
-          rqlQuery.args.push(targetQuery);
-        }
-
-        var limit = pagination[target] || {from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target)};
-        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
-
-        if(addFieldsQuery){
-          var fieldsQuery = getSourceFields(context, target);
-          if (fieldsQuery) {
-            RqlQueryUtils.addFields(targetQuery, fieldsQuery);
-          }
-        }
-
-        if (sort) {
-          RqlQueryUtils.addSort(targetQuery, sort);
-        }
-
-        return rqlQuery;
-      }
-
-      this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
-        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, true);
-      };
-
-      this.prepareSearchQueryNoFields = function (context, type, query, pagination, lang, sort) {
-        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, false);
-      };
-
-      this.prepareSearchQueryAndSerialize = function (context, type, query, pagination, lang, sort) {
-        return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, pagination, lang, sort).args);
-      };
-
-      /**
-       * Append the aggregate and bucket operations to the variable.
-       *
-       * @param query
-       * @param bucketArg
-       * @returns the new query
-       */
-      this.prepareCoverageQuery = function (query, bucketArg) {
-        var parsedQuery = this.parseQuery(query);
-        var aggregate = new RqlQuery('aggregate');
-        var bucketField;
-
-        var parts = bucketArg.split('-');
-        var groupBy = parts[0];
-        var filterBy = parts.length > 1 ? parts[1] : undefined;
-
-        switch (groupBy) {
-          case BUCKET_TYPES.NETWORK:
-            bucketField = 'networkId';
-            break;
-          case BUCKET_TYPES.STUDY:
-          case BUCKET_TYPES.STUDY_INDIVIDUAL:
-          case BUCKET_TYPES.STUDY_HARMONIZATION:
-            bucketField = 'studyId';
-            break;
-          case BUCKET_TYPES.DCE:
-          case BUCKET_TYPES.DCE_INDIVIDUAL:
-            bucketField = 'dceId';
-            break;
-          case BUCKET_TYPES.DATASCHEMA:
-          case BUCKET_TYPES.DATASET:
-          case BUCKET_TYPES.DATASET_COLLECTED:
-          case BUCKET_TYPES.DATASET_HARMONIZED:
-            bucketField = 'datasetId';
-            break;
-        }
-
-        var bucket = new RqlQuery('bucket');
-        bucket.args.push(bucketField);
-        aggregate.args.push(bucket);
-
-        // variable RQL
-        var variable;
-        parsedQuery.args.forEach(function (arg) {
-          if (!variable && arg.name === 'variable') {
-            variable = arg;
-          }
-        });
-        if (!variable) {
-          variable = new RqlQuery('variable');
-          parsedQuery.args.push(variable);
-        }
-
-        if (variable.args.length > 0 && variable.args[0].name !== 'limit') {
-          var variableType = new RqlQuery('in');
-          variableType.args.push('Mica_variable.variableType');
-          if (filterBy === undefined) {
-            if (bucketArg === BUCKET_TYPES.DATASET_HARMONIZED || bucketArg === BUCKET_TYPES.DATASCHEMA) {
-              variableType.args.push('Dataschema');
-            } else {
-              variableType.args.push(['Collected','Dataschema']);
-            }
-          } else if (['individual', 'collected'].indexOf(filterBy) > -1) {
-            variableType.args.push('Collected');
-          } else if (['harmonization', 'harmonized'].indexOf(filterBy) > -1) {
-            variableType.args.push('Dataschema');
-          }
-          var andVariableType = new RqlQuery('and');
-          andVariableType.args.push(variableType);
-          andVariableType.args.push(variable.args[0]);
-          variable.args[0] = andVariableType;
-        }
-
-        variable.args.push(aggregate);
-
-        return parsedQuery.serializeArgs(parsedQuery.args);
-      };
-
-      this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs) {
-        var parsedQuery = this.parseQuery(query);
-        // aggregate
-        var aggregate = new RqlQuery(RQL_NODE.AGGREGATE);
-        aggregateArgs.forEach(function (a) {
-          aggregate.args.push(a);
-        });
-        //bucket
-        if (bucketArgs && bucketArgs.length > 0) {
-          var bucket = new RqlQuery(RQL_NODE.BUCKET);
-          bucketArgs.forEach(function (b) {
-            bucket.args.push(b);
-          });
-          aggregate.args.push(bucket);
-        }
-
-        // study
-        var study;
-        var hasQuery = false;
-        var hasStudyTarget = false;
-        parsedQuery.args.forEach(function (arg) {
-          if (arg.name === 'study') {
-            hasStudyTarget = true;
-            var limitIndex = null;
-            hasQuery = arg.args.filter(function (requestArg, index) {
-              if (requestArg.name === 'limit') {
-                limitIndex = index;
-              }
-              return ['limit', 'sort', 'aggregate'].indexOf(requestArg.name) < 0;
-            }).length;
-            if (limitIndex !== null) {
-              arg.args.splice(limitIndex, 1);
-            }
-            study = arg;
-          }
-        });
-        // Study match all if no study query.
-        if (!hasStudyTarget) {
-          study = new RqlQuery('study');
-          parsedQuery.args.push(study);
-        }
-        if (!hasQuery) {
-          study.args.push(new RqlQuery(RQL_NODE.MATCH));
-        }
-        study.args.push(aggregate);
-        // facet
-        parsedQuery.args.push(new RqlQuery('facet'));
-        return parsedQuery.serializeArgs(parsedQuery.args);
-      };
-
-      this.getTargetAggregations = function (joinQueryResponse, criterion, lang) {
-
-        /**
-         * Helper to merge the terms that are not in the aggregation list
-         *
-         * @param aggs
-         * @param vocabulary
-         * @returns Array of aggs
-         */
-        function addMissingTerms(aggs, vocabulary) {
-          var terms = vocabulary.terms;
-          if (terms && terms.length > 0) {
-            var keys = aggs && aggs.map(function (agg) {
-                return agg.key;
-              }) || [];
-
-            if (aggs) {
-              // Add the missing terms not present in the aggs list
-              var missingTerms = [];
-
-              terms.forEach(function (term) {
-                if (keys.length === 0 || keys.indexOf(term.name) === -1) {
-                  missingTerms.push({
-                    count: 0,
-                    default: 0,
-                    description: LocalizedValues.forLocale(term.description, lang),
-                    key: term.name,
-                    title: LocalizedValues.forLocale(term.title, lang)
-                  });
-                }
-              });
-
-              return aggs.concat(missingTerms);
-            }
-
-            // The query didn't have any match, return default empty aggs based on the vocabulary terms
-            return terms.map(function (term) {
-              return {
-                count: 0,
-                default: 0,
-                description: LocalizedValues.forLocale(term.description, lang),
-                key: term.name,
-                title: LocalizedValues.forLocale(term.title, lang)
-              };
-            });
-
-          }
-
-          return aggs;
-        }
-
-        function getChildAggragations(parentAgg, aggKey) {
-          if (parentAgg.children) {
-            var child = parentAgg.children.filter(function (child) {
-              return child.hasOwnProperty(aggKey);
-            }).pop();
-
-            if (child) {
-              return child[aggKey];
-            }
-          }
-
-          return null;
-        }
-
-        var alias = VocabularyService.vocabularyAlias(criterion.vocabulary);
-        var targetResponse = joinQueryResponse[criterion.target + 'ResultDto'];
-
-        if (targetResponse && targetResponse.aggs) {
-          var isProperty = criterion.taxonomy.name.startsWith('Mica_');
-          var filter = isProperty ? alias : criterion.taxonomy.name;
-          var filteredAgg = targetResponse.aggs.filter(function (agg) {
-            return agg.aggregation === filter;
-          }).pop();
-
-          if (filteredAgg) {
-            if (isProperty) {
-              if (VocabularyService.isNumericVocabulary(criterion.vocabulary)) {
-                return filteredAgg['obiba.mica.StatsAggregationResultDto.stats'];
-              } else {
-                return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
-                  addMissingTerms(filteredAgg['obiba.mica.RangeAggregationResultDto.ranges'], criterion.vocabulary) :
-                  addMissingTerms(filteredAgg['obiba.mica.TermsAggregationResultDto.terms'], criterion.vocabulary);
-              }
-            } else {
-              var vocabularyAgg = filteredAgg.children.filter(function (agg) {
-                return agg.aggregation === alias;
-              }).pop();
-
-              if (vocabularyAgg) {
-                return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
-                  addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.RangeAggregationResultDto.ranges'), criterion.vocabulary) :
-                  addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.TermsAggregationResultDto.terms'), criterion.vocabulary);
-              }
-            }
-          }
-        }
-
-        return addMissingTerms([], criterion.vocabulary);
-      };
-
-      this.findCriterion = function(criteria, id) {
-        function inner(criteria, id) {
-          var result;
-          if(criteria.id === id) { return criteria; }
-          var children = criteria.children.filter(function (childCriterion) { return childCriterion instanceof CriteriaItem; });
-
-          for(var i = children.length; i--;){
-            result = inner(children[i], id);
-
-            if (result) {return result;}
-          }
-        }
-        
-        return inner(criteria, id);
-      };
-    }]);
-;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
  * This program and the accompanying materials
@@ -7865,6 +6408,1461 @@ ngObibaMica.search
 
 'use strict';
 
+
+/* global DISPLAY_TYPES */
+/* global CriteriaItem */
+/* global CriteriaItemBuilder */
+/* global CriteriaBuilder */
+
+/* exported QUERY_TYPES */
+var QUERY_TYPES = {
+  NETWORKS: 'networks',
+  STUDIES: 'studies',
+  DATASETS: 'datasets',
+  VARIABLES: 'variables'
+};
+
+/* exported QUERY_TARGETS */
+var QUERY_TARGETS = {
+  NETWORK: 'network',
+  STUDY: 'study',
+  DATASET: 'dataset',
+  VARIABLE: 'variable',
+  TAXONOMY: 'taxonomy'
+};
+
+/* exported BUCKET_TYPES */
+var BUCKET_TYPES = {
+  NETWORK: 'network',
+  STUDY: 'study',
+  STUDY_INDIVIDUAL: 'study-individual',
+  STUDY_HARMONIZATION: 'study-harmonization',
+  DCE: 'dce',
+  DCE_INDIVIDUAL: 'dce-individual',
+  DCE_HARMONIZATION: 'dce-harmonization',
+  DATASET: 'dataset',
+  DATASET_COLLECTED: 'dataset-collected',
+  DATASET_HARMONIZED: 'dataset-harmonized',
+  DATASCHEMA: 'dataschema'
+};
+
+/* exported RQL_NODE */
+var RQL_NODE = {
+  // target nodes
+  VARIABLE: 'variable',
+  DATASET: 'dataset',
+  STUDY: 'study',
+  NETWORK: 'network',
+
+  /* target children */
+  LIMIT: 'limit',
+  SORT: 'sort',
+  AND: 'and',
+  NAND: 'nand',
+  OR: 'or',
+  NOR: 'nor',
+  NOT: 'not',
+  FACET: 'facet',
+  LOCALE: 'locale',
+  AGGREGATE: 'aggregate',
+  BUCKET: 'bucket',
+  FIELDS: 'fields',
+  FILTER: 'filter',
+
+  /* leaf criteria nodes */
+  CONTAINS: 'contains',
+  IN: 'in',
+  OUT: 'out',
+  EQ: 'eq',
+  GT: 'gt',
+  GE: 'ge',
+  LT: 'lt',
+  LE: 'le',
+  BETWEEN: 'between',
+  MATCH: 'match',
+  EXISTS: 'exists',
+  MISSING: 'missing'
+};
+
+/* exported SORT_FIELDS */
+var SORT_FIELDS = {
+  ACRONYM: 'acronym',
+  NAME: 'name',
+  CONTAINER_ID: 'containerId',
+  POPULATION_WEIGHT: 'populationWeight',
+  DATA_COLLECTION_EVENT_WEIGHT: 'dataCollectionEventWeight',
+  POPULATION_ID: 'populationId',
+  DATASET_ID: 'datasetId',
+  VARIABLE_TYPE: 'variableType',
+  INDEX: 'index',
+  STUDY_TABLE: {
+    POPULATION_WEIGHT: 'studyTable.populationWeight',
+    DATA_COLLECTION_EVENT_WEIGHT: 'studyTable.dataCollectionEventWeight',
+    STUDY_ID: 'studyTable.studyId',
+    POPULATION_ID: 'studyTable.populationId'
+  }
+};
+
+/* exported targetToType */
+function targetToType(target) {
+  switch (target.toLocaleString()) {
+    case QUERY_TARGETS.NETWORK:
+      return QUERY_TYPES.NETWORKS;
+    case QUERY_TARGETS.STUDY:
+      return QUERY_TYPES.STUDIES;
+    case QUERY_TARGETS.DATASET:
+      return QUERY_TYPES.DATASETS;
+    case QUERY_TARGETS.VARIABLE:
+      return QUERY_TYPES.VARIABLES;
+  }
+
+  throw new Error('Invalid target: ' + target);
+}
+
+/* exported targetToType */
+function typeToTarget(type) {
+  switch (type.toLocaleString()) {
+    case QUERY_TYPES.NETWORKS:
+      return QUERY_TARGETS.NETWORK;
+    case QUERY_TYPES.STUDIES:
+      return QUERY_TARGETS.STUDY;
+    case QUERY_TYPES.DATASETS:
+      return QUERY_TARGETS.DATASET;
+    case QUERY_TYPES.VARIABLES:
+      return QUERY_TARGETS.VARIABLE;
+  }
+
+  throw new Error('Invalid type: ' + type);
+}
+
+
+ngObibaMica.search.service('RqlQueryService',
+  ['$q', 
+  '$log', 
+  'TaxonomiesResource', 
+  'TaxonomyResource', 
+  'LocalizedValues', 
+  'VocabularyService', 
+  'RqlQueryUtils',
+  'ngObibaMicaSearch',
+    function ($q, 
+      $log, 
+      TaxonomiesResource, 
+      TaxonomyResource, 
+      LocalizedValues, 
+      VocabularyService, 
+      RqlQueryUtils,
+      ngObibaMicaSearch) {
+
+      var taxonomiesCache = {
+        variable: null,
+        dataset: null,
+        study: null,
+        network: null
+      };
+
+      var self = this;
+      var searchOptions = ngObibaMicaSearch.getOptions();
+      this.findItemNodeById = function (root, targetId, result, strict) {
+        if (root && root.children && result) {
+          return root.children.some(function (child) {
+            if (strict ? targetId === child.id : targetId.indexOf(child.id) > -1) {
+              result.item = child;
+              return true;
+            }
+
+            return self.findItemNodeById(child, targetId, result, strict);
+          });
+        }
+
+        return false;
+      };
+
+      this.findItemNode = function (root, item, result) {
+        return self.findItemNodeById(root, item.id, result);
+      };
+
+      function findTargetCriteria(target, rootCriteria) {
+        return rootCriteria.children.filter(function (child) {
+          return child.target === target;
+        }).pop();
+      }
+
+      function findCriteriaItemFromTreeById(target, targetId, rootCriteria, strict) {
+        var targetItem = findTargetCriteria(target, rootCriteria);
+        var result = {};
+        if (self.findItemNodeById(targetItem, targetId, result, strict)) {
+          return result.item;
+        }
+
+        return null;
+      }
+
+      function findCriteriaItemFromTree(item, rootCriteria) {
+        var targetItem = findTargetCriteria(item.target, rootCriteria);
+        var result = {};
+        if (self.findItemNode(targetItem, item, result)) {
+          return result.item;
+        }
+
+        return null;
+      }
+
+      function findTargetQuery(target, query) {
+        return query.args.filter(function (arg) {
+          return arg.name === target;
+        }).pop();
+      }
+
+      function findQueryInTargetByTaxonomyVocabulary(target, taxonomy, vocabulary) {
+        if (!target) {
+          return null;
+        }
+
+        function search(parent, rx, result) {
+          return parent.args.some(function (arg) {
+            if (null !== rx.exec(arg)) {
+              result.parent = parent;
+              return true;
+            }
+
+            if (arg instanceof RqlQuery) {
+              return search(arg, rx, result);
+            }
+
+            return false;
+
+          });
+        }
+
+        var result = {};
+        search(target, new RegExp((taxonomy ? taxonomy : '') + '\\.' + vocabulary + '$'), result);
+        return result.parent;
+      }
+
+      function findQueryInTargetByVocabulary(target, vocabulary) {
+        return findQueryInTargetByTaxonomyVocabulary(target, null, vocabulary);
+      }
+
+      function getSourceFields(context, target) {
+        switch (context) {
+          case DISPLAY_TYPES.LIST:
+            switch (target) {
+              case QUERY_TARGETS.STUDY:
+                return RqlQueryUtils.fields(searchOptions.studies.fields);
+
+              case QUERY_TARGETS.VARIABLE:
+                return RqlQueryUtils.fields(
+                  [
+                    'attributes.label.*',
+                    'variableType',
+                    'datasetId',
+                    'datasetAcronym'
+                  ]);
+
+              case QUERY_TARGETS.DATASET:
+                return RqlQueryUtils.fields(searchOptions.datasets.fields);
+
+              case QUERY_TARGETS.NETWORK:
+                return RqlQueryUtils.fields(searchOptions.networks.fields);
+            }
+            break;
+        }
+
+        return null;
+      }
+
+      this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
+      this.findCriteriaItemFromTree = findCriteriaItemFromTree;
+      this.findTargetCriteria = findTargetCriteria;
+      this.findTargetQuery = findTargetQuery;
+      this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
+      this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
+
+      function isOperator(name) {
+        switch (name) {
+          case RQL_NODE.AND:
+          case RQL_NODE.NAND:
+          case RQL_NODE.OR:
+          case RQL_NODE.NOR:
+            return true;
+        }
+
+        return false;
+      }
+
+      function isLeaf(name) {
+        switch (name) {
+          case RQL_NODE.CONTAINS:
+          case RQL_NODE.IN:
+          case RQL_NODE.OUT:
+          case RQL_NODE.EQ:
+          case RQL_NODE.GT:
+          case RQL_NODE.GE:
+          case RQL_NODE.LT:
+          case RQL_NODE.LE:
+          case RQL_NODE.BETWEEN:
+          case RQL_NODE.MATCH:
+          case RQL_NODE.EXISTS:
+          case RQL_NODE.MISSING:
+            return true;
+        }
+
+        return false;
+      }
+
+      function isLeafCriteria(item) {
+        return isLeaf(item.type);
+      }
+
+      function deleteNode(item) {
+        var parent = item.parent;
+        var query = item.rqlQuery;
+        var queryArgs = query.args;
+        var parentQuery = item.parent.rqlQuery;
+        var index = parentQuery.args.indexOf(query);
+        var indexChild = parent.children.indexOf(item);
+
+        if (index === -1 || indexChild === -1) {
+          throw new Error('Criteria node not found: ' + item);
+        }
+
+        parent.children.splice(indexChild, 1);
+        item.children.forEach(function (c) {
+          c.parent = parent;
+        });
+        parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
+
+        parentQuery.args.splice(index, 1);
+
+        if (queryArgs) {
+          if (queryArgs instanceof Array) {
+            parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
+          } else {
+            parentQuery.args.splice(index, 0, queryArgs);
+          }
+        }
+
+        if (parent.parent !== null && parentQuery.args.length === 0) {
+          deleteNode(parent);
+        }
+      }
+
+      function deleteNodeCriteriaWithOrphans(item) {
+        var parent = item.parent;
+        var query = item.rqlQuery;
+        var queryArgs = query.args;
+        var parentQuery = item.parent.rqlQuery;
+        var index = parentQuery.args.indexOf(query);
+        var indexChild = parent.children.indexOf(item);
+
+        if (index === -1 || indexChild === -1) {
+          throw new Error('Criteria node not found: ' + item);
+        }
+
+        parent.children.splice(indexChild, 1);
+        item.children.forEach(function (c) {
+          c.parent = parent;
+        });
+        parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
+
+        parentQuery.args.splice(index, 1);
+
+        if (queryArgs) {
+          if (queryArgs instanceof Array) {
+            parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
+          } else {
+            parentQuery.args.splice(index, 0, queryArgs);
+          }
+        }
+
+        if (parentQuery.args.length === 0) {
+          deleteNode(parent);
+        }
+      }
+
+      function deleteLeafCriteria(item) {
+        var parent = item.parent;
+        if (!parent) {
+          throw new Error('Cannot remove criteria when parent is NULL');
+        }
+
+        var query = item.rqlQuery;
+        var parentQuery = item.parent.rqlQuery;
+        var index = parentQuery.args.indexOf(query);
+
+        if (index === -1) {
+          throw new Error('Criteria node not found: ' + item);
+        }
+
+        parentQuery.args.splice(index, 1);
+
+        if ([RQL_NODE.OR, RQL_NODE.AND, RQL_NODE.NAND, RQL_NODE.NOR].indexOf(parent.type) !== -1) {
+          deleteNodeCriteriaWithOrphans(parent);
+        } else if (parentQuery.args.length === 0) {
+          deleteNode(parent);
+        }
+
+      }
+
+      /**
+       * NOTE: once the FreeTextMatch has a UI this is no longer needed.
+       *
+       * @param query
+       * @returns boolean if target has more than a FreeTextMatch
+       */
+      function queryHasCriteria(query) {
+        if (query && query.args) {
+          var leafQueries = query.args.filter(function (arg) {
+            return isLeaf(arg.name) || isOperator(arg.name);
+          });
+
+          if (leafQueries.length === 1 && RqlQueryUtils.isFreeTextMatch(leafQueries[0])) {
+            return false;
+          }
+
+          return leafQueries.length > 0;
+        }
+
+        return false;
+      }
+
+      function getRenderableTargetCriteria(targets) {
+        return (targets || []).filter(function (target) {
+          return queryHasCriteria(target.rqlQuery);
+        });
+      }
+
+      function getRenderableTargetCriteriaFromRoot(rootCriteria) {
+        return rootCriteria ?
+          getRenderableTargetCriteria(rootCriteria.children) :
+          [];
+      }
+
+      this.getRenderableTargetCriteria = getRenderableTargetCriteria;
+      this.getRenderableTargetCriteriaFromRoot = getRenderableTargetCriteriaFromRoot;
+
+      this.parseQuery = function (query) {
+        try {
+          return new RqlParser().parse(query);
+        } catch (e) {
+          $log.error(e.message);
+        }
+
+        return new RqlQuery();
+      };
+
+      /**
+       * Removes the item from criteria item tree. This should be from a leaf.
+       * @param item
+       */
+      this.removeCriteriaItem = function (item) {
+        if (isLeafCriteria(item)) {
+          deleteLeafCriteria(item);
+        } else {
+          deleteNode(item);
+        }
+      };
+
+      /**
+       * Creates a criteria item
+       * @param target
+       * @param taxonomy
+       * @param vocabulary
+       * @param term
+       * @param lang
+       * @returns A criteria item
+       */
+      this.createCriteriaItem = function (target, taxonomy, vocabulary, term, lang) {
+        function createBuilder(taxonomy, vocabulary, term) {
+          return new CriteriaItemBuilder(LocalizedValues, lang)
+            .target(target)
+            .taxonomy(taxonomy)
+            .vocabulary(vocabulary)
+            .term(term);
+        }
+
+        if (angular.isString(taxonomy)) {
+          return TaxonomyResource.get({
+            target: target,
+            taxonomy: taxonomy
+          }).$promise.then(function (taxonomy) {
+            vocabulary = taxonomy.vocabularies.filter(function (v) {
+              return v.name === vocabulary || VocabularyService.vocabularyAlias(v) === vocabulary;
+            })[0];
+            term = vocabulary && vocabulary.terms ?
+              vocabulary.terms.filter(function (t) { return t.name === term; })[0] :
+              null;
+
+            return createBuilder(taxonomy, vocabulary, term).build();
+          });
+        }
+
+        return createBuilder(taxonomy, vocabulary, term).build();
+      };
+
+      /**
+       * Adds new item to the item tree
+       *
+       * @param rootItem
+       * @param item
+       */
+      this.addCriteriaItem = function (rootRql, newItem, logicalOp) {
+        var target = rootRql.args.filter(function (query) {
+          return newItem.target === query.name;
+        }).pop();
+
+        if (!target) {
+          target = new RqlQuery(RQL_NODE[newItem.target.toUpperCase()]);
+          rootRql.args.push(target);
+        }
+
+        var rqlQuery = newItem.rqlQuery ? newItem.rqlQuery : RqlQueryUtils.buildRqlQuery(newItem);
+        return RqlQueryUtils.addQuery(target, rqlQuery, logicalOp);
+      };
+
+      /**
+       * Update an existing item to the item tree
+       *
+       * @param rootItem
+       * @param item
+       */
+      this.updateCriteriaItem = function (existingItem, newItem, replace) {
+        var newTerms;
+        var isRepeatable = existingItem.isRepeatable();
+        var isMatchNode = !isRepeatable && existingItem.rqlQuery.name === RQL_NODE.MATCH;
+
+        if (replace && newItem.rqlQuery) {
+          existingItem.rqlQuery.name = newItem.rqlQuery.name;
+        }
+
+        if (newItem.rqlQuery) {
+          newTerms = newItem.rqlQuery.args[isMatchNode ? 0 : 1];
+        } else if (newItem.term) {
+          newTerms = [newItem.term.name];
+        } else {
+          existingItem = isRepeatable ? existingItem.first() : existingItem;
+          existingItem.rqlQuery.name = RQL_NODE.EXISTS;
+          existingItem.rqlQuery.args.splice(1, 1);
+        }
+
+        if (newTerms) {
+          if (isRepeatable) {
+            RqlQueryUtils.updateRepeatableQueryArgValues(existingItem, newTerms);
+          } else {
+            RqlQueryUtils.updateQueryArgValues(existingItem.rqlQuery, newTerms, replace);
+          }
+        }
+      };
+
+      this.getTaxonomyByTarget = function (target) {
+        var deferred = $q.defer();
+        var taxonomy = taxonomiesCache[target];
+        if (taxonomy) {
+          deferred.resolve(taxonomy);
+        } else {
+          TaxonomiesResource.get({
+            target: target
+          }).$promise.then(function (response) {
+            taxonomiesCache[target] = response;
+            deferred.resolve(response);
+          });
+        }
+
+        return deferred.promise;
+      };
+
+      /**
+       * Builders registry
+       *
+       * @type {{variable: builders.variable, study: builders.study}}
+       */
+      this.builders = function (target, rootRql, rootItem, lang) {
+        var deferred = $q.defer();
+
+        function build(rootRql, rootItem) {
+          var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang);
+          builder.initialize(target);
+          builder.build();
+          deferred.resolve({ root: builder.getRootItem(), map: builder.getLeafItemMap() });
+        }
+
+        self.getTaxonomyByTarget(target).then(function () {
+          build(rootRql, rootItem);
+        });
+
+        return deferred.promise;
+      };
+
+      /**
+       * Builds the criteria tree
+       *
+       * @param rootRql
+       * @param lang
+       * @returns {*}
+       */
+      this.createCriteria = function (rootRql, lang) {
+        var deferred = $q.defer();
+        var rootItem = new CriteriaItemBuilder().type(RQL_NODE.AND).rqlQuery(rootRql).build();
+        var leafItemMap = {};
+
+        if (!RqlQueryUtils.hasTargetQuery(rootRql)) {
+          deferred.resolve({ root: rootItem, map: leafItemMap });
+          return deferred.promise;
+        }
+
+        var queries = [];
+        var self = this;
+        var resolvedCount = 0;
+
+        rootRql.args.forEach(function (node) {
+          if (QUERY_TARGETS[node.name.toUpperCase()]) {
+            queries.push(node);
+          }
+        });
+
+        queries.forEach(function (node) {
+          self.builders(node.name, node, rootItem, lang).then(function (result) {
+            rootItem.children.push(result.root);
+            leafItemMap = angular.extend(leafItemMap, result.map);
+            resolvedCount++;
+            if (resolvedCount === queries.length) {
+              deferred.resolve({ root: rootItem, map: leafItemMap });
+            }
+          });
+        });
+
+        return deferred.promise;
+      };
+
+      /**
+       * Append the aggregate and facet for criteria term listing.
+       *
+       * @param query
+       * @para
+       * @returns the new query
+       */
+      this.prepareCriteriaTermsQuery = function (query, item, lang) {
+        function iterReplaceQuery(query, criteriaId, newQuery) {
+          if (!query || !query.args) {
+            return null;
+          }
+
+          if ((query.name === RQL_NODE.IN || query.name === RQL_NODE.MISSING || query.name === RQL_NODE.CONTAINS) && query.args[0] === criteriaId) {
+            return query;
+          }
+
+          for (var i = query.args.length; i--;) {
+            var res = iterReplaceQuery(query.args[i], criteriaId, newQuery);
+
+            if (res) {
+              query.args[i] = newQuery;
+            }
+          }
+        }
+
+        var parsedQuery = this.parseQuery(query);
+        var targetQuery = parsedQuery.args.filter(function (node) {
+          return node.name === item.target;
+        }).pop();
+
+        if (targetQuery) {
+          var anyQuery = new RqlQuery(RQL_NODE.EXISTS),
+            criteriaId = RqlQueryUtils.criteriaId(item.taxonomy, item.vocabulary);
+
+          anyQuery.args.push(criteriaId);
+          iterReplaceQuery(targetQuery, criteriaId, anyQuery);
+          targetQuery.args.push(RqlQueryUtils.aggregate([criteriaId]));
+          targetQuery.args.push(RqlQueryUtils.limit(0, 0));
+        }
+
+        parsedQuery.args.push(new RqlQuery(RQL_NODE.FACET));
+
+        if (lang) {
+          RqlQueryUtils.addLocaleQuery(parsedQuery, lang);
+        }
+
+        return parsedQuery.serializeArgs(parsedQuery.args);
+      };
+
+      this.getTargetQuerySort = function (type, query) {
+        var target = typeToTarget(type);
+        var targetQuery = findTargetQuery(target, query);
+        var sort = null;
+        if (targetQuery) {
+          sort = targetQuery.args.filter(function (arg) {
+            return arg.name === RQL_NODE.SORT;
+          }).pop();
+        }
+
+        return sort;
+      };
+
+      function prepareSearchQueryInternal(context, type, query, pagination, lang, sort, addFieldsQuery) {
+        var rqlQuery = angular.copy(query);
+        var target = typeToTarget(type);
+        RqlQueryUtils.addLocaleQuery(rqlQuery, lang);
+        var targetQuery = findTargetQuery(target, rqlQuery);
+
+        if (!targetQuery) {
+          targetQuery = new RqlQuery(target);
+          rqlQuery.args.push(targetQuery);
+        }
+
+        var limit = pagination[target] || { from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target) };
+        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
+
+        if (addFieldsQuery) {
+          var fieldsQuery = getSourceFields(context, target);
+          if (fieldsQuery) {
+            RqlQueryUtils.addFields(targetQuery, fieldsQuery);
+          }
+        }
+
+        if (sort) {
+          RqlQueryUtils.addSort(targetQuery, sort);
+        }
+
+        return rqlQuery;
+      }
+
+      this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
+        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, true);
+      };
+
+      this.prepareSearchQueryNoFields = function (context, type, query, pagination, lang, sort) {
+        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, false);
+      };
+
+      this.prepareSearchQueryAndSerialize = function (context, type, query, pagination, lang, sort) {
+        return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, pagination, lang, sort).args);
+      };
+
+      /**
+       * Append the aggregate and bucket operations to the variable.
+       *
+       * @param query
+       * @param bucketArg
+       * @returns the new query
+       */
+      this.prepareCoverageQuery = function (query, bucketArg) {
+        var parsedQuery = this.parseQuery(query);
+        var aggregate = new RqlQuery('aggregate');
+        var bucketField;
+
+        var parts = bucketArg.split('-');
+        var groupBy = parts[0];
+        var filterBy = parts.length > 1 ? parts[1] : undefined;
+
+        switch (groupBy) {
+          case BUCKET_TYPES.NETWORK:
+            bucketField = 'networkId';
+            break;
+          case BUCKET_TYPES.STUDY:
+          case BUCKET_TYPES.STUDY_INDIVIDUAL:
+          case BUCKET_TYPES.STUDY_HARMONIZATION:
+            bucketField = 'studyId';
+            break;
+          case BUCKET_TYPES.DCE:
+          case BUCKET_TYPES.DCE_INDIVIDUAL:
+            bucketField = 'dceId';
+            break;
+          case BUCKET_TYPES.DATASCHEMA:
+          case BUCKET_TYPES.DATASET:
+          case BUCKET_TYPES.DATASET_COLLECTED:
+          case BUCKET_TYPES.DATASET_HARMONIZED:
+            bucketField = 'datasetId';
+            break;
+        }
+
+        var bucket = new RqlQuery('bucket');
+        bucket.args.push(bucketField);
+        aggregate.args.push(bucket);
+
+        // variable RQL
+        var variable;
+        parsedQuery.args.forEach(function (arg) {
+          if (!variable && arg.name === 'variable') {
+            variable = arg;
+          }
+        });
+        if (!variable) {
+          variable = new RqlQuery('variable');
+          parsedQuery.args.push(variable);
+        }
+
+        if (variable.args.length > 0 && variable.args[0].name !== 'limit') {
+          var variableType = new RqlQuery('in');
+          variableType.args.push('Mica_variable.variableType');
+          if (filterBy === undefined) {
+            if (bucketArg === BUCKET_TYPES.DATASET_HARMONIZED || bucketArg === BUCKET_TYPES.DATASCHEMA) {
+              variableType.args.push('Dataschema');
+            } else {
+              variableType.args.push(['Collected', 'Dataschema']);
+            }
+          } else if (['individual', 'collected'].indexOf(filterBy) > -1) {
+            variableType.args.push('Collected');
+          } else if (['harmonization', 'harmonized'].indexOf(filterBy) > -1) {
+            variableType.args.push('Dataschema');
+          }
+          var andVariableType = new RqlQuery('and');
+          andVariableType.args.push(variableType);
+          andVariableType.args.push(variable.args[0]);
+          variable.args[0] = andVariableType;
+        }
+
+        variable.args.push(aggregate);
+
+        return parsedQuery.serializeArgs(parsedQuery.args);
+      };
+
+      this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs) {
+        var parsedQuery = this.parseQuery(query);
+        // aggregate
+        var aggregate = new RqlQuery(RQL_NODE.AGGREGATE);
+        aggregateArgs.forEach(function (a) {
+          aggregate.args.push(a);
+        });
+        //bucket
+        if (bucketArgs && bucketArgs.length > 0) {
+          var bucket = new RqlQuery(RQL_NODE.BUCKET);
+          bucketArgs.forEach(function (b) {
+            bucket.args.push(b);
+          });
+          aggregate.args.push(bucket);
+        }
+
+        // study
+        var study;
+        var hasQuery = false;
+        var hasStudyTarget = false;
+        parsedQuery.args.forEach(function (arg) {
+          if (arg.name === 'study') {
+            hasStudyTarget = true;
+            var limitIndex = null;
+            hasQuery = arg.args.filter(function (requestArg, index) {
+              if (requestArg.name === 'limit') {
+                limitIndex = index;
+              }
+              return ['limit', 'sort', 'aggregate'].indexOf(requestArg.name) < 0;
+            }).length;
+            if (limitIndex !== null) {
+              arg.args.splice(limitIndex, 1);
+            }
+            study = arg;
+          }
+        });
+        // Study match all if no study query.
+        if (!hasStudyTarget) {
+          study = new RqlQuery('study');
+          parsedQuery.args.push(study);
+        }
+        if (!hasQuery) {
+          study.args.push(new RqlQuery(RQL_NODE.MATCH));
+        }
+        study.args.push(aggregate);
+        // facet
+        parsedQuery.args.push(new RqlQuery('facet'));
+        return parsedQuery.serializeArgs(parsedQuery.args);
+      };
+
+      this.getTargetAggregations = function (joinQueryResponse, criterion, lang) {
+
+        /**
+         * Helper to merge the terms that are not in the aggregation list
+         *
+         * @param aggs
+         * @param vocabulary
+         * @returns Array of aggs
+         */
+        function addMissingTerms(aggs, vocabulary) {
+          var terms = vocabulary.terms;
+          if (terms && terms.length > 0) {
+            var keys = aggs && aggs.map(function (agg) {
+              return agg.key;
+            }) || [];
+
+            if (aggs) {
+              // Add the missing terms not present in the aggs list
+              var missingTerms = [];
+
+              terms.forEach(function (term) {
+                if (keys.length === 0 || keys.indexOf(term.name) === -1) {
+                  missingTerms.push({
+                    count: 0,
+                    default: 0,
+                    description: LocalizedValues.forLocale(term.description, lang),
+                    key: term.name,
+                    title: LocalizedValues.forLocale(term.title, lang)
+                  });
+                }
+              });
+
+              return aggs.concat(missingTerms);
+            }
+
+            // The query didn't have any match, return default empty aggs based on the vocabulary terms
+            return terms.map(function (term) {
+              return {
+                count: 0,
+                default: 0,
+                description: LocalizedValues.forLocale(term.description, lang),
+                key: term.name,
+                title: LocalizedValues.forLocale(term.title, lang)
+              };
+            });
+
+          }
+
+          return aggs;
+        }
+
+        function getChildAggragations(parentAgg, aggKey) {
+          if (parentAgg.children) {
+            var child = parentAgg.children.filter(function (child) {
+              return child.hasOwnProperty(aggKey);
+            }).pop();
+
+            if (child) {
+              return child[aggKey];
+            }
+          }
+
+          return null;
+        }
+
+        var alias = VocabularyService.vocabularyAlias(criterion.vocabulary);
+        var targetResponse = joinQueryResponse[criterion.target + 'ResultDto'];
+
+        if (targetResponse && targetResponse.aggs) {
+          var isProperty = criterion.taxonomy.name.startsWith('Mica_');
+          var filter = isProperty ? alias : criterion.taxonomy.name;
+          var filteredAgg = targetResponse.aggs.filter(function (agg) {
+            return agg.aggregation === filter;
+          }).pop();
+
+          if (filteredAgg) {
+            if (isProperty) {
+              if (VocabularyService.isNumericVocabulary(criterion.vocabulary)) {
+                return filteredAgg['obiba.mica.StatsAggregationResultDto.stats'];
+              } else {
+                return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
+                  addMissingTerms(filteredAgg['obiba.mica.RangeAggregationResultDto.ranges'], criterion.vocabulary) :
+                  addMissingTerms(filteredAgg['obiba.mica.TermsAggregationResultDto.terms'], criterion.vocabulary);
+              }
+            } else {
+              var vocabularyAgg = filteredAgg.children.filter(function (agg) {
+                return agg.aggregation === alias;
+              }).pop();
+
+              if (vocabularyAgg) {
+                return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
+                  addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.RangeAggregationResultDto.ranges'), criterion.vocabulary) :
+                  addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.TermsAggregationResultDto.terms'), criterion.vocabulary);
+              }
+            }
+          }
+        }
+
+        return addMissingTerms([], criterion.vocabulary);
+      };
+
+      this.findCriterion = function (criteria, id) {
+        function inner(criteria, id) {
+          var result;
+          if (criteria.id === id) { return criteria; }
+          var children = criteria.children.filter(function (childCriterion) { return childCriterion instanceof CriteriaItem; });
+
+          for (var i = children.length; i--;) {
+            result = inner(children[i], id);
+
+            if (result) { return result; }
+          }
+        }
+
+        return inner(criteria, id);
+      };
+    }]);
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+
+  ngObibaMica.search.RqlQueryUtils = function(VocabularyService) {
+
+    /**
+     * Finds the parent node to which new queries can be added
+     *
+     * @param targetNode
+     * @returns {*}
+     */
+    function findValidParentNode(targetNode) {
+      var target = targetNode.args.filter(function (query) {
+        switch (query.name) {
+          case RQL_NODE.AND:
+          case RQL_NODE.NAND:
+          case RQL_NODE.OR:
+          case RQL_NODE.NOR:
+          case RQL_NODE.NOT:
+          case RQL_NODE.CONTAINS:
+          case RQL_NODE.IN:
+          case RQL_NODE.OUT:
+          case RQL_NODE.EQ:
+          case RQL_NODE.GT:
+          case RQL_NODE.GE:
+          case RQL_NODE.LT:
+          case RQL_NODE.LE:
+          case RQL_NODE.BETWEEN:
+          case RQL_NODE.EXISTS:
+          case RQL_NODE.MISSING:
+            return true;
+          case RQL_NODE.MATCH:
+            return query.args.length > 1;
+        }
+
+        return false;
+      }).pop();
+
+      if (target) {
+        return targetNode.args.findIndex(function (arg) {
+          return arg.name === target.name;
+        });
+      }
+
+      return -1;
+    }
+
+    function vocabularyTermNames(vocabulary) {
+      return vocabulary && vocabulary.terms ? vocabulary.terms.map(function (term) {
+        return term.name;
+      }) : [];
+    }
+
+    function hasTargetQuery(rootRql, target) {
+      return rootRql.args.filter(function (query) {
+        switch (query.name) {
+          case RQL_NODE.VARIABLE:
+          case RQL_NODE.DATASET:
+          case RQL_NODE.STUDY:
+          case RQL_NODE.NETWORK:
+            return target ? target === query.name : true;
+          default:
+            return false;
+        }
+      }).length > 0;
+    }
+
+    function variableQuery() {
+      return new RqlQuery(QUERY_TARGETS.VARIABLE);
+    }
+
+    function eqQuery(field, term) {
+      var query = new RqlQuery(RQL_NODE.EQ);
+      query.args.push(term);
+      return query;
+    }
+
+    function orQuery(left, right) {
+      var query = new RqlQuery(RQL_NODE.OR);
+      query.args = [left, right];
+      return query;
+    }
+
+    function aggregate(fields) {
+      var query = new RqlQuery(RQL_NODE.AGGREGATE);
+      fields.forEach(function (field) {
+        query.args.push(field);
+      });
+      return query;
+    }
+
+    function fields(fields) {
+      var query = new RqlQuery(RQL_NODE.FIELDS);
+      query.args.push(fields);
+      return query;
+    }
+
+    function limit(from, size) {
+      var query = new RqlQuery(RQL_NODE.LIMIT);
+      query.args.push(from);
+      query.args.push(size);
+      return query;
+    }
+
+    function fieldQuery(name, field, terms) {
+      var query = new RqlQuery(name);
+      query.args.push(field);
+
+      if (terms && terms.length > 0) {
+        query.args.push(terms);
+      }
+
+      return query;
+    }
+
+    function inQuery(field, terms) {
+      var hasValues = terms && terms.length > 0;
+      var name = hasValues ? RQL_NODE.IN : RQL_NODE.EXISTS;
+      return fieldQuery(name, field, terms);
+    }
+
+    function matchQuery(field, queryString) {
+      var query = new RqlQuery(RQL_NODE.MATCH);
+      query.args.push(queryString || '*');
+      query.args.push(field);
+      return query;
+    }
+
+    function isFreeTextMatch(query) {
+      return query.name === RQL_NODE.MATCH && query.args.length === 1;
+    }
+
+    function updateMatchQuery(query, queryString) {
+      query.args[0] = queryString || '*';
+      return query;
+    }
+
+    function rangeQuery(field, from, to) {
+      var query = new RqlQuery(RQL_NODE.BETWEEN);
+      query.args.push(field);
+      updateRangeQuery(query, from, to);
+      return query;
+    }
+
+    function updateQueryInternal(query, terms) {
+      var hasValues = terms && terms.length > 0;
+
+      if (hasValues) {
+        query.args[1] = terms;
+      } else {
+        query.args.splice(1, 1);
+      }
+
+      return query;
+    }
+
+    function mergeInQueryArgValues(query, terms, replace) {
+      var hasValues = terms && terms.length > 0;
+
+      if (hasValues) {
+        var current = query.args[1];
+
+        if (!current || replace) {
+          query.args[1] = terms;
+        } else {
+          if (!(current instanceof Array)) {
+            current = [current];
+          }
+
+          var unique = terms.filter(function (term) {
+            return current.indexOf(term) === -1;
+          });
+
+          query.args[1] = current.concat(unique);
+        }
+      } else {
+        query.args.splice(1, 1);
+      }
+
+      return query;
+    }
+
+    function updateRangeQuery(query, from, to, missing) {
+      if (missing) {
+        query.name = RQL_NODE.MISSING;
+        query.args.splice(1, 1);
+      } else if (angular.isDefined(from) && from !== null && angular.isDefined(to) && to !== null) {
+        query.name = RQL_NODE.BETWEEN;
+        query.args[1] = [from, to];
+      } else if (angular.isDefined(from) && from !== null) {
+        query.name = RQL_NODE.GE;
+        query.args[1] = from;
+      } else if (angular.isDefined(to) && to !== null) {
+        query.name = RQL_NODE.LE;
+        query.args[1] = to;
+      } else {
+        query.name = RQL_NODE.EXISTS;
+        query.args.splice(1, 1);
+      }
+    }
+
+    /**
+     * Creates a RqlQuery from an item
+     *
+     * @param item
+     * @returns {RqlQuery}
+     */
+    function buildRqlQuery(item) {
+      if (VocabularyService.isNumericVocabulary(item.vocabulary)) {
+        return rangeQuery(criteriaId(item.taxonomy, item.vocabulary), null, null);
+      } else if (VocabularyService.isMatchVocabulary(item.vocabulary)) {
+        return matchQuery(criteriaId(item.taxonomy, item.vocabulary), null);
+      } else {
+        var args;
+        if (Array.isArray(item.selectedTerms) && item.selectedTerms.length > 0) {
+          args = item.selectedTerms;
+        } else if (item.term) {
+          args = item.term.name;
+        }
+
+        return inQuery(
+          criteriaId(item.taxonomy, item.vocabulary),
+          args
+        );
+      }
+    }
+
+    /**
+     * Adds a new query to the parent query node
+     *
+     * @param parentQuery
+     * @param query
+     * @returns {*}
+     */
+    function addQuery(parentQuery, query, logicalOp) {
+      if (parentQuery.args.length === 0) {
+        parentQuery.args.push(query);
+      } else {
+        var parentIndex = findValidParentNode(parentQuery);
+
+        if (parentIndex === -1) {
+          parentQuery.args.push(query);
+        } else {
+          var oldArg = parentQuery.args.splice(parentIndex, 1).pop();
+          // check if the field is from the target's taxonomy, in which case the criteria is
+          // added with a AND operator otherwise it is a OR
+          if (!logicalOp && query.args && query.args.length > 0) {
+            var targetTaxo = 'Mica_' + parentQuery.name;
+
+            if (!isFreeTextMatch(query)) {
+              var criteriaVocabulary = query.name === 'match' ? query.args[1] : query.args[0];
+              logicalOp = criteriaVocabulary.startsWith(targetTaxo + '.') ? RQL_NODE.AND : RQL_NODE.OR;
+            }
+          }
+          var orQuery = new RqlQuery(logicalOp || RQL_NODE.AND);
+          orQuery.args.push(oldArg, query);
+          parentQuery.args.push(orQuery);
+        }
+      }
+
+      return parentQuery;
+    }
+
+    /**
+     * Update repeatable vocabularies as follows:
+     *
+     * IN(q, [a,b]) OR [c] => CONTAINS(q, [a,c]) OR CONTAINS(q, [b,c])
+     * CONTAINS(q, [a,b]) OR [c] => CONTAINS(q, [a,b,c])
+     * EXISTS(q) OR [c] => CONTAINS(q, [c])
+     *
+     * @param existingItemWrapper
+     * @param terms
+     */
+    function updateRepeatableQueryArgValues(existingItem, terms) {
+      existingItem.items().forEach(function (item) {
+        var query = item.rqlQuery;
+        switch (query.name) {
+          case RQL_NODE.EXISTS:
+            query.name = RQL_NODE.CONTAINS;
+            mergeInQueryArgValues(query, terms, false);
+            break;
+
+          case RQL_NODE.CONTAINS:
+            mergeInQueryArgValues(query, terms, false);
+            break;
+
+          case RQL_NODE.IN:
+            var values = query.args[1] ? [].concat(query.args[1]) : [];
+            if (values.length === 1) {
+              query.name = RQL_NODE.CONTAINS;
+              mergeInQueryArgValues(query, terms, false);
+              break;
+            }
+
+            var field = query.args[0];
+            var contains = values.filter(function (value) {
+              // remove duplicates (e.g. CONTAINS(q, [a,a])
+              return terms.indexOf(value) < 0;
+            }).map(function (value) {
+              return fieldQuery(RQL_NODE.CONTAINS, field, [].concat(value, terms));
+            });
+
+            var orRql;
+            if (contains.length > 1) {
+              var firstTwo = contains.splice(0, 2);
+              orRql = orQuery(firstTwo[0], firstTwo[1]);
+
+              contains.forEach(function (value) {
+                orRql = orQuery(value, orRql);
+              });
+
+              query.name = orRql.name;
+              query.args = orRql.args;
+            } else {
+              query.name = RQL_NODE.CONTAINS;
+              query.args = contains[0].args;
+            }
+        }
+      });
+    }
+
+    function updateQueryArgValues(query, terms, replace) {
+      switch (query.name) {
+        case RQL_NODE.EXISTS:
+        case RQL_NODE.MISSING:
+          query.name = RQL_NODE.IN;
+          mergeInQueryArgValues(query, terms, replace);
+          break;
+        case RQL_NODE.CONTAINS:
+        case RQL_NODE.IN:
+          mergeInQueryArgValues(query, terms, replace);
+          break;
+        case RQL_NODE.BETWEEN:
+        case RQL_NODE.GE:
+        case RQL_NODE.LE:
+          query.args[1] = terms;
+          break;
+        case RQL_NODE.MATCH:
+          query.args[0] = terms;
+          break;
+      }
+    }
+
+    function updateQuery(query, values) {
+      switch (query.name) {
+        case RQL_NODE.CONTAINS:
+        case RQL_NODE.IN:
+        case RQL_NODE.OUT:
+        case RQL_NODE.EXISTS:
+        case RQL_NODE.MISSING:
+          updateQueryInternal(query, values);
+          break;
+      }
+    }
+
+    function addLocaleQuery(rqlQuery, locale) {
+      var found = rqlQuery.args.filter(function (arg) {
+        return arg.name === RQL_NODE.LOCALE;
+      }).pop();
+
+      if (!found) {
+        var localeQuery = new RqlQuery('locale');
+        localeQuery.args.push(locale);
+        rqlQuery.args.push(localeQuery);
+      }
+    }
+
+    function addFields(targetQuery, fieldsQuery) {
+      if (targetQuery && targetQuery.args) {
+        var found = targetQuery.args.filter(function (arg) {
+          return arg.name === RQL_NODE.FIELDS;
+        }).pop();
+
+        if (found) {
+          found.args = fieldsQuery.args;
+        } else {
+          targetQuery.args.push(fieldsQuery);
+        }
+      }
+    }
+
+    function addLimit(targetQuery, limitQuery) {
+      if (targetQuery && targetQuery.args) {
+        var found = targetQuery.args.filter(function (arg) {
+          return arg.name === RQL_NODE.LIMIT;
+        }).pop();
+
+        if (found) {
+          found.args = limitQuery.args;
+        } else {
+          targetQuery.args.push(limitQuery);
+        }
+      }
+    }
+
+    /**
+     * Adds a sort criteria on given fields
+     *
+     * @param targetQuery
+     * @param sort field name or an array of field names
+     */
+    function addSort(targetQuery, sort) {
+      var sortQuery = targetQuery.args.filter(function (arg) {
+        return arg.name === RQL_NODE.SORT;
+      }).pop();
+
+      if (!sortQuery) {
+        sortQuery = new RqlQuery('sort');
+        targetQuery.args.push(sortQuery);
+      }
+
+      sortQuery.args = Array.isArray(sort) ? sort : [sort];
+    }
+
+    /**
+     * Helper finding the vocabulary field, return name if none was found
+     *
+     * @param taxonomy
+     * @param vocabulary
+     * @returns {*}
+     */
+    function criteriaId(taxonomy, vocabulary) {
+      return taxonomy.name + '.' + vocabulary.name;
+    }
+
+    // exports
+    this.vocabularyTermNames = vocabularyTermNames;
+    this.hasTargetQuery = hasTargetQuery;
+    this.variableQuery = variableQuery;
+    this.eqQuery = eqQuery;
+    this.orQuery = orQuery;
+    this.aggregate = aggregate;
+    this.fields = fields;
+    this.limit = limit;
+    this.fieldQuery = fieldQuery;
+    this.inQuery = inQuery;
+    this.matchQuery = matchQuery;
+    this.isFreeTextMatch = isFreeTextMatch;
+    this.updateMatchQuery = updateMatchQuery;
+    this.rangeQuery = rangeQuery;
+    this.updateQueryInternal = updateQueryInternal;
+    this.mergeInQueryArgValues = mergeInQueryArgValues;
+    this.updateRangeQuery = updateRangeQuery;
+    this.buildRqlQuery = buildRqlQuery;
+    this.addQuery = addQuery;
+    this.updateRepeatableQueryArgValues = updateRepeatableQueryArgValues;
+    this.updateQueryArgValues = updateQueryArgValues;
+    this.updateQuery = updateQuery;
+    this.addLocaleQuery = addLocaleQuery;
+    this.addFields = addFields;
+    this.addLimit = addLimit;
+    this.addSort = addSort;
+    this.criteriaId = criteriaId;
+  };
+
+  ngObibaMica.search.service('RqlQueryUtils', ['VocabularyService', ngObibaMica.search.RqlQueryUtils]);
+
+})();;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
 (function() {
   ngObibaMica.search.EntitySuggestionService = function($rootScope,
                                                         $location,
@@ -9319,7 +9317,7 @@ ngObibaMica.search
             return prev;
           }
 
-          item.rqlQuery = RqlQueryUtils.buildRqlQuery(item);
+          item.rqlQuery = RqlQueryUtils.buildRqlQuery(item); // TODO
           return item;
         }, null);
       }

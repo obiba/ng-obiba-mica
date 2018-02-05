@@ -10,11 +10,11 @@
 
 'use strict';
 
+
 /* global DISPLAY_TYPES */
 /* global CriteriaItem */
 /* global CriteriaItemBuilder */
 /* global CriteriaBuilder */
-/* global RqlQueryUtils */
 
 /* exported QUERY_TYPES */
 var QUERY_TYPES = {
@@ -138,30 +138,24 @@ function typeToTarget(type) {
 }
 
 
-ngObibaMica.search
+ngObibaMica.search.service('RqlQueryService',
+  ['$q', 
+  '$log', 
+  'TaxonomiesResource', 
+  'TaxonomyResource', 
+  'LocalizedValues', 
+  'VocabularyService', 
+  'RqlQueryUtils',
+  'ngObibaMicaSearch',
+    function ($q, 
+      $log, 
+      TaxonomiesResource, 
+      TaxonomyResource, 
+      LocalizedValues, 
+      VocabularyService, 
+      RqlQueryUtils,
+      ngObibaMicaSearch) {
 
-  .service('RqlQueryUtils', ['VocabularyService', function (VocabularyService) {
-    var utils = new RqlQueryUtils(VocabularyService);
-    return utils;
-  }])
-
-  .service('RqlQueryService', [
-    '$q',
-    '$log',
-    'TaxonomiesResource',
-    'TaxonomyResource',
-    'LocalizedValues',
-    'RqlQueryUtils',
-    'VocabularyService',
-    'ngObibaMicaSearch',
-    function ($q,
-              $log,
-              TaxonomiesResource,
-              TaxonomyResource,
-              LocalizedValues,
-              RqlQueryUtils,
-              VocabularyService,
-              ngObibaMicaSearch) {
       var taxonomiesCache = {
         variable: null,
         dataset: null,
@@ -171,9 +165,9 @@ ngObibaMica.search
 
       var self = this;
       var searchOptions = ngObibaMicaSearch.getOptions();
-      this.findItemNodeById = function(root, targetId, result, strict) {
+      this.findItemNodeById = function (root, targetId, result, strict) {
         if (root && root.children && result) {
-          return root.children.some(function(child) {
+          return root.children.some(function (child) {
             if (strict ? targetId === child.id : targetId.indexOf(child.id) > -1) {
               result.item = child;
               return true;
@@ -186,7 +180,7 @@ ngObibaMica.search
         return false;
       };
 
-      this.findItemNode = function(root, item, result) {
+      this.findItemNode = function (root, item, result) {
         return self.findItemNodeById(root, item.id, result);
       };
 
@@ -228,7 +222,7 @@ ngObibaMica.search
         }
 
         function search(parent, rx, result) {
-          return parent.args.some(function(arg) {
+          return parent.args.some(function (arg) {
             if (null !== rx.exec(arg)) {
               result.parent = parent;
               return true;
@@ -244,7 +238,7 @@ ngObibaMica.search
         }
 
         var result = {};
-        search(target, new RegExp((taxonomy ? taxonomy : '') + '\\.' + vocabulary+'$'), result);
+        search(target, new RegExp((taxonomy ? taxonomy : '') + '\\.' + vocabulary + '$'), result);
         return result.parent;
       }
 
@@ -421,7 +415,7 @@ ngObibaMica.search
        */
       function queryHasCriteria(query) {
         if (query && query.args) {
-          var leafQueries = query.args.filter(function(arg) {
+          var leafQueries = query.args.filter(function (arg) {
             return isLeaf(arg.name) || isOperator(arg.name);
           });
 
@@ -436,7 +430,7 @@ ngObibaMica.search
       }
 
       function getRenderableTargetCriteria(targets) {
-        return (targets || []).filter(function(target){
+        return (targets || []).filter(function (target) {
           return queryHasCriteria(target.rqlQuery);
         });
       }
@@ -450,7 +444,7 @@ ngObibaMica.search
       this.getRenderableTargetCriteria = getRenderableTargetCriteria;
       this.getRenderableTargetCriteriaFromRoot = getRenderableTargetCriteriaFromRoot;
 
-      this.parseQuery = function(query) {
+      this.parseQuery = function (query) {
         try {
           return new RqlParser().parse(query);
         } catch (e) {
@@ -499,7 +493,7 @@ ngObibaMica.search
               return v.name === vocabulary || VocabularyService.vocabularyAlias(v) === vocabulary;
             })[0];
             term = vocabulary && vocabulary.terms ?
-              vocabulary.terms.filter(function (t) {return t.name === term; })[0] :
+              vocabulary.terms.filter(function (t) { return t.name === term; })[0] :
               null;
 
             return createBuilder(taxonomy, vocabulary, term).build();
@@ -540,10 +534,10 @@ ngObibaMica.search
         var isRepeatable = existingItem.isRepeatable();
         var isMatchNode = !isRepeatable && existingItem.rqlQuery.name === RQL_NODE.MATCH;
 
-        if(replace && newItem.rqlQuery) {
+        if (replace && newItem.rqlQuery) {
           existingItem.rqlQuery.name = newItem.rqlQuery.name;
         }
-        
+
         if (newItem.rqlQuery) {
           newTerms = newItem.rqlQuery.args[isMatchNode ? 0 : 1];
         } else if (newItem.term) {
@@ -563,7 +557,7 @@ ngObibaMica.search
         }
       };
 
-      this.getTaxonomyByTarget = function(target) {
+      this.getTaxonomyByTarget = function (target) {
         var deferred = $q.defer();
         var taxonomy = taxonomiesCache[target];
         if (taxonomy) {
@@ -592,10 +586,10 @@ ngObibaMica.search
           var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang);
           builder.initialize(target);
           builder.build();
-          deferred.resolve({root: builder.getRootItem(), map: builder.getLeafItemMap()});
+          deferred.resolve({ root: builder.getRootItem(), map: builder.getLeafItemMap() });
         }
 
-        self.getTaxonomyByTarget(target).then(function(){
+        self.getTaxonomyByTarget(target).then(function () {
           build(rootRql, rootItem);
         });
 
@@ -615,7 +609,7 @@ ngObibaMica.search
         var leafItemMap = {};
 
         if (!RqlQueryUtils.hasTargetQuery(rootRql)) {
-          deferred.resolve({root: rootItem, map: leafItemMap});
+          deferred.resolve({ root: rootItem, map: leafItemMap });
           return deferred.promise;
         }
 
@@ -635,7 +629,7 @@ ngObibaMica.search
             leafItemMap = angular.extend(leafItemMap, result.map);
             resolvedCount++;
             if (resolvedCount === queries.length) {
-              deferred.resolve({root: rootItem, map: leafItemMap});
+              deferred.resolve({ root: rootItem, map: leafItemMap });
             }
           });
         });
@@ -717,10 +711,10 @@ ngObibaMica.search
           rqlQuery.args.push(targetQuery);
         }
 
-        var limit = pagination[target] || {from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target)};
+        var limit = pagination[target] || { from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target) };
         RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
 
-        if(addFieldsQuery){
+        if (addFieldsQuery) {
           var fieldsQuery = getSourceFields(context, target);
           if (fieldsQuery) {
             RqlQueryUtils.addFields(targetQuery, fieldsQuery);
@@ -806,7 +800,7 @@ ngObibaMica.search
             if (bucketArg === BUCKET_TYPES.DATASET_HARMONIZED || bucketArg === BUCKET_TYPES.DATASCHEMA) {
               variableType.args.push('Dataschema');
             } else {
-              variableType.args.push(['Collected','Dataschema']);
+              variableType.args.push(['Collected', 'Dataschema']);
             }
           } else if (['individual', 'collected'].indexOf(filterBy) > -1) {
             variableType.args.push('Collected');
@@ -887,8 +881,8 @@ ngObibaMica.search
           var terms = vocabulary.terms;
           if (terms && terms.length > 0) {
             var keys = aggs && aggs.map(function (agg) {
-                return agg.key;
-              }) || [];
+              return agg.key;
+            }) || [];
 
             if (aggs) {
               // Add the missing terms not present in the aggs list
@@ -975,19 +969,19 @@ ngObibaMica.search
         return addMissingTerms([], criterion.vocabulary);
       };
 
-      this.findCriterion = function(criteria, id) {
+      this.findCriterion = function (criteria, id) {
         function inner(criteria, id) {
           var result;
-          if(criteria.id === id) { return criteria; }
+          if (criteria.id === id) { return criteria; }
           var children = criteria.children.filter(function (childCriterion) { return childCriterion instanceof CriteriaItem; });
 
-          for(var i = children.length; i--;){
+          for (var i = children.length; i--;) {
             result = inner(children[i], id);
 
-            if (result) {return result;}
+            if (result) { return result; }
           }
         }
-        
+
         return inner(criteria, id);
       };
     }]);

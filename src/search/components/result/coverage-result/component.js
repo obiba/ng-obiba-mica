@@ -429,7 +429,7 @@ ngObibaMica.search
             return prev;
           }
 
-          item.rqlQuery = RqlQueryUtils.buildRqlQuery(item);
+          item.rqlQuery = RqlQueryUtils.buildRqlQuery(item); // TODO
           return item;
         }, null);
       }
