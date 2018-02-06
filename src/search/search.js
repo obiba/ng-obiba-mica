@@ -205,8 +205,13 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
     return angular.copy(options);
   }
 
+  function getOptionsInternal() {
+    return options;
+  }
+
   this.setOptions = setOptions;
   this.getOptions = getOptions;
+  this.getOptionsInternal = getOptionsInternal;
 };
 
 /**
@@ -233,8 +238,7 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
   }
 
   function normalizeOptions() {
-    var options = optionsWrapper.getOptions();
-    options.coverage.groupBy.study = options.coverage.groupBy.study && options.studies.showSearchTab;
+    var options = optionsWrapper.getOptionsInternal(); // get internal options, not a copy
     options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
     var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
       return options.coverage.groupBy[canShow];

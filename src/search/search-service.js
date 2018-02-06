@@ -304,7 +304,15 @@ ngObibaMica.search
   .service('CoverageGroupByService', ['ngObibaMicaSearch', function(ngObibaMicaSearch) {
     var self = this;
 
-    var groupByOptions = ngObibaMicaSearch.getOptions().coverage.groupBy;
+    var options = ngObibaMicaSearch.getOptions();
+    var groupByOptions = options.coverage.groupBy;
+
+    this.isSingleStudy = function() {
+      // coverage => there are datasets and at least one study
+      // not showing study means that there is only one
+      return !options.studies.showSearchTab;
+    };
+
     this.canShowStudy = function() {
       return groupByOptions.study || groupByOptions.dce;
     };
@@ -373,7 +381,11 @@ ngObibaMica.search
 
     this.defaultBucket = function() {
       if (groupByOptions.study) {
-        return self.studyBucket();
+        if (options.studies.showSearchTab) {
+          return self.studyBucket();
+        } else {
+          return self.dceBucket();
+        }
       } else if (groupByOptions.dataset) {
         return self.datasetBucket();
       }
@@ -403,4 +415,3 @@ ngObibaMica.search
     };
 
   }]);
-
