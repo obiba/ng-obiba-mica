@@ -10,34 +10,37 @@
 
 'use strict';
 
- function EntityCountsController() {
-  var ctrl = this;
-  function getTotalHits(entity){
-    if (!ctrl.result || !ctrl.result[entity + 'TotalCount']) {
-      return '';
+(function () {
+  function EntityCountsController() {
+    var ctrl = this;
+    function getTotalHits(entity) {
+      if (!ctrl.result || !ctrl.result[entity + 'TotalCount']) {
+        return '';
+      }
+
+      return ctrl.result[entity + 'TotalCount'].hits;
     }
 
-    return ctrl.result[entity + 'TotalCount'].hits;
+    function selectType(entity) {
+      ctrl.onSelectType({ type: targetToType(entity) });
+    }
+
+    ctrl.getTotalHits = getTotalHits;
+    ctrl.selectType = selectType;
   }
 
-  function selectType(entity) {
-    ctrl.onSelectType({type: targetToType(entity)});
-  }
+  ngObibaMica.search
+    .component('entityCounts', {
+      transclude: true,
+      bindings: {
+        result: '<',
+        target: '<',
+        onSelectType: '&',
+        resultTabsOrder: '<',
+        taxonomyTypeMap: '<'
+      },
+      templateUrl: 'search/components/entity-counts/component.html',
+      controller: [EntityCountsController]
+    });
 
-  ctrl.getTotalHits = getTotalHits;
-  ctrl.selectType = selectType;
-}
-
-ngObibaMica.search
-  .component('entityCounts', {
-    transclude: true,
-    bindings: {
-      result: '<',
-      target: '<',
-      onSelectType: '&',
-      resultTabsOrder: '<',
-      taxonomyTypeMap: '<'
-    },
-    templateUrl: 'search/components/entity-counts/component.html',
-    controller: [EntityCountsController]
-  });
+})();

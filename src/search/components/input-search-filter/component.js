@@ -10,48 +10,48 @@
 
 'use strict';
 
-function InputSearchFilterController() {
-  var ctrl = this;
+(function () {
+  function InputSearchFilterController() {
+    var ctrl = this;
 
-  function change() {
-    ctrl.onFilterChange({ queryString: ctrl.queryString });
-  }
-  function clear() {
-    ctrl.queryString = '';
-    change();
-  }
+    function change() {
+      ctrl.onFilterChange({ queryString: ctrl.queryString });
+    }
+    function clear() {
+      ctrl.queryString = '';
+      change();
+    }
 
-  function onChanges(changesObj) {
-    if (changesObj.taxonomyName) {
-      var updateQueryString = false;
-      ctrl.taxonomiesQuery.forEach(function (taxonomy) {
-        if (taxonomy.name === ctrl.taxonomyName && taxonomy.queryString) {
-          ctrl.queryString = taxonomy.queryString;
-          updateQueryString = true;
+    function onChanges(changesObj) {
+      if (changesObj.taxonomyName) {
+        var updateQueryString = false;
+        ctrl.taxonomiesQuery.forEach(function (taxonomy) {
+          if (taxonomy.name === ctrl.taxonomyName && taxonomy.queryString) {
+            ctrl.queryString = taxonomy.queryString;
+            updateQueryString = true;
+          }
+        });
+        if (!updateQueryString) {
+          ctrl.queryString = '';
         }
-      });
-      if (!updateQueryString) {
-        ctrl.queryString = '';
       }
     }
+
+    ctrl.$onChanges = onChanges;
+    ctrl.change = change;
+    ctrl.clear = clear;
   }
 
-  ctrl.$onChanges = onChanges;
-  ctrl.change = change;
-  ctrl.clear = clear;
-}
-
-
-ngObibaMica.search
-
-  .component('inputSearchFilter', {
-    transclude: true,
-    bindings: {
-      taxonomiesQuery: '<',
-      taxonomyName: '<',
-      queryString: '<',
-      onFilterChange: '&'
-    },
-    templateUrl: 'search/components/input-search-filter/component.html',
-    controller: [InputSearchFilterController]
-  });
+  ngObibaMica.search
+    .component('inputSearchFilter', {
+      transclude: true,
+      bindings: {
+        taxonomiesQuery: '<',
+        taxonomyName: '<',
+        queryString: '<',
+        onFilterChange: '&'
+      },
+      templateUrl: 'search/components/input-search-filter/component.html',
+      controller: [InputSearchFilterController]
+    });
+})();

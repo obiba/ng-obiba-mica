@@ -11,7 +11,7 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.VocabularyFilterDetailController = function (VocabularyService) {
+  function VocabularyFilterDetailController(VocabularyService) {
     var ctrl = this;
 
     function checkAndSetCriterionType(vocabulary) {
@@ -60,7 +60,7 @@
     ctrl.selectAllFilteredVocabularyTerms = selectAllFilteredVocabularyTerms;
     ctrl.selectVocabularyArgs = selectVocabularyArgs;
     ctrl.removeCriterion = removeCriterion;
-  };
+  }
 
   ngObibaMica.search
     .component('vocabularyFilterDetail', {
@@ -71,6 +71,6 @@
         onRemoveCriterion: '&'
       },
       templateUrl: 'search/components/vocabulary/vocabulary-filter-detail/component.html',
-      controller: ['VocabularyService', ngObibaMica.search.VocabularyFilterDetailController]
+      controller: ['VocabularyService', VocabularyFilterDetailController]
     });
 })();

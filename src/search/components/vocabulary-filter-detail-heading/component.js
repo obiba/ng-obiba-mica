@@ -12,7 +12,7 @@
 
 (function () {
 
-  ngObibaMica.search.VocabularyFilterDetailHeading = function () {
+  function VocabularyFilterDetailHeading() {
     var ctrl = this;
     var bodyElement = document.querySelectorAll('body')[0];
 
@@ -72,7 +72,7 @@
     ctrl.$onDestroy = onDestroy;
 
     addWindowEventHandlers();
-  };
+  }
 
   ngObibaMica.search
     .component('vocabularyFilterDetailHeading', {
@@ -93,6 +93,6 @@
       templateUrl: ['ngObibaMicaSearchTemplateUrl', function (ngObibaMicaSearchTemplateUrl) {
         return ngObibaMicaSearchTemplateUrl.getTemplateUrl('vocabularyFilterDetailHeading');
       }],
-      controller: [ngObibaMica.search.VocabularyFilterDetailHeading]
+      controller: [VocabularyFilterDetailHeading]
     });
 })();
