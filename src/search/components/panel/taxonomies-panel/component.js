@@ -129,7 +129,7 @@
           lang: '='
         },
         controller: 'TaxonomiesPanelController',
-        templateUrl: 'search/components/panel/taxonomy/component.html',
+        templateUrl: 'search/components/panel/taxonomies-panel/component.html',
         link: function (scope, element) {
           scope.closeTaxonomies = function () {
             element.collapse('hide');

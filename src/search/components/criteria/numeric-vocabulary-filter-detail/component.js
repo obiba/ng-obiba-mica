@@ -11,7 +11,7 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.NumericVocabularyFilterDetailController = function() {
+  function NumericVocabularyFilterDetailController() {
     var ctrl = this;
 
     function setRangeValue(submitEvent) {
@@ -27,11 +27,11 @@
         args.to = parseInt(to, 10);
       }
 
-      ctrl.onSelectArgs({vocabulary: ctrl.vocabulary, args: args});
+      ctrl.onSelectArgs({ vocabulary: ctrl.vocabulary, args: args });
     }
 
     ctrl.setRangeValue = setRangeValue;
-  };
+  }
 
   ngObibaMica.search
     .component('numericVocabularyFilterDetail', {
@@ -41,6 +41,6 @@
         onSelectArgs: '&'
       },
       templateUrl: 'search/components/criteria/numeric-vocabulary-filter-detail/component.html',
-      controller: [ngObibaMica.search.NumericVocabularyFilterDetailController]
+      controller: [NumericVocabularyFilterDetailController]
     });
 })();

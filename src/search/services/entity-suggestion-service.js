@@ -10,15 +10,15 @@
 
 'use strict';
 
-(function() {
-  ngObibaMica.search.EntitySuggestionService = function($rootScope,
-                                                        $location,
-                                                        $translate,
-                                                        DocumentSuggestionResource,
-                                                        RqlQueryService,
-                                                        EntitySuggestionRqlUtilityService,
-                                                        AlertService,
-                                                        ServerErrorUtils) {
+(function () {
+  function EntitySuggestionService($rootScope,
+    $location,
+    $translate,
+    DocumentSuggestionResource,
+    RqlQueryService,
+    EntitySuggestionRqlUtilityService,
+    AlertService,
+    ServerErrorUtils) {
 
     function suggest(entityType, query) {
       var obibaUtils = new obiba.utils.NgObibaStringUtils();
@@ -27,7 +27,7 @@
       cleanQuery = obibaUtils.cleanSpecialLuceneCharacters(cleanQuery);
 
       if (entityType && query && cleanQuery.length > 1) {
-        return DocumentSuggestionResource.query({locale: $translate.use(), documentType: entityType, query: cleanQuery})
+        return DocumentSuggestionResource.query({ locale: $translate.use(), documentType: entityType, query: cleanQuery })
           .$promise
           .then(function (response) {
             var parsedResponse = Array.isArray(response) ? response : [];
@@ -37,7 +37,7 @@
             }
 
             return parsedResponse;
-          }, function(response) {
+          }, function (response) {
             AlertService.alert({
               id: 'SearchController',
               type: 'danger',
@@ -67,8 +67,8 @@
         var targetQuery = RqlQueryService.findTargetQuery(target, query);
         if (targetQuery) {
           var matchQuery =
-              EntitySuggestionRqlUtilityService
-                  .givenFilterQueryGetMatchQuery(EntitySuggestionRqlUtilityService.givenTargetQueryGetFilterQuery(targetQuery));
+            EntitySuggestionRqlUtilityService
+              .givenFilterQueryGetMatchQuery(EntitySuggestionRqlUtilityService.givenTargetQueryGetFilterQuery(targetQuery));
 
           return matchQuery && matchQuery.args ? matchQuery.args[0][0] : '';
         }
@@ -84,16 +84,16 @@
       cleanSuggestion = obibaUtils.cleanSpecialLuceneCharacters(cleanSuggestion);
 
       $rootScope.$new().$emit('ngObibaMicaSearch.searchSuggestion',
-          cleanSuggestion, target, withSpecificFields);
+        cleanSuggestion, target, withSpecificFields);
     }
 
     this.getCurrentSuggestion = getCurrentSuggestion;
     this.suggest = suggest;
     this.selectSuggestion = selectSuggestion;
     this.suggestForTargetQuery = suggestForTargetQuery;
-  };
+  }
 
-  ngObibaMica.search.EntitySuggestionRqlUtilityService = function () {
+  function EntitySuggestionRqlUtilityService() {
     function createMatchQueryArgs(suggestion, filterFields) {
       var args = [];
       args.push([suggestion]);
@@ -131,7 +131,7 @@
       if (!filterQuery) {
         return null;
       }
-      return filterQuery.args.filter(function (arg) { return arg.name ===  RQL_NODE.MATCH; }).pop();
+      return filterQuery.args.filter(function (arg) { return arg.name === RQL_NODE.MATCH; }).pop();
     }
 
     // use when suggestion is empty or null
@@ -156,9 +156,9 @@
     this.givenTargetQueryGetFilterQuery = givenTargetQueryGetFilterQuery;
     this.givenFilterQueryGetMatchQuery = givenFilterQueryGetMatchQuery;
     this.removeFilteredMatchQueryFromTargetQuery = removeFilteredMatchQueryFromTargetQuery;
-  };
+  }
 
-  ngObibaMica.search.service('EntitySuggestionRqlUtilityService', ngObibaMica.search.EntitySuggestionRqlUtilityService);
+  ngObibaMica.search.service('EntitySuggestionRqlUtilityService', EntitySuggestionRqlUtilityService);
 
   ngObibaMica.search
     .service('EntitySuggestionService', [
@@ -169,7 +169,7 @@
       'RqlQueryService', 'EntitySuggestionRqlUtilityService',
       'AlertService',
       'ServerErrorUtils',
-      ngObibaMica.search.EntitySuggestionService
+      EntitySuggestionService
     ]);
 
 })();

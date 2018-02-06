@@ -18,54 +18,6 @@ var CRITERIA_ITEM_EVENT = {
 };
 
 ngObibaMica.search
-
-  .directive('taxonomyPanel', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        taxonomy: '=',
-        lang: '=',
-        onNavigate: '='
-      },
-      templateUrl: 'search/views/classifications/taxonomy-panel-template.html'
-    };
-  }])
-
-  .directive('vocabularyPanel', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        target: '=',
-        taxonomy: '=',
-        vocabulary: '=',
-        lang: '=',
-        onNavigate: '=',
-        onSelect: '=',
-        onHideSearchNavigate: '=',
-        isInHideNavigate: '='
-      },
-      templateUrl: 'search/views/classifications/vocabulary-panel-template.html'
-    };
-  }])
-
-  .directive('termPanel', [function () {
-    return {
-      restrict: 'EA',
-      replace: true,
-      scope: {
-        target: '=',
-        taxonomy: '=',
-        vocabulary: '=',
-        term: '=',
-        lang: '=',
-        onSelect: '='
-      },
-      templateUrl: 'search/views/classifications/term-panel-template.html'
-    };
-  }])
-
   .directive('networksResultTable', ['PageUrlService', 'ngObibaMicaSearch', 'RqlQueryService', 'StudyFilterShortcutService', 'ngObibaMicaSearchTemplateUrl',
     function (PageUrlService, ngObibaMicaSearch, RqlQueryService, StudyFilterShortcutService, ngObibaMicaSearchTemplateUrl) {
       return {

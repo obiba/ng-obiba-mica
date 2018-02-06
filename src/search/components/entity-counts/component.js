@@ -10,7 +10,7 @@
 
 'use strict';
 
-ngObibaMica.search.EntityCountsController = function() {
+ function EntityCountsController() {
   var ctrl = this;
   function getTotalHits(entity){
     if (!ctrl.result || !ctrl.result[entity + 'TotalCount']) {
@@ -26,7 +26,7 @@ ngObibaMica.search.EntityCountsController = function() {
 
   ctrl.getTotalHits = getTotalHits;
   ctrl.selectType = selectType;
-};
+}
 
 ngObibaMica.search
   .component('entityCounts', {
@@ -39,5 +39,5 @@ ngObibaMica.search
       taxonomyTypeMap: '<'
     },
     templateUrl: 'search/components/entity-counts/component.html',
-    controller: [ngObibaMica.search.EntityCountsController]
+    controller: [EntityCountsController]
   });

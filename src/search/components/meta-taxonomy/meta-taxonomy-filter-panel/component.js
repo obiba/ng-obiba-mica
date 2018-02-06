@@ -12,7 +12,7 @@
 
 (function() {
 
-  ngObibaMica.search.Controller = function (MetaTaxonomyService, TaxonomyService) {
+  function Controller(MetaTaxonomyService, TaxonomyService) {
 
     /**
      * Retrieves all meta taxonomies
@@ -62,7 +62,7 @@
     ctrl.$onChanges = onChanges;
 
     init();
-  };
+  }
 
   ngObibaMica.search
     .component('metaTaxonomyFilterPanel', {
@@ -73,7 +73,7 @@
         rqlQuery: '<'
       },
       templateUrl: 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html',
-      controller: ['MetaTaxonomyService', 'TaxonomyService', ngObibaMica.search.Controller]
+      controller: ['MetaTaxonomyService', 'TaxonomyService', Controller]
     });
 })();
 

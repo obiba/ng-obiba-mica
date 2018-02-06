@@ -10,27 +10,27 @@
 
 'use strict';
 
-ngObibaMica.search.InputSearchFilterController = function() {
+function InputSearchFilterController() {
   var ctrl = this;
 
-  function change(){
-    ctrl.onFilterChange({queryString:ctrl.queryString});
+  function change() {
+    ctrl.onFilterChange({ queryString: ctrl.queryString });
   }
-  function clear(){
+  function clear() {
     ctrl.queryString = '';
     change();
   }
 
   function onChanges(changesObj) {
-    if(changesObj.taxonomyName){
+    if (changesObj.taxonomyName) {
       var updateQueryString = false;
       ctrl.taxonomiesQuery.forEach(function (taxonomy) {
-        if(taxonomy.name === ctrl.taxonomyName && taxonomy.queryString){
+        if (taxonomy.name === ctrl.taxonomyName && taxonomy.queryString) {
           ctrl.queryString = taxonomy.queryString;
           updateQueryString = true;
         }
       });
-      if(!updateQueryString){
+      if (!updateQueryString) {
         ctrl.queryString = '';
       }
     }
@@ -39,7 +39,7 @@ ngObibaMica.search.InputSearchFilterController = function() {
   ctrl.$onChanges = onChanges;
   ctrl.change = change;
   ctrl.clear = clear;
-};
+}
 
 
 ngObibaMica.search
@@ -53,5 +53,5 @@ ngObibaMica.search
       onFilterChange: '&'
     },
     templateUrl: 'search/components/input-search-filter/component.html',
-    controller: [ngObibaMica.search.InputSearchFilterController]
+    controller: [InputSearchFilterController]
   });

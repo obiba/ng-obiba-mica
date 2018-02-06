@@ -10,23 +10,23 @@
 
 'use strict';
 
-(function() {
+(function () {
 
-  ngObibaMica.search.Controller = function() {
+  function Controller() {
     var ctrl = this;
 
     function selectTaxonomy(taxonomy) {
-      ctrl.onSelectTaxonomy({target: ctrl.metaTaxonomy.name, taxonomy: taxonomy});
+      ctrl.onSelectTaxonomy({ target: ctrl.metaTaxonomy.name, taxonomy: taxonomy });
     }
 
     function getEntityType() {
       return targetToType(ctrl.metaTaxonomy.name);
     }
 
-    ctrl.status = {isFirstOpen: true};
+    ctrl.status = { isFirstOpen: true };
     ctrl.selectTaxonomy = selectTaxonomy;
     ctrl.entityType = getEntityType();
-  };
+  }
 
   ngObibaMica.search
 
@@ -39,6 +39,6 @@
         onSelectTaxonomy: '&'
       },
       templateUrl: 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html',
-      controller: ngObibaMica.search.Controller
+      controller: Controller
     });
 })();

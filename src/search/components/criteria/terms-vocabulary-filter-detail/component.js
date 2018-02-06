@@ -11,18 +11,18 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.TermsVocabularyFilterDetailController = function() {
+  function TermsVocabularyFilterDetailController() {
     var ctrl = this;
 
     function clickCheckbox(input) {
-      var args = {term: input};
-      ctrl.onSelectArgs({vocabulary: ctrl.vocabulary, args: args});
+      var args = { term: input };
+      ctrl.onSelectArgs({ vocabulary: ctrl.vocabulary, args: args });
     }
 
     ctrl.constantLimitNumber = 12;
     ctrl.limitNumber = ctrl.constantLimitNumber;
     ctrl.clickCheckbox = clickCheckbox;
-  };
+  }
 
   ngObibaMica.search
     .component('termsVocabularyFilterDetail', {
@@ -32,6 +32,6 @@
         onSelectArgs: '&'
       },
       templateUrl: 'search/components/criteria/terms-vocabulary-filter-detail/component.html',
-      controller: [ngObibaMica.search.TermsVocabularyFilterDetailController]
+      controller: [TermsVocabularyFilterDetailController]
     });
 })();

@@ -13,7 +13,7 @@
 /* global BUCKET_TYPES  */
 
 (function () {
-  ngObibaMica.search.CoverageGroupByService = function (ngObibaMicaSearch) {
+  function CoverageGroupByService(ngObibaMicaSearch) {
     var self = this;
 
     var options = ngObibaMicaSearch.getOptions();
@@ -109,7 +109,7 @@
 
       return '';
     };
-  };
+  }
 
-  ngObibaMica.search.service('CoverageGroupByService', ['ngObibaMicaSearch', ngObibaMica.search.CoverageGroupByService]);
+  ngObibaMica.search.service('CoverageGroupByService', ['ngObibaMicaSearch', CoverageGroupByService]);
 })();

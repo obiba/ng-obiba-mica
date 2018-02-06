@@ -11,19 +11,19 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.MatchVocabularyFilterDetailController = function() {
+  function MatchVocabularyFilterDetailController() {
     var ctrl = this;
 
     function enterText(keyUpEvent) {
       var input = new obiba.utils.NgObibaStringUtils().cleanDoubleQuotesLeftUnclosed(keyUpEvent.target.value);
-      var args = {text: input || '*'};
+      var args = { text: input || '*' };
       if (keyUpEvent.keyCode === 13) {
-        ctrl.onSelectArgs({vocabulary: ctrl.vocabulary, args: args});
+        ctrl.onSelectArgs({ vocabulary: ctrl.vocabulary, args: args });
       }
     }
 
     ctrl.enterText = enterText;
-  };
+  }
 
   ngObibaMica.search
     .component('matchVocabularyFilterDetail', {
@@ -33,6 +33,6 @@
         onSelectArgs: '&'
       },
       templateUrl: 'search/components/criteria/match-vocabulary-filter-detail/component.html',
-      controller: [ngObibaMica.search.MatchVocabularyFilterDetailController]
+      controller: [MatchVocabularyFilterDetailController]
     });
 })();

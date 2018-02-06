@@ -12,7 +12,7 @@
 
 (function () {
 
-  ngObibaMica.search.Controller = function (EntitySuggestionService) {
+  function Controller(EntitySuggestionService) {
 
     function init() {
       ctrl.model = EntitySuggestionService.getCurrentSuggestion(ctrl.target, ctrl.rqlQuery) || '';
@@ -50,7 +50,7 @@
     ctrl.clear = clear;
     ctrl.onKeyUp = onKeyUp;
     ctrl.$onChanges = onChanges;
-  };
+  }
 
   ngObibaMica.search
     .component('entitySearchTypeahead', {
@@ -63,7 +63,7 @@
         showButton: '@'
       },
       templateUrl: 'search/components/entity-search-typeahead/component.html',
-      controller: ['EntitySuggestionService', ngObibaMica.search.Controller]
+      controller: ['EntitySuggestionService', Controller]
     });
 
 })();

@@ -10,75 +10,74 @@
 
 'use strict';
 
-(function() {
-ngObibaMica.search.MetaTaxonomyService = function($q, $translate, TaxonomyResource, ngObibaMicaSearch) {
-  var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions;
-  var parser = new ngObibaMica.search.MetaTaxonomyParser(taxonomyPanelOptions);
+(function () {
+  function MetaTaxonomyService($q, $translate, TaxonomyResource, ngObibaMicaSearch) {
+    var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions;
+    var parser = new ngObibaMica.search.MetaTaxonomyParser(taxonomyPanelOptions);
 
+    /**
+     * Returns the taxonomy of taxonomy
+     * @returns {*}
+     */
+    function getMetaTaxonomies() {
+      return TaxonomyResource.get({
+        target: QUERY_TARGETS.TAXONOMY,
+        taxonomy: 'Mica_taxonomy'
+      }).$promise;
+    }
 
-  /**
-   * Returns the taxonomy of taxonomy
-   * @returns {*}
-   */
-  function getMetaTaxonomies() {
-    return TaxonomyResource.get({
-      target: QUERY_TARGETS.TAXONOMY,
-      taxonomy: 'Mica_taxonomy'
-    }).$promise;
-  }
+    /**
+     * @param targets [variable, study, ...]
+     * @returns parsed list of taxonomies each item having an info object and a list of taxonomies
+     */
+    function getMetaTaxonomyForTargets(targets) {
+      var deferred = $q.defer();
 
-  /**
-   * @param targets [variable, study, ...]
-   * @returns parsed list of taxonomies each item having an info object and a list of taxonomies
-   */
-  function getMetaTaxonomyForTargets(targets) {
-    var deferred = $q.defer();
+      getMetaTaxonomies().then(
+        function (metaTaxonomy) {
+          var metaVocabularies = (metaTaxonomy.vocabularies || []).filter(function (vocabulary) {
+            return targets.indexOf(vocabulary.name) > -1;
+          });
 
-    getMetaTaxonomies().then(
-      function(metaTaxonomy) {
-        var metaVocabularies = (metaTaxonomy.vocabularies || []).filter(function(vocabulary) {
-          return targets.indexOf(vocabulary.name) > -1;
-        });
-
-        var taxonomies = metaVocabularies.map(
-          function(vocabulary) {
-            switch (vocabulary.name) {
-              case QUERY_TARGETS.VARIABLE:
-                return parser.parseVariableTaxonomies(vocabulary);
-              case QUERY_TARGETS.NETWORK:
-              case QUERY_TARGETS.STUDY:
-              case QUERY_TARGETS.DATASET:
-                return parser.parseEntityTaxonomies(vocabulary);
+          var taxonomies = metaVocabularies.map(
+            function (vocabulary) {
+              switch (vocabulary.name) {
+                case QUERY_TARGETS.VARIABLE:
+                  return parser.parseVariableTaxonomies(vocabulary);
+                case QUERY_TARGETS.NETWORK:
+                case QUERY_TARGETS.STUDY:
+                case QUERY_TARGETS.DATASET:
+                  return parser.parseEntityTaxonomies(vocabulary);
+              }
             }
-          }
-        );
+          );
 
-        deferred.resolve(taxonomies || []);
-      }
-    );
+          deferred.resolve(taxonomies || []);
+        }
+      );
 
-    return deferred.promise;
+      return deferred.promise;
+    }
+
+    /**
+     * Return taxonomy panel options
+     * @returns {taxonomyPanelOptions|{network, study, dataset, variable}}
+     */
+    function getTaxonomyPanelOptions() {
+      return taxonomyPanelOptions;
+    }
+    // exported functions
+    this.getTaxonomyPanelOptions = getTaxonomyPanelOptions;
+    this.getMetaTaxonomyForTargets = getMetaTaxonomyForTargets;
   }
 
-  /**
-   * Return taxonomy panel options
-   * @returns {taxonomyPanelOptions|{network, study, dataset, variable}}
-   */
-  function getTaxonomyPanelOptions(){
-    return taxonomyPanelOptions;
-  }
-  // exported functions
-  this.getTaxonomyPanelOptions = getTaxonomyPanelOptions;
-  this.getMetaTaxonomyForTargets = getMetaTaxonomyForTargets;
-};
-
-ngObibaMica.search
-  .service('MetaTaxonomyService', [
-    '$q',
-    '$translate',
-    'TaxonomyResource',
-    'ngObibaMicaSearch',
-    ngObibaMica.search.MetaTaxonomyService
-  ]);
+  ngObibaMica.search
+    .service('MetaTaxonomyService', [
+      '$q',
+      '$translate',
+      'TaxonomyResource',
+      'ngObibaMicaSearch',
+      MetaTaxonomyService
+    ]);
 
 })();
