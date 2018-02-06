@@ -25,6 +25,11 @@
       return !options.studies.showSearchTab;
     };
 
+    this.canShowStudyType = function() {
+      // showing study type column means that there are several
+      return options.studies.studiesColumn.showStudiesTypeColumn;
+    };
+
     this.canShowStudy = function () {
       return groupByOptions.study || groupByOptions.dce;
     };
