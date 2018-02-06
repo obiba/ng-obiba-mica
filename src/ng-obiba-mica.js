@@ -93,9 +93,9 @@ var ngObibaMica;
 
   ngObibaMica.NgObibaMicaTemplateUrlFactory = function(){
     var templates = {
-      'searchStudiesResultTable': 'search/views/list/studies-search-result-table-template.html',
-      'searchNetworksResultTable': 'search/views/list/networks-search-result-table-template.html',
-      'searchDatasetsResultTable': 'search/views/list/datasets-search-result-table-template.html',
+      'searchStudiesResultTable': 'search/components/result/studies-result-table/component.html',
+      'searchNetworksResultTable': 'search/components/result/networks-result-table/component.html',
+      'searchDatasetsResultTable': 'search/components/result/datasets-result-table/component.html',
       'searchCriteriaRegionTemplate': 'search/components/criteria/item-region/region/component.html',
       'vocabularyFilterDetailHeading': 'search/components/vocabulary-filter-detail-heading/component.html',
       'CriterionDropdownTemplate': 'search/components/criteria/item-region/dropdown/component.html',
