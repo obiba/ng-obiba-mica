@@ -2007,6 +2007,7 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
       listPageSize: 20,
       showStudiesSearchFilter: true,
       studiesColumn: {
+        showStudiesTypeColumn: true,
         showStudiesDesignColumn: true,
         showStudiesQuestionnaireColumn: true,
         showStudiesPmColumn: true,
@@ -2063,6 +2064,37 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
     return null;
   }
 
+  function normalizeOptions() {
+
+    function removeItemByValue(array, value) {
+      var index = array.indexOf(value);
+      if (index > -1) {
+        array.splice(index, 1);
+      }
+      return array;
+    }
+
+    options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
+    var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
+      return options.coverage.groupBy[canShow];
+    }).length > 0;
+
+    if (!canShowCoverage) {
+      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.COVERAGE);
+    }
+
+    if (!options.networks.showSearchTab) {
+      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.NETWORK);
+      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.NETWORK);
+    }
+
+    if (!options.studies.showSearchTab) {
+      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.GRAPHICS);
+      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.STUDY);
+      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.STUDY);
+    }
+  }
+
   function setOptions(value) {
     options = angular.merge(options, value);
     //NOTICE: angular.merge merges arrays by position. Overriding manually.
@@ -2089,19 +2121,15 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
       options.obibaListOptions.trimmedDescription = value.studies.obibaListOptions.studiesTrimmedDescription === 0 ? value.studies.obibaListOptions.studiesTrimmedDescription : true;
       options.searchLayout = value.searchLayout ? value.searchLayout : options.searchLayout;
     }
+    normalizeOptions();
   }
 
   function getOptions() {
     return angular.copy(options);
   }
 
-  function getOptionsInternal() {
-    return options;
-  }
-
   this.setOptions = setOptions;
   this.getOptions = getOptions;
-  this.getOptionsInternal = getOptionsInternal;
 };
 
 /**
@@ -2118,38 +2146,7 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
 
   var deferred = $q.defer();
   var resolved = false;
-
-  function removeItemByValue(array, value) {
-    var index = array.indexOf(value);
-    if (index > -1) {
-      array.splice(index, 1);
-    }
-    return array;
-  }
-
-  function normalizeOptions() {
-    var options = optionsWrapper.getOptionsInternal(); // get internal options, not a copy
-    options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
-    var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
-      return options.coverage.groupBy[canShow];
-    }).length > 0;
-
-    if (!canShowCoverage) {
-      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.COVERAGE);
-    }
-
-    if (!options.networks.showSearchTab) {
-      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.NETWORK);
-      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.NETWORK);
-    }
-
-    if (!options.studies.showSearchTab) {
-      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.GRAPHICS);
-      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.STUDY);
-      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.STUDY);
-    }
-  }
-
+  
   /**
    * Resolves the option by retrieving the server config and overriding the corresponding options.
    * @returns {*}
@@ -2174,6 +2171,7 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
           studies: {
             showSearchTab: hasMultipleStudies,
             studiesColumn: {
+              showStudiesTypeColumn: micaConfig.isCollectedDatasetEnabled && micaConfig.isHarmonizedDatasetEnabled,
               showStudiesNetworksColumn: hasMultipleNetworks,
               showStudiesVariablesColumn: hasMultipleDatasets,
               showStudiesStudyDatasetsColumn: hasMultipleDatasets && micaConfig.isCollectedDatasetEnabled,
@@ -2199,7 +2197,6 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
           }
         };
         optionsWrapper.setOptions(updatedOptions);
-        normalizeOptions();
         deferred.resolve(optionsWrapper.getOptions());
         resolved = true;
       });
@@ -4501,7 +4498,12 @@ ngObibaMica.search
     this.isSingleStudy = function() {
       // coverage => there are datasets and at least one study
       // not showing study means that there is only one
-      return !options.studies.showSearchTab;
+      return !options.studies.showSearchTab;// || 
+    };
+
+    this.canShowStudyType = function() {
+      // showing study type column means that there are several
+      return options.studies.studiesColumn.showStudiesTypeColumn;
     };
 
     this.canShowStudy = function() {
@@ -14550,14 +14552,14 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "\n" +
     "    <div class=\"clearfix\"></div>\n" +
     "\n" +
-    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}\" ng-if=\"!singleStudy && groupByOptions.canShowDce(bucket)\">\n" +
+    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket) && groupByOptions.canShowStudyType()}\" ng-if=\"!singleStudy && groupByOptions.canShowDce(bucket)\">\n" +
     "      <label class=\"checkbox-inline\">\n" +
     "        <input type=\"checkbox\" ng-model=\"bucketSelection.dceBucketSelected\">\n" +
     "        <span translate>search.coverage-buckets.dce</span>\n" +
     "      </label>\n" +
     "    </div>\n" +
     "\n" +
-    "    <div class=\"voffset2\" ng-if=\"!singleStudy\">\n" +
+    "    <div class=\"voffset2\" ng-if=\"!singleStudy && groupByOptions.canShowStudyType()\">\n" +
     "      <div class=\"btn btn-group\" style=\"padding: 0\">\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'all'\" translate>all</label>\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'individual'\" translate>search.coverage-buckets.individual</label>\n" +
@@ -15222,7 +15224,7 @@ angular.module("search/views/list/studies-search-result-table-template.html", []
     "        <tr>\n" +
     "          <th rowspan=\"2\" translate>acronym</th>\n" +
     "          <th rowspan=\"2\" translate>name</th>\n" +
-    "          <th rowspan=\"2\" translate ng-if=\"choseAll\">type</th>\n" +
+    "          <th rowspan=\"2\" translate ng-if=\"choseAll && optionsCols.showStudiesTypeColumn\">type</th>\n" +
     "          <th rowspan=\"2\" translate ng-if=\"optionsCols.showStudiesDesignColumn && choseIndividual\">search.study.design</th>\n" +
     "          <th translate\n" +
     "              ng-attr-colspan=\"{{optionsCols.showStudiesQuestionnaireColumn + optionsCols.showStudiesPmColumn + optionsCols.showStudiesBioColumn + optionsCols.showStudiesOtherColumn}}\"\n" +
@@ -15269,7 +15271,7 @@ angular.module("search/views/list/studies-search-result-table-template.html", []
     "          <td>\n" +
     "            <localized value=\"summary.name\" lang=\"lang\"></localized>\n" +
     "          </td>\n" +
-    "          <td ng-if=\"choseAll\">{{(summary.studyResourcePath === 'individual-study' ? 'search.study.individual' : 'search.study.harmonization') | translate}}</td>\n" +
+    "          <td ng-if=\"choseAll && optionsCols.showStudiesTypeColumn\">{{(summary.studyResourcePath === 'individual-study' ? 'search.study.individual' : 'search.study.harmonization') | translate}}</td>\n" +
     "          <td ng-if=\"optionsCols.showStudiesDesignColumn && choseIndividual\">\n" +
     "            {{ summary.design === undefined ? '-' : 'study_taxonomy.vocabulary.methods-design.term.' + summary.design + '.title' | translate}}\n" +
     "          </td>\n" +
@@ -15564,7 +15566,7 @@ angular.module("search/views/search-result-list-template.html", []).run(["$templ
     "    </div>\n" +
     "    <div class=\"clearfix\" ng-if=\"options.studies.showSearchTab\"/>\n" +
     "    <div class=\"tab-content\">\n" +
-    "        <div class=\"pull-left\" study-filter-shortcut ng-if=\"options.studies.showSearchTab\"></div>\n" +
+    "        <div class=\"pull-left\" study-filter-shortcut ng-if=\"options.studies.showSearchTab && options.studies.studiesColumn.showStudiesTypeColumn\"></div>\n" +
     "        <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"pull-right voffset2\" test-ref=\"pager\">\n" +
     "          <span search-result-pagination\n" +
     "                target=\"activeTarget[targetTypeMap[res]].name\"\n" +
