@@ -17,49 +17,7 @@ var CRITERIA_ITEM_EVENT = {
   refresh: 'event:refresh-criteria-item'
 };
 
-ngObibaMica.search
-  .directive('studyFilterShortcut', ['$location', '$translate', 'RqlQueryService', 'StudyFilterShortcutService',
-    function ($location, $translate, RqlQueryService, StudyFilterShortcutService) {
-      return {
-        restrict: 'EA',
-        replace: true,
-        templateUrl: 'search/views/search-study-filter-template.html',
-        link: function (scope) {
-          scope.studyFilterSelection = {
-            get selection() {
-              return this._selection;
-            },
-            set selection(value) {
-              this._selection = value;
-              updateStudyClassNameFilter(value);
-            }
-          };
-
-          function updateStudyClassNameFilter(choice) {
-            StudyFilterShortcutService.filter(choice, $translate.use());
-          }
-
-          function setChoice() {
-            var result = StudyFilterShortcutService.getStudyClassNameChoices();
-            if (result.choseAll) {
-              scope.studyFilterSelection._selection = ngObibaMica.search.STUDY_FILTER_CHOICES.ALL_STUDIES;
-            } else if (result.choseIndividual) {
-              scope.studyFilterSelection._selection = ngObibaMica.search.STUDY_FILTER_CHOICES.INDIVIDUAL_STUDIES;
-            } else if (result.choseHarmonization) {
-              scope.studyFilterSelection._selection = ngObibaMica.search.STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
-            }
-          }
-
-          scope.$on('$locationChangeSuccess', function () {
-            setChoice();
-          });
-
-          setChoice();
-        }
-      };
-    }]
-  )
-  
+ngObibaMica.search  
   .directive('includeReplace', function () {
     return {
       require: 'ngInclude',
