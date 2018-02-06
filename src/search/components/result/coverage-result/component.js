@@ -1,7 +1,6 @@
 'use strict';
 
 /* global BUCKET_TYPES */
-/* global STUDY_FILTER_CHOICES */
 /* global DISPLAY_TYPES */
 
 ngObibaMica.search
@@ -97,11 +96,11 @@ ngObibaMica.search
         var result = StudyFilterShortcutService.getStudyClassNameChoices();
 
         if (result.choseAll) {
-          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.ALL_STUDIES;
+          $scope.bucketSelection._studySelection = ngObibaMica.search.STUDY_FILTER_CHOICES.ALL_STUDIES;
         } else if (result.choseIndividual) {
-          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.INDIVIDUAL_STUDIES;
+          $scope.bucketSelection._studySelection = ngObibaMica.search.STUDY_FILTER_CHOICES.INDIVIDUAL_STUDIES;
         } else if (result.choseHarmonization) {
-          $scope.bucketSelection._studySelection = STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
+          $scope.bucketSelection._studySelection = ngObibaMica.search.STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
         }
 
         angular.extend($scope, result);

@@ -10,7 +10,6 @@
 
 'use strict';
 
-/* global STUDY_FILTER_CHOICES */
 
 /* exported CRITERIA_ITEM_EVENT */
 var CRITERIA_ITEM_EVENT = {
@@ -228,11 +227,11 @@ ngObibaMica.search
           function setChoice() {
             var result = StudyFilterShortcutService.getStudyClassNameChoices();
             if (result.choseAll) {
-              scope.studyFilterSelection._selection = STUDY_FILTER_CHOICES.ALL_STUDIES;
+              scope.studyFilterSelection._selection = ngObibaMica.search.STUDY_FILTER_CHOICES.ALL_STUDIES;
             } else if (result.choseIndividual) {
-              scope.studyFilterSelection._selection = STUDY_FILTER_CHOICES.INDIVIDUAL_STUDIES;
+              scope.studyFilterSelection._selection = ngObibaMica.search.STUDY_FILTER_CHOICES.INDIVIDUAL_STUDIES;
             } else if (result.choseHarmonization) {
-              scope.studyFilterSelection._selection = STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
+              scope.studyFilterSelection._selection = ngObibaMica.search.STUDY_FILTER_CHOICES.HARMONIZATION_STUDIES;
             }
           }
 
