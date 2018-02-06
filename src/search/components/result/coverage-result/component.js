@@ -117,6 +117,7 @@ ngObibaMica.search
         if (search.display && search.display === DISPLAY_TYPES.COVERAGE) {
           $scope.bucket = search.bucket ? search.bucket : CoverageGroupByService.defaultBucket();
           $scope.bucketStartsWithDce = $scope.bucket.startsWith('dce');
+          $scope.singleStudy = CoverageGroupByService.isSingleStudy();
           setInitialFilter();
         }
       }
@@ -143,7 +144,7 @@ ngObibaMica.search
 
       function selectTab(tab) {
         if (tab === BUCKET_TYPES.STUDY) {
-          updateBucket($scope.bucketSelection.dceBucketSelected ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
+          updateBucket(($scope.bucketSelection.dceBucketSelected || $scope.groupByOptions.isSingleStudy()) ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
         } else if (tab === BUCKET_TYPES.DATASET) {
           dsUpdateBucket(BUCKET_TYPES.DATASET);
         }
@@ -229,7 +230,7 @@ ngObibaMica.search
 
       function splitIds() {
         var cols = {
-          colSpan: $scope.bucket.startsWith('dce') ? 3 : 1,
+          colSpan: $scope.bucket.startsWith('dce') ? (CoverageGroupByService.isSingleStudy() ? 2 : 3) : 1,
           ids: {}
         };
 
@@ -327,7 +328,7 @@ ngObibaMica.search
             rowSpan = appendRowSpan(id);
             appendMinMax(id, row.start || currentYearMonth, row.end || currentYearMonth);
             cols.ids[row.value].push({
-              id: id,
+              id: CoverageGroupByService.isSingleStudy() ? '-' : id,
               url: PageUrlService.studyPage(id, isHarmo ? 'harmonization' : 'individual'),
               title: titles[0],
               description: descriptions[0],

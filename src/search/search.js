@@ -117,7 +117,6 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
       listPageSize: 20,
       showStudiesSearchFilter: true,
       studiesColumn: {
-        showStudiesTypeColumn: true,
         showStudiesDesignColumn: true,
         showStudiesQuestionnaireColumn: true,
         showStudiesPmColumn: true,
@@ -174,37 +173,6 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
     return null;
   }
 
-  function normalizeOptions() {
-
-    function removeItemByValue(array, value) {
-      var index = array.indexOf(value);
-      if (index > -1) {
-        array.splice(index, 1);
-      }
-      return array;
-    }
-
-    options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
-    var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
-      return options.coverage.groupBy[canShow];
-    }).length > 0;
-
-    if (!canShowCoverage) {
-      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.COVERAGE);
-    }
-
-    if (!options.networks.showSearchTab) {
-      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.NETWORK);
-      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.NETWORK);
-    }
-
-    if (!options.studies.showSearchTab) {
-      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.GRAPHICS);
-      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.STUDY);
-      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.STUDY);
-    }
-  }
-
   function setOptions(value) {
     options = angular.merge(options, value);
     //NOTICE: angular.merge merges arrays by position. Overriding manually.
@@ -231,15 +199,19 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
       options.obibaListOptions.trimmedDescription = value.studies.obibaListOptions.studiesTrimmedDescription === 0 ? value.studies.obibaListOptions.studiesTrimmedDescription : true;
       options.searchLayout = value.searchLayout ? value.searchLayout : options.searchLayout;
     }
-    normalizeOptions();
   }
 
   function getOptions() {
     return angular.copy(options);
   }
 
+  function getOptionsInternal() {
+    return options;
+  }
+
   this.setOptions = setOptions;
   this.getOptions = getOptions;
+  this.getOptionsInternal = getOptionsInternal;
 };
 
 /**
@@ -256,7 +228,38 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
 
   var deferred = $q.defer();
   var resolved = false;
-  
+
+  function removeItemByValue(array, value) {
+    var index = array.indexOf(value);
+    if (index > -1) {
+      array.splice(index, 1);
+    }
+    return array;
+  }
+
+  function normalizeOptions() {
+    var options = optionsWrapper.getOptionsInternal(); // get internal options, not a copy
+    options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
+    var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
+      return options.coverage.groupBy[canShow];
+    }).length > 0;
+
+    if (!canShowCoverage) {
+      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.COVERAGE);
+    }
+
+    if (!options.networks.showSearchTab) {
+      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.NETWORK);
+      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.NETWORK);
+    }
+
+    if (!options.studies.showSearchTab) {
+      removeItemByValue(options.searchTabsOrder, DISPLAY_TYPES.GRAPHICS);
+      removeItemByValue(options.targetTabsOrder, QUERY_TARGETS.STUDY);
+      removeItemByValue(options.resultTabsOrder, QUERY_TARGETS.STUDY);
+    }
+  }
+
   /**
    * Resolves the option by retrieving the server config and overriding the corresponding options.
    * @returns {*}
@@ -281,7 +284,6 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
           studies: {
             showSearchTab: hasMultipleStudies,
             studiesColumn: {
-              showStudiesTypeColumn: micaConfig.isCollectedDatasetEnabled && micaConfig.isHarmonizedDatasetEnabled,
               showStudiesNetworksColumn: hasMultipleNetworks,
               showStudiesVariablesColumn: hasMultipleDatasets,
               showStudiesStudyDatasetsColumn: hasMultipleDatasets && micaConfig.isCollectedDatasetEnabled,
@@ -307,6 +309,7 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
           }
         };
         optionsWrapper.setOptions(updatedOptions);
+        normalizeOptions();
         deferred.resolve(optionsWrapper.getOptions());
         resolved = true;
       });

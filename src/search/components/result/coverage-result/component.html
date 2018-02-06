@@ -29,14 +29,14 @@
 
     <div class="clearfix"></div>
 
-    <div class="voffset2" ng-class="{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}" ng-if="groupByOptions.canShowDce(bucket)">
+    <div class="voffset2" ng-class="{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}" ng-if="!singleStudy && groupByOptions.canShowDce(bucket)">
       <label class="checkbox-inline">
         <input type="checkbox" ng-model="bucketSelection.dceBucketSelected">
         <span translate>search.coverage-buckets.dce</span>
       </label>
     </div>
 
-    <div class="voffset2" ng-if="groupByOptions.canShowStudy()">
+    <div class="voffset2" ng-if="!singleStudy">
       <div class="btn btn-group" style="padding: 0">
         <label class="btn btn-sm btn-study" ng-model="bucketSelection.studySelection" uib-btn-radio="'all'" translate>all</label>
         <label class="btn btn-sm btn-study" ng-model="bucketSelection.studySelection" uib-btn-radio="'individual'" translate>search.coverage-buckets.individual</label>
@@ -91,7 +91,7 @@
           </th>
         </tr>
         <tr>
-          <th ng-if="bucketStartsWithDce" translate>search.coverage-dce-cols.study</th>
+          <th ng-if="bucketStartsWithDce && !singleStudy" translate>search.coverage-dce-cols.study</th>
           <th ng-if="bucketStartsWithDce" colspan="{{choseHarmonization && !choseAll ? 2 : 1}}" translate>search.coverage-dce-cols.population</th>
           <th ng-if="bucketStartsWithDce" ng-hide="choseHarmonization && !choseAll" translate>search.coverage-dce-cols.dce</th>
           <th ng-repeat="header in ::table.termHeaders">
@@ -112,8 +112,7 @@
           <td style="text-align: center">
             <input type="checkbox" ng-model="row.selected">
           </td>
-          <td ng-repeat="col in ::table.cols.ids[row.value] track by col.index" colspan="{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}"
-            ng-hide="col.id === '-' && (choseHarmonization && !choseAll)">
+          <td ng-repeat="col in ::table.cols.ids[row.value] track by col.index" colspan="{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}" ng-hide="col.id === '-' && (singleStudy || choseHarmonization && !choseAll)">
             <span ng-if="col.id === '-'">-</span>
             <a ng-hide="col.rowSpan === 0  || col.id === '-'" href="{{col.url}}" uib-popover-html="col.description === col.title ? null : col.description"
               popover-title="{{col.title}}" popover-placement="bottom" popover-trigger="'mouseenter'">{{col.title}}</a>

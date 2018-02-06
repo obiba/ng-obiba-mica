@@ -25,9 +25,6 @@ var STUDY_FILTER_CHOICES = {
  * Module services and factories
  */
 ngObibaMica.search
-
-  
-
   .service('StudyFilterShortcutService', ['$location', 'RqlQueryService',
     function ($location, RqlQueryService) {
       function getCurrentClassName(rqlQuery) {
@@ -44,7 +41,7 @@ ngObibaMica.search
 
       function classNameQueryHasArgValue(className, argValue) {
         return !className ||
-            (Array.isArray(className.args[1]) ? className.args[1].indexOf(argValue) > -1 : className.args[1] === argValue);
+          (Array.isArray(className.args[1]) ? className.args[1].indexOf(argValue) > -1 : className.args[1] === argValue);
       }
 
       function classNameQueryHasStudyArg(className) {
@@ -57,8 +54,8 @@ ngObibaMica.search
 
       function classNameQueryIsExists(className) {
         return !className ||
-            className.name === RQL_NODE.EXISTS ||
-            (classNameQueryHasStudyArg(className) && classNameQueryHasHarmonizationStudyArg(className));
+          className.name === RQL_NODE.EXISTS ||
+          (classNameQueryHasStudyArg(className) && classNameQueryHasHarmonizationStudyArg(className));
       }
 
       this.filter = function (choice) {
@@ -111,7 +108,7 @@ ngObibaMica.search
 
       this.getStudyClassNameChoices = function () {
         return {
-          choseAll:classNameQueryIsExists(getCurrentClassName()),
+          choseAll: classNameQueryIsExists(getCurrentClassName()),
           choseIndividual: classNameQueryHasStudyArg(getCurrentClassName()),
           choseHarmonization: classNameQueryHasHarmonizationStudyArg(getCurrentClassName())
         };
@@ -119,45 +116,45 @@ ngObibaMica.search
     }
   ])
 
-  .service('SearchContext', function() {
+  .service('SearchContext', function () {
     var selectedLocale = null;
 
-    this.setLocale = function(locale) {
+    this.setLocale = function (locale) {
       selectedLocale = locale;
     };
 
-    this.currentLocale = function() {
+    this.currentLocale = function () {
       return selectedLocale;
     };
   })
 
-  .service('PageUrlService', ['ngObibaMicaUrl', 'StringUtils', 'urlEncode', function(ngObibaMicaUrl, StringUtils, urlEncode) {
+  .service('PageUrlService', ['ngObibaMicaUrl', 'StringUtils', 'urlEncode', function (ngObibaMicaUrl, StringUtils, urlEncode) {
 
-    this.studyPage = function(id, type) {
+    this.studyPage = function (id, type) {
       var sType = (type.toLowerCase().indexOf('individual') > -1 ? 'individual' : 'harmonization') + '-study';
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPage'), {':type': urlEncode(sType), ':study': urlEncode(id)}) : '';
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPage'), { ':type': urlEncode(sType), ':study': urlEncode(id) }) : '';
     };
 
-    this.studyPopulationPage = function(id, type, populationId) {
+    this.studyPopulationPage = function (id, type, populationId) {
       var sType = (type.toLowerCase() === 'individual' ? 'individual' : 'harmonization') + '-study';
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPopulationsPage'), {':type': urlEncode(sType), ':study': urlEncode(id), ':population': urlEncode(populationId)}) : '';
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPopulationsPage'), { ':type': urlEncode(sType), ':study': urlEncode(id), ':population': urlEncode(populationId) }) : '';
     };
 
-    this.networkPage = function(id) {
-      return  id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('NetworkPage'), {':network': urlEncode(id)}) : '';
+    this.networkPage = function (id) {
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('NetworkPage'), { ':network': urlEncode(id) }) : '';
     };
 
-    this.datasetPage = function(id, type) {
+    this.datasetPage = function (id, type) {
       var dsType = (type.toLowerCase() === 'collected' ? 'collected' : 'harmonized') + '-dataset';
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('DatasetPage'), {':type': urlEncode(dsType), ':dataset': urlEncode(id)}) : '';
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('DatasetPage'), { ':type': urlEncode(dsType), ':dataset': urlEncode(id) }) : '';
     };
 
-    this.variablePage = function(id) {
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('VariablePage'), {':variable': urlEncode(id)}) : '';
+    this.variablePage = function (id) {
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('VariablePage'), { ':variable': urlEncode(id) }) : '';
     };
 
-    this.downloadCoverage = function(query) {
-      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('JoinQueryCoverageDownloadResource'), {':query': query});
+    this.downloadCoverage = function (query) {
+      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('JoinQueryCoverageDownloadResource'), { ':query': query });
     };
 
     return this;
@@ -166,21 +163,21 @@ ngObibaMica.search
   .service('ObibaSearchConfig', function () {
     var options = {
       networks: {
-        showSearchTab:1
+        showSearchTab: 1
       },
       studies: {
-        showSearchTab:1
+        showSearchTab: 1
       },
       datasets: {
-        showSearchTab:1
+        showSearchTab: 1
       },
       variables: {
-        showSearchTab:1
+        showSearchTab: 1
       }
     };
 
     this.setOptions = function (newOptions) {
-      if (typeof(newOptions) === 'object') {
+      if (typeof (newOptions) === 'object') {
         Object.keys(newOptions).forEach(function (option) {
           if (option in options) {
             options[option] = newOptions[option];
@@ -194,47 +191,42 @@ ngObibaMica.search
     };
   })
 
-  .service('CoverageGroupByService', ['ngObibaMicaSearch', function(ngObibaMicaSearch) {
+  .service('CoverageGroupByService', ['ngObibaMicaSearch', function (ngObibaMicaSearch) {
     var self = this;
 
     var options = ngObibaMicaSearch.getOptions();
     var groupByOptions = options.coverage.groupBy;
 
-    this.isSingleStudy = function() {
+    this.isSingleStudy = function () {
       // coverage => there are datasets and at least one study
       // not showing study means that there is only one
-      return !options.studies.showSearchTab;// || 
+      return !options.studies.showSearchTab;
     };
 
-    this.canShowStudyType = function() {
-      // showing study type column means that there are several
-      return options.studies.studiesColumn.showStudiesTypeColumn;
-    };
-
-    this.canShowStudy = function() {
+    this.canShowStudy = function () {
       return groupByOptions.study || groupByOptions.dce;
     };
 
-    this.canShowDce = function(bucket) {
+    this.canShowDce = function (bucket) {
       return (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && groupByOptions.study && groupByOptions.dce;
     };
 
-    this.canShowDataset = function() {
+    this.canShowDataset = function () {
       return groupByOptions.dataset;
     };
 
-    this.canShowVariableTypeFilter = function(bucket) {
+    this.canShowVariableTypeFilter = function (bucket) {
       var forStudy = (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && (groupByOptions.study);
       var forDataset = bucket.indexOf('dataset') > -1 && groupByOptions.dataset;
 
       return forStudy || forDataset;
     };
 
-    this.studyTitle = function() {
+    this.studyTitle = function () {
       return 'search.coverage-buckets.study';
     };
 
-    this.studyBucket = function() {
+    this.studyBucket = function () {
       return BUCKET_TYPES.STUDY;
     };
 
@@ -246,15 +238,15 @@ ngObibaMica.search
       }
     };
 
-    this.datasetTitle = function() {
+    this.datasetTitle = function () {
       return 'search.coverage-buckets.dataset';
     };
 
-    this.datasetBucket = function() {
+    this.datasetBucket = function () {
       return BUCKET_TYPES.DATASET;
     };
 
-    this.canGroupBy = function(bucket) {
+    this.canGroupBy = function (bucket) {
       var isAllowed = false;
 
       switch (bucket) {
@@ -277,7 +269,7 @@ ngObibaMica.search
       return isAllowed;
     };
 
-    this.defaultBucket = function() {
+    this.defaultBucket = function () {
       if (groupByOptions.study) {
         if (options.studies.showSearchTab) {
           return self.studyBucket();

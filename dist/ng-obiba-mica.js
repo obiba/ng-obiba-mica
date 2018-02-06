@@ -2095,8 +2095,13 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
     return angular.copy(options);
   }
 
+  function getOptionsInternal() {
+    return options;
+  }
+
   this.setOptions = setOptions;
   this.getOptions = getOptions;
+  this.getOptionsInternal = getOptionsInternal;
 };
 
 /**
@@ -2123,8 +2128,7 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
   }
 
   function normalizeOptions() {
-    var options = optionsWrapper.getOptions();
-    options.coverage.groupBy.study = options.coverage.groupBy.study && options.studies.showSearchTab;
+    var options = optionsWrapper.getOptionsInternal(); // get internal options, not a copy
     options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
     var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
       return options.coverage.groupBy[canShow];
@@ -3247,9 +3251,6 @@ var STUDY_FILTER_CHOICES = {
  * Module services and factories
  */
 ngObibaMica.search
-
-  
-
   .service('StudyFilterShortcutService', ['$location', 'RqlQueryService',
     function ($location, RqlQueryService) {
       function getCurrentClassName(rqlQuery) {
@@ -3266,7 +3267,7 @@ ngObibaMica.search
 
       function classNameQueryHasArgValue(className, argValue) {
         return !className ||
-            (Array.isArray(className.args[1]) ? className.args[1].indexOf(argValue) > -1 : className.args[1] === argValue);
+          (Array.isArray(className.args[1]) ? className.args[1].indexOf(argValue) > -1 : className.args[1] === argValue);
       }
 
       function classNameQueryHasStudyArg(className) {
@@ -3279,8 +3280,8 @@ ngObibaMica.search
 
       function classNameQueryIsExists(className) {
         return !className ||
-            className.name === RQL_NODE.EXISTS ||
-            (classNameQueryHasStudyArg(className) && classNameQueryHasHarmonizationStudyArg(className));
+          className.name === RQL_NODE.EXISTS ||
+          (classNameQueryHasStudyArg(className) && classNameQueryHasHarmonizationStudyArg(className));
       }
 
       this.filter = function (choice) {
@@ -3333,7 +3334,7 @@ ngObibaMica.search
 
       this.getStudyClassNameChoices = function () {
         return {
-          choseAll:classNameQueryIsExists(getCurrentClassName()),
+          choseAll: classNameQueryIsExists(getCurrentClassName()),
           choseIndividual: classNameQueryHasStudyArg(getCurrentClassName()),
           choseHarmonization: classNameQueryHasHarmonizationStudyArg(getCurrentClassName())
         };
@@ -3341,45 +3342,45 @@ ngObibaMica.search
     }
   ])
 
-  .service('SearchContext', function() {
+  .service('SearchContext', function () {
     var selectedLocale = null;
 
-    this.setLocale = function(locale) {
+    this.setLocale = function (locale) {
       selectedLocale = locale;
     };
 
-    this.currentLocale = function() {
+    this.currentLocale = function () {
       return selectedLocale;
     };
   })
 
-  .service('PageUrlService', ['ngObibaMicaUrl', 'StringUtils', 'urlEncode', function(ngObibaMicaUrl, StringUtils, urlEncode) {
+  .service('PageUrlService', ['ngObibaMicaUrl', 'StringUtils', 'urlEncode', function (ngObibaMicaUrl, StringUtils, urlEncode) {
 
-    this.studyPage = function(id, type) {
+    this.studyPage = function (id, type) {
       var sType = (type.toLowerCase().indexOf('individual') > -1 ? 'individual' : 'harmonization') + '-study';
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPage'), {':type': urlEncode(sType), ':study': urlEncode(id)}) : '';
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPage'), { ':type': urlEncode(sType), ':study': urlEncode(id) }) : '';
     };
 
-    this.studyPopulationPage = function(id, type, populationId) {
+    this.studyPopulationPage = function (id, type, populationId) {
       var sType = (type.toLowerCase() === 'individual' ? 'individual' : 'harmonization') + '-study';
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPopulationsPage'), {':type': urlEncode(sType), ':study': urlEncode(id), ':population': urlEncode(populationId)}) : '';
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPopulationsPage'), { ':type': urlEncode(sType), ':study': urlEncode(id), ':population': urlEncode(populationId) }) : '';
     };
 
-    this.networkPage = function(id) {
-      return  id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('NetworkPage'), {':network': urlEncode(id)}) : '';
+    this.networkPage = function (id) {
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('NetworkPage'), { ':network': urlEncode(id) }) : '';
     };
 
-    this.datasetPage = function(id, type) {
+    this.datasetPage = function (id, type) {
       var dsType = (type.toLowerCase() === 'collected' ? 'collected' : 'harmonized') + '-dataset';
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('DatasetPage'), {':type': urlEncode(dsType), ':dataset': urlEncode(id)}) : '';
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('DatasetPage'), { ':type': urlEncode(dsType), ':dataset': urlEncode(id) }) : '';
     };
 
-    this.variablePage = function(id) {
-      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('VariablePage'), {':variable': urlEncode(id)}) : '';
+    this.variablePage = function (id) {
+      return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('VariablePage'), { ':variable': urlEncode(id) }) : '';
     };
 
-    this.downloadCoverage = function(query) {
-      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('JoinQueryCoverageDownloadResource'), {':query': query});
+    this.downloadCoverage = function (query) {
+      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('JoinQueryCoverageDownloadResource'), { ':query': query });
     };
 
     return this;
@@ -3388,21 +3389,21 @@ ngObibaMica.search
   .service('ObibaSearchConfig', function () {
     var options = {
       networks: {
-        showSearchTab:1
+        showSearchTab: 1
       },
       studies: {
-        showSearchTab:1
+        showSearchTab: 1
       },
       datasets: {
-        showSearchTab:1
+        showSearchTab: 1
       },
       variables: {
-        showSearchTab:1
+        showSearchTab: 1
       }
     };
 
     this.setOptions = function (newOptions) {
-      if (typeof(newOptions) === 'object') {
+      if (typeof (newOptions) === 'object') {
         Object.keys(newOptions).forEach(function (option) {
           if (option in options) {
             options[option] = newOptions[option];
@@ -3416,34 +3417,42 @@ ngObibaMica.search
     };
   })
 
-  .service('CoverageGroupByService', ['ngObibaMicaSearch', function(ngObibaMicaSearch) {
+  .service('CoverageGroupByService', ['ngObibaMicaSearch', function (ngObibaMicaSearch) {
     var self = this;
 
-    var groupByOptions = ngObibaMicaSearch.getOptions().coverage.groupBy;
-    this.canShowStudy = function() {
+    var options = ngObibaMicaSearch.getOptions();
+    var groupByOptions = options.coverage.groupBy;
+
+    this.isSingleStudy = function () {
+      // coverage => there are datasets and at least one study
+      // not showing study means that there is only one
+      return !options.studies.showSearchTab;
+    };
+
+    this.canShowStudy = function () {
       return groupByOptions.study || groupByOptions.dce;
     };
 
-    this.canShowDce = function(bucket) {
+    this.canShowDce = function (bucket) {
       return (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && groupByOptions.study && groupByOptions.dce;
     };
 
-    this.canShowDataset = function() {
+    this.canShowDataset = function () {
       return groupByOptions.dataset;
     };
 
-    this.canShowVariableTypeFilter = function(bucket) {
+    this.canShowVariableTypeFilter = function (bucket) {
       var forStudy = (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && (groupByOptions.study);
       var forDataset = bucket.indexOf('dataset') > -1 && groupByOptions.dataset;
 
       return forStudy || forDataset;
     };
 
-    this.studyTitle = function() {
+    this.studyTitle = function () {
       return 'search.coverage-buckets.study';
     };
 
-    this.studyBucket = function() {
+    this.studyBucket = function () {
       return BUCKET_TYPES.STUDY;
     };
 
@@ -3455,15 +3464,15 @@ ngObibaMica.search
       }
     };
 
-    this.datasetTitle = function() {
+    this.datasetTitle = function () {
       return 'search.coverage-buckets.dataset';
     };
 
-    this.datasetBucket = function() {
+    this.datasetBucket = function () {
       return BUCKET_TYPES.DATASET;
     };
 
-    this.canGroupBy = function(bucket) {
+    this.canGroupBy = function (bucket) {
       var isAllowed = false;
 
       switch (bucket) {
@@ -3486,9 +3495,13 @@ ngObibaMica.search
       return isAllowed;
     };
 
-    this.defaultBucket = function() {
+    this.defaultBucket = function () {
       if (groupByOptions.study) {
-        return self.studyBucket();
+        if (options.studies.showSearchTab) {
+          return self.studyBucket();
+        } else {
+          return self.dceBucket();
+        }
       } else if (groupByOptions.dataset) {
         return self.datasetBucket();
       }
@@ -9128,6 +9141,7 @@ ngObibaMica.search
         if (search.display && search.display === DISPLAY_TYPES.COVERAGE) {
           $scope.bucket = search.bucket ? search.bucket : CoverageGroupByService.defaultBucket();
           $scope.bucketStartsWithDce = $scope.bucket.startsWith('dce');
+          $scope.singleStudy = CoverageGroupByService.isSingleStudy();
           setInitialFilter();
         }
       }
@@ -9154,7 +9168,7 @@ ngObibaMica.search
 
       function selectTab(tab) {
         if (tab === BUCKET_TYPES.STUDY) {
-          updateBucket($scope.bucketSelection.dceBucketSelected ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
+          updateBucket(($scope.bucketSelection.dceBucketSelected || $scope.groupByOptions.isSingleStudy()) ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
         } else if (tab === BUCKET_TYPES.DATASET) {
           dsUpdateBucket(BUCKET_TYPES.DATASET);
         }
@@ -9240,7 +9254,7 @@ ngObibaMica.search
 
       function splitIds() {
         var cols = {
-          colSpan: $scope.bucket.startsWith('dce') ? 3 : 1,
+          colSpan: $scope.bucket.startsWith('dce') ? (CoverageGroupByService.isSingleStudy() ? 2 : 3) : 1,
           ids: {}
         };
 
@@ -9338,7 +9352,7 @@ ngObibaMica.search
             rowSpan = appendRowSpan(id);
             appendMinMax(id, row.start || currentYearMonth, row.end || currentYearMonth);
             cols.ids[row.value].push({
-              id: id,
+              id: CoverageGroupByService.isSingleStudy() ? '-' : id,
               url: PageUrlService.studyPage(id, isHarmo ? 'harmonization' : 'individual'),
               title: titles[0],
               description: descriptions[0],
@@ -14612,14 +14626,14 @@ angular.module("search/components/result/coverage-result/component.html", []).ru
     "\n" +
     "    <div class=\"clearfix\"></div>\n" +
     "\n" +
-    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}\" ng-if=\"groupByOptions.canShowDce(bucket)\">\n" +
+    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}\" ng-if=\"!singleStudy && groupByOptions.canShowDce(bucket)\">\n" +
     "      <label class=\"checkbox-inline\">\n" +
     "        <input type=\"checkbox\" ng-model=\"bucketSelection.dceBucketSelected\">\n" +
     "        <span translate>search.coverage-buckets.dce</span>\n" +
     "      </label>\n" +
     "    </div>\n" +
     "\n" +
-    "    <div class=\"voffset2\" ng-if=\"groupByOptions.canShowStudy()\">\n" +
+    "    <div class=\"voffset2\" ng-if=\"!singleStudy\">\n" +
     "      <div class=\"btn btn-group\" style=\"padding: 0\">\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'all'\" translate>all</label>\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'individual'\" translate>search.coverage-buckets.individual</label>\n" +
@@ -14674,7 +14688,7 @@ angular.module("search/components/result/coverage-result/component.html", []).ru
     "          </th>\n" +
     "        </tr>\n" +
     "        <tr>\n" +
-    "          <th ng-if=\"bucketStartsWithDce\" translate>search.coverage-dce-cols.study</th>\n" +
+    "          <th ng-if=\"bucketStartsWithDce && !singleStudy\" translate>search.coverage-dce-cols.study</th>\n" +
     "          <th ng-if=\"bucketStartsWithDce\" colspan=\"{{choseHarmonization && !choseAll ? 2 : 1}}\" translate>search.coverage-dce-cols.population</th>\n" +
     "          <th ng-if=\"bucketStartsWithDce\" ng-hide=\"choseHarmonization && !choseAll\" translate>search.coverage-dce-cols.dce</th>\n" +
     "          <th ng-repeat=\"header in ::table.termHeaders\">\n" +
@@ -14695,8 +14709,7 @@ angular.module("search/components/result/coverage-result/component.html", []).ru
     "          <td style=\"text-align: center\">\n" +
     "            <input type=\"checkbox\" ng-model=\"row.selected\">\n" +
     "          </td>\n" +
-    "          <td ng-repeat=\"col in ::table.cols.ids[row.value] track by col.index\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\"\n" +
-    "            ng-hide=\"col.id === '-' && (choseHarmonization && !choseAll)\">\n" +
+    "          <td ng-repeat=\"col in ::table.cols.ids[row.value] track by col.index\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\" ng-hide=\"col.id === '-' && (singleStudy || choseHarmonization && !choseAll)\">\n" +
     "            <span ng-if=\"col.id === '-'\">-</span>\n" +
     "            <a ng-hide=\"col.rowSpan === 0  || col.id === '-'\" href=\"{{col.url}}\" uib-popover-html=\"col.description === col.title ? null : col.description\"\n" +
     "              popover-title=\"{{col.title}}\" popover-placement=\"bottom\" popover-trigger=\"'mouseenter'\">{{col.title}}</a>\n" +
