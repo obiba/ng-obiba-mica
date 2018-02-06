@@ -310,7 +310,12 @@ ngObibaMica.search
     this.isSingleStudy = function() {
       // coverage => there are datasets and at least one study
       // not showing study means that there is only one
-      return !options.studies.showSearchTab;
+      return !options.studies.showSearchTab;// || 
+    };
+
+    this.canShowStudyType = function() {
+      // showing study type column means that there are several
+      return options.studies.studiesColumn.showStudiesTypeColumn;
     };
 
     this.canShowStudy = function() {

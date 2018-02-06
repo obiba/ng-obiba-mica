@@ -29,14 +29,14 @@
 
     <div class="clearfix"></div>
 
-    <div class="voffset2" ng-class="{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}" ng-if="!singleStudy && groupByOptions.canShowDce(bucket)">
+    <div class="voffset2" ng-class="{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket) && groupByOptions.canShowStudyType()}" ng-if="!singleStudy && groupByOptions.canShowDce(bucket)">
       <label class="checkbox-inline">
         <input type="checkbox" ng-model="bucketSelection.dceBucketSelected">
         <span translate>search.coverage-buckets.dce</span>
       </label>
     </div>
 
-    <div class="voffset2" ng-if="!singleStudy">
+    <div class="voffset2" ng-if="!singleStudy && groupByOptions.canShowStudyType()">
       <div class="btn btn-group" style="padding: 0">
         <label class="btn btn-sm btn-study" ng-model="bucketSelection.studySelection" uib-btn-radio="'all'" translate>all</label>
         <label class="btn btn-sm btn-study" ng-model="bucketSelection.studySelection" uib-btn-radio="'individual'" translate>search.coverage-buckets.individual</label>
