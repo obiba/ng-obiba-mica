@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-02-01
+ * Date: 2018-02-06
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -2095,8 +2095,13 @@ ngObibaMica.search.NgObibaMicaSearchOptionsWrapper = function() {
     return angular.copy(options);
   }
 
+  function getOptionsInternal() {
+    return options;
+  }
+
   this.setOptions = setOptions;
   this.getOptions = getOptions;
+  this.getOptionsInternal = getOptionsInternal;
 };
 
 /**
@@ -2123,8 +2128,7 @@ ngObibaMica.search.ObibaMicaSearchOptionsService = function($q, $translate, opti
   }
 
   function normalizeOptions() {
-    var options = optionsWrapper.getOptions();
-    options.coverage.groupBy.study = options.coverage.groupBy.study && options.studies.showSearchTab;
+    var options = optionsWrapper.getOptionsInternal(); // get internal options, not a copy
     options.coverage.groupBy.dce = options.coverage.groupBy.study && options.coverage.groupBy.dce;
     var canShowCoverage = Object.keys(options.coverage.groupBy).filter(function(canShow) {
       return options.coverage.groupBy[canShow];
@@ -4491,7 +4495,15 @@ ngObibaMica.search
   .service('CoverageGroupByService', ['ngObibaMicaSearch', function(ngObibaMicaSearch) {
     var self = this;
 
-    var groupByOptions = ngObibaMicaSearch.getOptions().coverage.groupBy;
+    var options = ngObibaMicaSearch.getOptions();
+    var groupByOptions = options.coverage.groupBy;
+
+    this.isSingleStudy = function() {
+      // coverage => there are datasets and at least one study
+      // not showing study means that there is only one
+      return !options.studies.showSearchTab;
+    };
+
     this.canShowStudy = function() {
       return groupByOptions.study || groupByOptions.dce;
     };
@@ -4560,7 +4572,11 @@ ngObibaMica.search
 
     this.defaultBucket = function() {
       if (groupByOptions.study) {
-        return self.studyBucket();
+        if (options.studies.showSearchTab) {
+          return self.studyBucket();
+        } else {
+          return self.dceBucket();
+        }
       } else if (groupByOptions.dataset) {
         return self.datasetBucket();
       }
@@ -4590,7 +4606,6 @@ ngObibaMica.search
     };
 
   }]);
-
 ;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -4878,7 +4893,7 @@ function TaxonomiesPanelController($rootScope,
 }
 /**
  * ClassificationPanelController
- * 
+ *
  * @param $rootScope
  * @param $scope
  * @param $translate
@@ -5947,7 +5962,7 @@ ngObibaMica.search
           }
         }
 
-        if (options.searchLayout === 'layout1') {          
+        if (options.searchLayout === 'layout1') {
           selectCriteria(RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, args && args.term, $scope.lang));
         } else {
           // TODO externalize TermsVocabularyFacetController.selectTerm and use it for terms case
@@ -5962,11 +5977,11 @@ ngObibaMica.search
             } else {
               criterion.rqlQuery.name = RQL_NODE.IN;
               RqlQueryUtils.updateQuery(criterion.rqlQuery, selected);
-              
+
               if (vocabulary.terms.length > 1 && selected.length === vocabulary.terms.length) {
                 criterion.rqlQuery.name = RQL_NODE.EXISTS;
                 criterion.rqlQuery.args.pop();
-              }           
+              }
             }
 
             $scope.refreshQuery();
@@ -6140,7 +6155,7 @@ ngObibaMica.search
       $rootScope.$on('ngObibaMicaSearch.fullscreenChange', function(obj, isEnabled) {
         $scope.isFullscreen = isEnabled;
       });
-      
+
       $rootScope.$on('ngObibaMicaSearch.sortChange', function(obj, sort) {
         $scope.search.rqlQuery = RqlQueryService.prepareSearchQueryNoFields(
           $scope.search.display,
@@ -6173,13 +6188,13 @@ ngObibaMica.search
       $scope.to = null;
     }, true);
   }])
-  
+
   .controller('MatchVocabularyPanelController', ['$scope', function($scope) {
     $scope.$watch('taxonomies', function() {
       $scope.text = null;
     }, true);
   }])
-  
+
   .controller('NumericVocabularyFacetController', ['$scope','JoinQuerySearchResource', 'RqlQueryService',
     'RqlQueryUtils', function($scope, JoinQuerySearchResource, RqlQueryService, RqlQueryUtils) {
     function updateLimits (criteria, vocabulary) {
@@ -6257,11 +6272,11 @@ ngObibaMica.search
         $scope.text = null;
       }
     }
-    
+
     function updateCriteria() {
       $scope.$parent.selectTerm($scope.$parent.target, $scope.$parent.taxonomy, $scope.vocabulary, {text: $scope.text || '*'});
     }
-    
+
     $scope.onKeypress = function(ev) {
       if(ev.keyCode === 13 || ev.type==='click') {
         updateCriteria();
@@ -6300,7 +6315,7 @@ ngObibaMica.search
             criterion.rqlQuery.name = RQL_NODE.IN;
             RqlQueryUtils.updateQuery(criterion.rqlQuery, selected);
           }
-          
+
           $scope.onRefresh();
         } else {
           $scope.onSelectTerm(target, taxonomy, vocabulary, args);
@@ -6326,7 +6341,7 @@ ngObibaMica.search
         } else {
           criterion = RqlQueryService.createCriteriaItem($scope.target, $scope.$parent.taxonomy, $scope.vocabulary);
         }
-        
+
         if(RqlQueryUtils.hasTargetQuery(criteria.rqlQuery, criterion.target)) {
           query = angular.copy(criteria.rqlQuery);
 
@@ -6334,13 +6349,13 @@ ngObibaMica.search
             var operator = criterion.target === QUERY_TARGETS.VARIABLE && criterion.taxonomy.name !== 'Mica_variable' ?
               RQL_NODE.OR :
               RQL_NODE.AND;
-            
+
             RqlQueryService.addCriteriaItem(query, criterion, operator);
           }
         } else {
-          query = createExistsQuery(criteria, criterion); 
+          query = createExistsQuery(criteria, criterion);
         }
-        
+
         var joinQuery = RqlQueryService.prepareCriteriaTermsQuery(query, criterion, criterion.lang);
         JoinQuerySearchResource[targetToType($scope.target)]({query: joinQuery}).$promise.then(function (joinQueryResponse) {
           $scope.vocabulary.visibleTerms = 0;
@@ -6358,13 +6373,13 @@ ngObibaMica.search
           $scope.loading = false;
         });
       }
-      
+
       $scope.$on('ngObibaMicaQueryUpdated', function(ev, criteria) {
         if(!$scope.vocabulary.isNumeric && !$scope.vocabulary.isMatch && $scope.vocabulary.isOpen) {
           updateCounts(criteria, $scope.vocabulary);
         }
       });
-      
+
       $scope.$on('ngObibaMicaLoadVocabulary', function(ev, taxonomy, vocabulary) {
         if(vocabulary.name === $scope.vocabulary.name && !$scope.vocabulary.isNumeric && !$scope.vocabulary.isMatch &&
           !vocabulary.isOpen) {
@@ -6420,7 +6435,7 @@ ngObibaMica.search
       $scope.taxonomies = {};
       $scope.targets = [];
       $scope.RqlQueryUtils = RqlQueryUtils;
-      
+
       $scope.$watch('facetedTaxonomies', function(facetedTaxonomies) {
         if(facetedTaxonomies) {
           $scope.targets = $scope.options.targetTabsOrder.filter(function (t) {
@@ -6428,7 +6443,7 @@ ngObibaMica.search
               return facetedTaxonomies[t].length;
             }
           });
-          
+
           $scope.target = $scope.targets[0];
           init($scope.target);
         }
@@ -6437,7 +6452,7 @@ ngObibaMica.search
       $scope.selectTerm = function(target, taxonomy, vocabulary, args) {
         $scope.onSelectTerm(target, taxonomy, vocabulary, args);
       };
-      
+
       $scope.setTarget = function(target) {
         $scope.target=target;
         init(target);
@@ -6498,7 +6513,7 @@ ngObibaMica.search
       });
     }
   ])
-  
+
   .controller('SearchResultController', [
     '$scope',
     'ngObibaMicaSearch',
@@ -7009,6 +7024,7 @@ ngObibaMica.search
         if (search.display && search.display === DISPLAY_TYPES.COVERAGE) {
           $scope.bucket = search.bucket ? search.bucket : CoverageGroupByService.defaultBucket();
           $scope.bucketStartsWithDce = $scope.bucket.startsWith('dce');
+          $scope.singleStudy = CoverageGroupByService.isSingleStudy();
           setInitialFilter();
         }
       }
@@ -7035,7 +7051,7 @@ ngObibaMica.search
 
       function selectTab(tab) {
         if (tab === BUCKET_TYPES.STUDY) {
-          updateBucket($scope.bucketSelection.dceBucketSelected ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
+          updateBucket(($scope.bucketSelection.dceBucketSelected || $scope.groupByOptions.isSingleStudy()) ? BUCKET_TYPES.DCE : BUCKET_TYPES.STUDY);
         } else if (tab === BUCKET_TYPES.DATASET) {
           dsUpdateBucket(BUCKET_TYPES.DATASET);
         }
@@ -7121,7 +7137,7 @@ ngObibaMica.search
 
       function splitIds() {
         var cols = {
-          colSpan: $scope.bucket.startsWith('dce') ? 3 : 1,
+          colSpan: $scope.bucket.startsWith('dce') ? (CoverageGroupByService.isSingleStudy() ? 2 : 3) : 1,
           ids: {}
         };
 
@@ -7219,7 +7235,7 @@ ngObibaMica.search
             rowSpan = appendRowSpan(id);
             appendMinMax(id,row.start || currentYearMonth, row.end || currentYearMonth);
             cols.ids[row.value].push({
-              id: id,
+              id: CoverageGroupByService.isSingleStudy() ? '-' : id,
               url: PageUrlService.studyPage(id, isHarmo ? 'harmonization' : 'individual'),
               title: titles[0],
               description: descriptions[0],
@@ -7846,7 +7862,6 @@ ngObibaMica.search
   }])
   .controller('ResultTabsOrderCountController', [function(){
   }]);
-
 ;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -14535,14 +14550,14 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "\n" +
     "    <div class=\"clearfix\"></div>\n" +
     "\n" +
-    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}\" ng-if=\"groupByOptions.canShowDce(bucket)\">\n" +
+    "    <div class=\"voffset2\" ng-class=\"{'pull-right': groupByOptions.canShowVariableTypeFilter(bucket)}\" ng-if=\"!singleStudy && groupByOptions.canShowDce(bucket)\">\n" +
     "      <label class=\"checkbox-inline\">\n" +
     "        <input type=\"checkbox\" ng-model=\"bucketSelection.dceBucketSelected\">\n" +
     "        <span translate>search.coverage-buckets.dce</span>\n" +
     "      </label>\n" +
     "    </div>\n" +
     "\n" +
-    "    <div class=\"voffset2\"  ng-if=\"groupByOptions.canShowStudy()\">\n" +
+    "    <div class=\"voffset2\" ng-if=\"!singleStudy\">\n" +
     "      <div class=\"btn btn-group\" style=\"padding: 0\">\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'all'\" translate>all</label>\n" +
     "        <label class=\"btn btn-sm btn-study\" ng-model=\"bucketSelection.studySelection\" uib-btn-radio=\"'individual'\" translate>search.coverage-buckets.individual</label>\n" +
@@ -14592,7 +14607,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "        </th>\n" +
     "      </tr>\n" +
     "      <tr>\n" +
-    "        <th ng-if=\"bucketStartsWithDce\" translate>search.coverage-dce-cols.study</th>\n" +
+    "        <th ng-if=\"bucketStartsWithDce && !singleStudy\" translate>search.coverage-dce-cols.study</th>\n" +
     "        <th ng-if=\"bucketStartsWithDce\" colspan=\"{{choseHarmonization && !choseAll ? 2 : 1}}\" translate>search.coverage-dce-cols.population</th>\n" +
     "        <th ng-if=\"bucketStartsWithDce\" ng-hide=\"choseHarmonization && !choseAll\" translate>search.coverage-dce-cols.dce</th>\n" +
     "        <th ng-repeat=\"header in ::table.termHeaders\">\n" +
@@ -14614,7 +14629,7 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "        <td style=\"text-align: center\">\n" +
     "          <input type=\"checkbox\" ng-model=\"row.selected\">\n" +
     "        </td>\n" +
-    "        <td ng-repeat=\"col in ::table.cols.ids[row.value] track by col.index\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\" ng-hide=\"col.id === '-' && (choseHarmonization && !choseAll)\">\n" +
+    "        <td ng-repeat=\"col in ::table.cols.ids[row.value] track by col.index\" colspan=\"{{$middle && (choseHarmonization && !choseAll) ? 2 : 1}}\" ng-hide=\"col.id === '-' && (singleStudy || choseHarmonization && !choseAll)\">\n" +
     "          <span ng-if=\"col.id === '-'\">-</span>\n" +
     "          <a ng-hide=\"col.rowSpan === 0  || col.id === '-'\" href=\"{{col.url}}\"\n" +
     "            uib-popover-html=\"col.description === col.title ? null : col.description\"\n" +
@@ -14660,7 +14675,8 @@ angular.module("search/views/coverage/coverage-search-result-table-template.html
     "      </tfoot>\n" +
     "    </table>\n" +
     "  </div>\n" +
-    "</div>");
+    "</div>\n" +
+    "");
 }]);
 
 angular.module("search/views/criteria/criteria-node-template.html", []).run(["$templateCache", function($templateCache) {
