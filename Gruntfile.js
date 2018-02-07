@@ -36,7 +36,6 @@ module.exports = function (grunt) {
           'src/search/rest/**/*.js',
           'src/search/search-filter.js',
           'src/search/search-controller.js',
-          'src/search/search-directive.js',
           'src/search/search-router.js',
           'src/search/options/**/*.js',
           'src/search/services/**/*.js',
