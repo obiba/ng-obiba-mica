@@ -534,25 +534,34 @@ ngObibaMica.search.service('RqlQueryService',
         var isRepeatable = existingItem.isRepeatable();
         var isMatchNode = !isRepeatable && existingItem.rqlQuery.name === RQL_NODE.MATCH;
 
-        if (replace && newItem.rqlQuery) {
-          existingItem.rqlQuery.name = newItem.rqlQuery.name;
-        }
-
-        if (newItem.rqlQuery) {
-          newTerms = newItem.rqlQuery.args[isMatchNode ? 0 : 1];
-        } else if (newItem.term) {
-          newTerms = [newItem.term.name];
-        } else {
+        function updateItemForExistsQuery() {
           existingItem = isRepeatable ? existingItem.first() : existingItem;
           existingItem.rqlQuery.name = RQL_NODE.EXISTS;
           existingItem.rqlQuery.args.splice(1, 1);
         }
 
-        if (newTerms) {
-          if (isRepeatable) {
-            RqlQueryUtils.updateRepeatableQueryArgValues(existingItem, newTerms);
+        if (RQL_NODE.EXISTS === newItem.rqlQuery.name) {
+          updateItemForExistsQuery();
+        } else {
+
+          if (replace && newItem.rqlQuery) {
+            existingItem.rqlQuery.name = newItem.rqlQuery.name;          
+          }
+  
+          if (newItem.rqlQuery) {
+            newTerms = newItem.rqlQuery.args[isMatchNode ? 0 : 1];
+          } else if (newItem.term) {
+            newTerms = [newItem.term.name];
           } else {
-            RqlQueryUtils.updateQueryArgValues(existingItem.rqlQuery, newTerms, replace);
+            updateItemForExistsQuery();
+          }  
+
+          if (newTerms) {
+            if (isRepeatable) {
+              RqlQueryUtils.updateRepeatableQueryArgValues(existingItem, newTerms);
+            } else {
+              RqlQueryUtils.updateQueryArgValues(existingItem.rqlQuery, newTerms, replace);
+            }
           }
         }
       };
