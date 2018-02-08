@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
 
  * License: GNU Public License version 3
- * Date: 2018-02-06
+ * Date: 2018-02-08
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -6011,7 +6011,7 @@ ngObibaMica.search
       ]);
 
       function searchSuggestion(target, suggestion, withSpecificFields) {
-        var rqlQuery = angular.copy($scope.search.rqlQuery);
+        var rqlQuery = $scope.search.rqlQuery;
         var targetQuery = RqlQueryService.findTargetQuery(target, rqlQuery);
 
         if (!targetQuery) {

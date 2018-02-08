@@ -1401,7 +1401,7 @@ ngObibaMica.search
       ]);
 
       function searchSuggestion(target, suggestion, withSpecificFields) {
-        var rqlQuery = angular.copy($scope.search.rqlQuery);
+        var rqlQuery = $scope.search.rqlQuery;
         var targetQuery = RqlQueryService.findTargetQuery(target, rqlQuery);
 
         if (!targetQuery) {
