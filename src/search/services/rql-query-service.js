@@ -540,7 +540,7 @@ ngObibaMica.search.service('RqlQueryService',
           existingItem.rqlQuery.args.splice(1, 1);
         }
 
-        if (RQL_NODE.EXISTS === newItem.rqlQuery.name) {
+        if (newItem.rqlQuery && RQL_NODE.EXISTS === newItem.rqlQuery.name) {
           updateItemForExistsQuery();
         } else {
 
