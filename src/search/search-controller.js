@@ -620,14 +620,6 @@
           }
         }
 
-        $scope.translateTaxonomyNav = function (t, key) {
-          var value = t[key] && t[key].filter(function (item) {
-            return item.locale === $translate.use();
-          }).pop();
-
-          return value ? value.text : key;
-        };
-
         $rootScope.$on('$translateChangeSuccess', function (event, value) {
           if (value.language !== SearchContext.currentLocale()) {
             $scope.lang = $translate.use();
@@ -636,21 +628,6 @@
           }
         });
 
-        var showTaxonomy = function (target, name) {
-          if ($scope.target === target && $scope.taxonomyName === name && $scope.taxonomiesShown) {
-            $scope.taxonomiesShown = false;
-            return;
-          }
-
-          $scope.taxonomiesShown = true;
-          $scope.target = target;
-          $scope.taxonomyName = name;
-        };
-
-        var clearTaxonomy = function () {
-          $scope.target = null;
-          $scope.taxonomyName = null;
-        };
 
         /**
          * Updates the URL location triggering a query execution
@@ -666,128 +643,6 @@
           $location.search(search);
         };
 
-        var clearSearch = function () {
-          $scope.documents.search.text = null;
-          $scope.documents.search.active = false;
-        };
-
-        /**
-         * Searches the criteria matching the input query
-         *
-         * @param query
-         * @returns {*}
-         */
-        var searchCriteria = function (query) {
-          // search for taxonomy terms
-          // search for matching variables/studies/... count
-
-          function score(item) {
-            var result = 0;
-            var regExp = new RegExp(query, 'ig');
-
-            if (item.itemTitle.match(regExp)) {
-              result = 10;
-            } else if (item.itemDescription && item.itemDescription.match(regExp)) {
-              result = 8;
-            } else if (item.itemParentTitle.match(regExp)) {
-              result = 6;
-            } else if (item.itemParentDescription && item.itemParentDescription.match(regExp)) {
-              result = 4;
-            }
-
-            return result;
-          }
-
-          // vocabulary (or term) can be used in search if it doesn't have the 'showSearch' attribute
-          function canSearch(taxonomyEntity, hideSearchList) {
-            if ((hideSearchList || []).indexOf(taxonomyEntity.name) > -1) {
-              return false;
-            }
-
-            return (taxonomyEntity.attributes || []).filter(function (attr) { return attr.key === 'showSearch'; }).length === 0;
-          }
-
-          function processBundle(bundle) {
-            var results = [];
-            var total = 0;
-            var target = bundle.target;
-            var taxonomy = bundle.taxonomy;
-            if (taxonomy.vocabularies) {
-              taxonomy.vocabularies.filter(function (vocabulary) {
-                return VocabularyService.isVisibleVocabulary(vocabulary) && canSearch(vocabulary, $scope.options.hideSearch);
-              }).forEach(function (vocabulary) {
-                if (vocabulary.terms) {
-                  vocabulary.terms.filter(function (term) {
-                    return canSearch(term, $scope.options.hideSearch);
-                  }).forEach(function (term) {
-                    var item = RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, term, $scope.lang);
-                    results.push({
-                      score: score(item),
-                      item: item
-                    });
-                    total++;
-                  });
-                } else {
-                  var item = RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, null, $scope.lang);
-                  results.push({
-                    score: score(item),
-                    item: item
-                  });
-                  total++;
-                }
-              });
-            }
-            return { results: results, total: total };
-          }
-
-          var criteria = TaxonomiesSearchResource.get({
-            query: StringUtils.quoteQuery(query.replace(/\/.*/g, '')), locale: $scope.lang, target: $scope.documents.search.target
-          }).$promise.then(function (response) {
-            if (response) {
-              var results = [];
-              var total = 0;
-              var size = 10;
-
-              response.forEach(function (bundle) {
-                var rval = processBundle(bundle);
-                results.push.apply(results, rval.results);
-                total = total + rval.total;
-              });
-
-              results.sort(function (a, b) {
-                return b.score - a.score;
-              });
-
-              results = results.splice(0, size);
-
-              if (total > results.length) {
-                var note = {
-                  query: query,
-                  total: total,
-                  size: size,
-                  message: LocaleStringUtils.translate('search.showing', [size, total]),
-                  status: 'has-warning'
-                };
-                results.push({ score: -1, item: note });
-              }
-
-              return results.map(function (result) {
-                return result.item;
-              });
-            } else {
-              return [];
-            }
-          }, function (response) {
-            AlertService.alert({
-              id: 'SearchController',
-              type: 'danger',
-              msg: ServerErrorUtils.buildMessage(response),
-              delay: 5000
-            });
-          });
-
-          return criteria;
-        };
 
         /**
          * Removes the item from the criteria tree
@@ -835,25 +690,6 @@
             }
 
             refreshQuery();
-            $scope.search.selectedCriteria = null;
-          } else {
-            $scope.search.selectedCriteria = item.query;
-          }
-        };
-
-        var searchKeyUp = function (event) {
-          switch (event.keyCode) {
-            case 27: // ESC
-              if ($scope.documents.search.active) {
-                clearSearch();
-              }
-              break;
-
-            default:
-              if ($scope.documents.search.text) {
-                searchCriteria($scope.documents.search.text);
-              }
-              break;
           }
         };
 
@@ -999,10 +835,6 @@
           }
         };
 
-        var selectSearchTarget = function (target) {
-          $scope.documents.search.target = target;
-        };
-
         var VIEW_MODES = {
           SEARCH: 'search',
           CLASSIFICATION: 'classification'
@@ -1076,7 +908,6 @@
         $scope.BUCKET_TYPES = BUCKET_TYPES;
 
         $scope.search = {
-          selectedCriteria: null,
           layout: 'layout2',
           pagination: {},
           query: null,
@@ -1096,26 +927,12 @@
         };
 
         $scope.viewMode = VIEW_MODES.SEARCH;
-        $scope.documents = {
-          search: {
-            text: null,
-            active: false,
-            target: null
-          }
-        };
 
         $scope.searchHeaderTemplateUrl = ngObibaMicaSearchTemplateUrl.getHeaderUrl('search');
         $scope.classificationsHeaderTemplateUrl = ngObibaMicaSearchTemplateUrl.getHeaderUrl('classifications');
         $scope.onTaxonomyFilterPanelToggleVisibility = onTaxonomyFilterPanelToggleVisibility;
-        $scope.selectSearchTarget = selectSearchTarget;
         $scope.selectDisplay = onDisplayChanged;
-        $scope.searchCriteria = searchCriteria;
         $scope.selectCriteria = selectCriteria;
-        $scope.searchKeyUp = searchKeyUp;
-
-        $scope.showTaxonomy = showTaxonomy;
-        $scope.clearTaxonomy = clearTaxonomy;
-
         $scope.removeCriteriaItem = removeCriteriaItem;
         $scope.refreshQuery = refreshQuery;
         $scope.clearSearchQuery = clearSearchQuery;

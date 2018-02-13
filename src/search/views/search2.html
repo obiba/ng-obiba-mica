@@ -31,10 +31,6 @@
             on-toggle="onTaxonomyFilterPanelToggleVisibility(target, taxonomy)"></meta-taxonomy-filter-panel>
       </div>
       <div class="col-md-9">
-        <div
-            ng-if="hasFacetedTaxonomies && hasFacetedNavigationHelp && !(search.criteria.children && search.criteria.children.length > 0)">
-          <p class="help-block" translate>search.faceted-navigation-help</p>
-        </div>
         <!-- Search Results region -->
         <div class="panel panel-default" ng-if="search.showTaxonomyPanel">
           <taxonomy-filter-panel

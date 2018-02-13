@@ -35,7 +35,7 @@ var ngObibaMica;
     'angularUtils.directives.dirPagination'
   ]);
 
-  ngObibaMica.NgObibaMicaUrlProvider = function() {
+  ngObibaMica.NgObibaMicaUrlProvider = function () {
     var registry = {
       'DataAccessClientDetailPath': '',
       'DataAccessClientListPath': '',
@@ -98,7 +98,7 @@ var ngObibaMica;
     };
   };
 
-  ngObibaMica.NgObibaMicaTemplateUrlFactory = function(){
+  ngObibaMica.NgObibaMicaTemplateUrlFactory = function () {
     var templates = {
       'searchStudiesResultTable': 'search/components/result/studies-result-table/component.html',
       'searchNetworksResultTable': 'search/components/result/networks-result-table/component.html',
@@ -111,7 +111,7 @@ var ngObibaMica;
       'searchResultCoverage': 'search/components/result/search-result/coverage.html',
       'searchResultGraphics': 'search/components/result/search-result/graphics.html'
     };
-    var factory = {registry: null};
+    var factory = { registry: null };
 
     function TemplateUrlProvider(registry) {
       var urlRegistry = registry;
@@ -170,8 +170,8 @@ var ngObibaMica;
     };
   };
 
-  ngObibaMica.ServerConfigResourceProvider = function() {
-    var provider  = this;
+  ngObibaMica.ServerConfigResourceProvider = function () {
+    var provider = this;
 
     function setFactory(value) {
       provider.$get = value;
@@ -180,7 +180,7 @@ var ngObibaMica;
     /**
      * Default
      */
-    provider.$get = function() {
+    provider.$get = function () {
       throw new Error('The provider factory method $get() must be overridden by client code.');
     };
 
@@ -1899,7 +1899,6 @@ ngObibaMica.access
  */
 
 'use strict';
-
 
 /* exported DISPLAY_TYPES */
 var DISPLAY_TYPES = {
@@ -3793,14 +3792,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
           }
         }
 
-        $scope.translateTaxonomyNav = function (t, key) {
-          var value = t[key] && t[key].filter(function (item) {
-            return item.locale === $translate.use();
-          }).pop();
-
-          return value ? value.text : key;
-        };
-
         $rootScope.$on('$translateChangeSuccess', function (event, value) {
           if (value.language !== SearchContext.currentLocale()) {
             $scope.lang = $translate.use();
@@ -3809,21 +3800,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
           }
         });
 
-        var showTaxonomy = function (target, name) {
-          if ($scope.target === target && $scope.taxonomyName === name && $scope.taxonomiesShown) {
-            $scope.taxonomiesShown = false;
-            return;
-          }
-
-          $scope.taxonomiesShown = true;
-          $scope.target = target;
-          $scope.taxonomyName = name;
-        };
-
-        var clearTaxonomy = function () {
-          $scope.target = null;
-          $scope.taxonomyName = null;
-        };
 
         /**
          * Updates the URL location triggering a query execution
@@ -3839,128 +3815,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
           $location.search(search);
         };
 
-        var clearSearch = function () {
-          $scope.documents.search.text = null;
-          $scope.documents.search.active = false;
-        };
-
-        /**
-         * Searches the criteria matching the input query
-         *
-         * @param query
-         * @returns {*}
-         */
-        var searchCriteria = function (query) {
-          // search for taxonomy terms
-          // search for matching variables/studies/... count
-
-          function score(item) {
-            var result = 0;
-            var regExp = new RegExp(query, 'ig');
-
-            if (item.itemTitle.match(regExp)) {
-              result = 10;
-            } else if (item.itemDescription && item.itemDescription.match(regExp)) {
-              result = 8;
-            } else if (item.itemParentTitle.match(regExp)) {
-              result = 6;
-            } else if (item.itemParentDescription && item.itemParentDescription.match(regExp)) {
-              result = 4;
-            }
-
-            return result;
-          }
-
-          // vocabulary (or term) can be used in search if it doesn't have the 'showSearch' attribute
-          function canSearch(taxonomyEntity, hideSearchList) {
-            if ((hideSearchList || []).indexOf(taxonomyEntity.name) > -1) {
-              return false;
-            }
-
-            return (taxonomyEntity.attributes || []).filter(function (attr) { return attr.key === 'showSearch'; }).length === 0;
-          }
-
-          function processBundle(bundle) {
-            var results = [];
-            var total = 0;
-            var target = bundle.target;
-            var taxonomy = bundle.taxonomy;
-            if (taxonomy.vocabularies) {
-              taxonomy.vocabularies.filter(function (vocabulary) {
-                return VocabularyService.isVisibleVocabulary(vocabulary) && canSearch(vocabulary, $scope.options.hideSearch);
-              }).forEach(function (vocabulary) {
-                if (vocabulary.terms) {
-                  vocabulary.terms.filter(function (term) {
-                    return canSearch(term, $scope.options.hideSearch);
-                  }).forEach(function (term) {
-                    var item = RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, term, $scope.lang);
-                    results.push({
-                      score: score(item),
-                      item: item
-                    });
-                    total++;
-                  });
-                } else {
-                  var item = RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, null, $scope.lang);
-                  results.push({
-                    score: score(item),
-                    item: item
-                  });
-                  total++;
-                }
-              });
-            }
-            return { results: results, total: total };
-          }
-
-          var criteria = TaxonomiesSearchResource.get({
-            query: StringUtils.quoteQuery(query.replace(/\/.*/g, '')), locale: $scope.lang, target: $scope.documents.search.target
-          }).$promise.then(function (response) {
-            if (response) {
-              var results = [];
-              var total = 0;
-              var size = 10;
-
-              response.forEach(function (bundle) {
-                var rval = processBundle(bundle);
-                results.push.apply(results, rval.results);
-                total = total + rval.total;
-              });
-
-              results.sort(function (a, b) {
-                return b.score - a.score;
-              });
-
-              results = results.splice(0, size);
-
-              if (total > results.length) {
-                var note = {
-                  query: query,
-                  total: total,
-                  size: size,
-                  message: LocaleStringUtils.translate('search.showing', [size, total]),
-                  status: 'has-warning'
-                };
-                results.push({ score: -1, item: note });
-              }
-
-              return results.map(function (result) {
-                return result.item;
-              });
-            } else {
-              return [];
-            }
-          }, function (response) {
-            AlertService.alert({
-              id: 'SearchController',
-              type: 'danger',
-              msg: ServerErrorUtils.buildMessage(response),
-              delay: 5000
-            });
-          });
-
-          return criteria;
-        };
 
         /**
          * Removes the item from the criteria tree
@@ -4008,25 +3862,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
             }
 
             refreshQuery();
-            $scope.search.selectedCriteria = null;
-          } else {
-            $scope.search.selectedCriteria = item.query;
-          }
-        };
-
-        var searchKeyUp = function (event) {
-          switch (event.keyCode) {
-            case 27: // ESC
-              if ($scope.documents.search.active) {
-                clearSearch();
-              }
-              break;
-
-            default:
-              if ($scope.documents.search.text) {
-                searchCriteria($scope.documents.search.text);
-              }
-              break;
           }
         };
 
@@ -4172,10 +4007,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
           }
         };
 
-        var selectSearchTarget = function (target) {
-          $scope.documents.search.target = target;
-        };
-
         var VIEW_MODES = {
           SEARCH: 'search',
           CLASSIFICATION: 'classification'
@@ -4249,7 +4080,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         $scope.BUCKET_TYPES = BUCKET_TYPES;
 
         $scope.search = {
-          selectedCriteria: null,
           layout: 'layout2',
           pagination: {},
           query: null,
@@ -4269,26 +4099,12 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         };
 
         $scope.viewMode = VIEW_MODES.SEARCH;
-        $scope.documents = {
-          search: {
-            text: null,
-            active: false,
-            target: null
-          }
-        };
 
         $scope.searchHeaderTemplateUrl = ngObibaMicaSearchTemplateUrl.getHeaderUrl('search');
         $scope.classificationsHeaderTemplateUrl = ngObibaMicaSearchTemplateUrl.getHeaderUrl('classifications');
         $scope.onTaxonomyFilterPanelToggleVisibility = onTaxonomyFilterPanelToggleVisibility;
-        $scope.selectSearchTarget = selectSearchTarget;
         $scope.selectDisplay = onDisplayChanged;
-        $scope.searchCriteria = searchCriteria;
         $scope.selectCriteria = selectCriteria;
-        $scope.searchKeyUp = searchKeyUp;
-
-        $scope.showTaxonomy = showTaxonomy;
-        $scope.clearTaxonomy = clearTaxonomy;
-
         $scope.removeCriteriaItem = removeCriteriaItem;
         $scope.refreshQuery = refreshQuery;
         $scope.clearSearchQuery = clearSearchQuery;
@@ -4852,7 +4668,7 @@ ngObibaMica.search
 'use strict';
 
 (function () {
-  ngObibaMica.search.ObibaSearchConfig = function () {
+  function ObibaSearchConfig() {
     var options = {
       networks: {
         showSearchTab: 1
@@ -4881,9 +4697,9 @@ ngObibaMica.search
     this.getOptions = function () {
       return angular.copy(options);
     };
-  };
+  }
 
-  ngObibaMica.search.service('ObibaSearchConfig', ngObibaMica.search.ObibaSearchConfig);
+  ngObibaMica.search.service('ObibaSearchConfig', ObibaSearchConfig);
 })();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -4897,7 +4713,7 @@ ngObibaMica.search
 'use strict';
 
 (function () {
-  ngObibaMica.search.PageUrlService = function (ngObibaMicaUrl, StringUtils, urlEncode) {
+  function PageUrlService(ngObibaMicaUrl, StringUtils, urlEncode) {
 
     this.studyPage = function (id, type) {
       var sType = (type.toLowerCase().indexOf('individual') > -1 ? 'individual' : 'harmonization') + '-study';
@@ -4927,9 +4743,9 @@ ngObibaMica.search
     };
 
     return this;
-  };
+  }
 
-  ngObibaMica.search.service('PageUrlService',['ngObibaMicaUrl', 'StringUtils', 'urlEncode',ngObibaMica.search.PageUrlService]);
+  ngObibaMica.search.service('PageUrlService', ['ngObibaMicaUrl', 'StringUtils', 'urlEncode', PageUrlService]);
 })();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -5069,863 +4885,866 @@ function typeToTarget(type) {
   throw new Error('Invalid type: ' + type);
 }
 
+(function () {
+  function RqlQueryService($q,
+    $log,
+    TaxonomiesResource,
+    TaxonomyResource,
+    LocalizedValues,
+    VocabularyService,
+    RqlQueryUtils,
+    ngObibaMicaSearch) {
 
-ngObibaMica.search.service('RqlQueryService',
-  ['$q', 
-  '$log', 
-  'TaxonomiesResource', 
-  'TaxonomyResource', 
-  'LocalizedValues', 
-  'VocabularyService', 
-  'RqlQueryUtils',
-  'ngObibaMicaSearch',
-    function ($q, 
-      $log, 
-      TaxonomiesResource, 
-      TaxonomyResource, 
-      LocalizedValues, 
-      VocabularyService, 
-      RqlQueryUtils,
-      ngObibaMicaSearch) {
+    var taxonomiesCache = {
+      variable: null,
+      dataset: null,
+      study: null,
+      network: null
+    };
 
-      var taxonomiesCache = {
-        variable: null,
-        dataset: null,
-        study: null,
-        network: null
-      };
+    var self = this;
+    var searchOptions = ngObibaMicaSearch.getOptions();
+    this.findItemNodeById = function (root, targetId, result, strict) {
+      if (root && root.children && result) {
+        return root.children.some(function (child) {
+          if (strict ? targetId === child.id : targetId.indexOf(child.id) > -1) {
+            result.item = child;
+            return true;
+          }
 
+          return self.findItemNodeById(child, targetId, result, strict);
+        });
+      }
+
+      return false;
+    };
+
+    this.findItemNode = function (root, item, result) {
+      return self.findItemNodeById(root, item.id, result);
+    };
+
+    function findTargetCriteria(target, rootCriteria) {
+      return rootCriteria.children.filter(function (child) {
+        return child.target === target;
+      }).pop();
+    }
+
+    function findCriteriaItemFromTreeById(target, targetId, rootCriteria, strict) {
+      var targetItem = findTargetCriteria(target, rootCriteria);
+      var result = {};
+      if (self.findItemNodeById(targetItem, targetId, result, strict)) {
+        return result.item;
+      }
+
+      return null;
+    }
+
+    function findCriteriaItemFromTree(item, rootCriteria) {
+      var targetItem = findTargetCriteria(item.target, rootCriteria);
+      var result = {};
+      if (self.findItemNode(targetItem, item, result)) {
+        return result.item;
+      }
+
+      return null;
+    }
+
+    function findTargetQuery(target, query) {
+      return query.args.filter(function (arg) {
+        return arg.name === target;
+      }).pop();
+    }
+
+    function findQueryInTargetByTaxonomyVocabulary(target, taxonomy, vocabulary) {
+      if (!target) {
+        return null;
+      }
+
+      function search(parent, rx, result) {
+        return parent.args.some(function (arg) {
+          if (null !== rx.exec(arg)) {
+            result.parent = parent;
+            return true;
+          }
+
+          if (arg instanceof RqlQuery) {
+            return search(arg, rx, result);
+          }
+
+          return false;
+
+        });
+      }
+
+      var result = {};
+      search(target, new RegExp((taxonomy ? taxonomy : '') + '\\.' + vocabulary + '$'), result);
+      return result.parent;
+    }
+
+    function findQueryInTargetByVocabulary(target, vocabulary) {
+      return findQueryInTargetByTaxonomyVocabulary(target, null, vocabulary);
+    }
+
+    function getSourceFields(context, target) {
+      switch (context) {
+        case DISPLAY_TYPES.LIST:
+          switch (target) {
+            case QUERY_TARGETS.STUDY:
+              return RqlQueryUtils.fields(searchOptions.studies.fields);
+
+            case QUERY_TARGETS.VARIABLE:
+              return RqlQueryUtils.fields(
+                [
+                  'attributes.label.*',
+                  'variableType',
+                  'datasetId',
+                  'datasetAcronym'
+                ]);
+
+            case QUERY_TARGETS.DATASET:
+              return RqlQueryUtils.fields(searchOptions.datasets.fields);
+
+            case QUERY_TARGETS.NETWORK:
+              return RqlQueryUtils.fields(searchOptions.networks.fields);
+          }
+          break;
+      }
+
+      return null;
+    }
+
+    this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
+    this.findCriteriaItemFromTree = findCriteriaItemFromTree;
+    this.findTargetCriteria = findTargetCriteria;
+    this.findTargetQuery = findTargetQuery;
+    this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
+    this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
+
+    function isOperator(name) {
+      switch (name) {
+        case RQL_NODE.AND:
+        case RQL_NODE.NAND:
+        case RQL_NODE.OR:
+        case RQL_NODE.NOR:
+          return true;
+      }
+
+      return false;
+    }
+
+    function isLeaf(name) {
+      switch (name) {
+        case RQL_NODE.CONTAINS:
+        case RQL_NODE.IN:
+        case RQL_NODE.OUT:
+        case RQL_NODE.EQ:
+        case RQL_NODE.GT:
+        case RQL_NODE.GE:
+        case RQL_NODE.LT:
+        case RQL_NODE.LE:
+        case RQL_NODE.BETWEEN:
+        case RQL_NODE.MATCH:
+        case RQL_NODE.EXISTS:
+        case RQL_NODE.MISSING:
+          return true;
+      }
+
+      return false;
+    }
+
+    function isLeafCriteria(item) {
+      return isLeaf(item.type);
+    }
+
+    function deleteNode(item) {
+      var parent = item.parent;
+      var query = item.rqlQuery;
+      var queryArgs = query.args;
+      var parentQuery = item.parent.rqlQuery;
+      var index = parentQuery.args.indexOf(query);
+      var indexChild = parent.children.indexOf(item);
+
+      if (index === -1 || indexChild === -1) {
+        throw new Error('Criteria node not found: ' + item);
+      }
+
+      parent.children.splice(indexChild, 1);
+      item.children.forEach(function (c) {
+        c.parent = parent;
+      });
+      parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
+
+      parentQuery.args.splice(index, 1);
+
+      if (queryArgs) {
+        if (queryArgs instanceof Array) {
+          parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
+        } else {
+          parentQuery.args.splice(index, 0, queryArgs);
+        }
+      }
+
+      if (parent.parent !== null && parentQuery.args.length === 0) {
+        deleteNode(parent);
+      }
+    }
+
+    function deleteNodeCriteriaWithOrphans(item) {
+      var parent = item.parent;
+      var query = item.rqlQuery;
+      var queryArgs = query.args;
+      var parentQuery = item.parent.rqlQuery;
+      var index = parentQuery.args.indexOf(query);
+      var indexChild = parent.children.indexOf(item);
+
+      if (index === -1 || indexChild === -1) {
+        throw new Error('Criteria node not found: ' + item);
+      }
+
+      parent.children.splice(indexChild, 1);
+      item.children.forEach(function (c) {
+        c.parent = parent;
+      });
+      parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
+
+      parentQuery.args.splice(index, 1);
+
+      if (queryArgs) {
+        if (queryArgs instanceof Array) {
+          parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
+        } else {
+          parentQuery.args.splice(index, 0, queryArgs);
+        }
+      }
+
+      if (parentQuery.args.length === 0) {
+        deleteNode(parent);
+      }
+    }
+
+    function deleteLeafCriteria(item) {
+      var parent = item.parent;
+      if (!parent) {
+        throw new Error('Cannot remove criteria when parent is NULL');
+      }
+
+      var query = item.rqlQuery;
+      var parentQuery = item.parent.rqlQuery;
+      var index = parentQuery.args.indexOf(query);
+
+      if (index === -1) {
+        throw new Error('Criteria node not found: ' + item);
+      }
+
+      parentQuery.args.splice(index, 1);
+
+      if ([RQL_NODE.OR, RQL_NODE.AND, RQL_NODE.NAND, RQL_NODE.NOR].indexOf(parent.type) !== -1) {
+        deleteNodeCriteriaWithOrphans(parent);
+      } else if (parentQuery.args.length === 0) {
+        deleteNode(parent);
+      }
+
+    }
+
+    /**
+     * NOTE: once the FreeTextMatch has a UI this is no longer needed.
+     *
+     * @param query
+     * @returns boolean if target has more than a FreeTextMatch
+     */
+    function queryHasCriteria(query) {
+      if (query && query.args) {
+        var leafQueries = query.args.filter(function (arg) {
+          return isLeaf(arg.name) || isOperator(arg.name);
+        });
+
+        if (leafQueries.length === 1 && RqlQueryUtils.isFreeTextMatch(leafQueries[0])) {
+          return false;
+        }
+
+        return leafQueries.length > 0;
+      }
+
+      return false;
+    }
+
+    function getRenderableTargetCriteria(targets) {
+      return (targets || []).filter(function (target) {
+        return queryHasCriteria(target.rqlQuery);
+      });
+    }
+
+    function getRenderableTargetCriteriaFromRoot(rootCriteria) {
+      return rootCriteria ?
+        getRenderableTargetCriteria(rootCriteria.children) :
+        [];
+    }
+
+    this.getRenderableTargetCriteria = getRenderableTargetCriteria;
+    this.getRenderableTargetCriteriaFromRoot = getRenderableTargetCriteriaFromRoot;
+
+    this.parseQuery = function (query) {
+      try {
+        return new RqlParser().parse(query);
+      } catch (e) {
+        $log.error(e.message);
+      }
+
+      return new RqlQuery();
+    };
+
+    /**
+     * Removes the item from criteria item tree. This should be from a leaf.
+     * @param item
+     */
+    this.removeCriteriaItem = function (item) {
+      if (isLeafCriteria(item)) {
+        deleteLeafCriteria(item);
+      } else {
+        deleteNode(item);
+      }
+    };
+
+    /**
+     * Creates a criteria item
+     * @param target
+     * @param taxonomy
+     * @param vocabulary
+     * @param term
+     * @param lang
+     * @returns A criteria item
+     */
+    this.createCriteriaItem = function (target, taxonomy, vocabulary, term, lang) {
+      function createBuilder(taxonomy, vocabulary, term) {
+        return new CriteriaItemBuilder(LocalizedValues, lang)
+          .target(target)
+          .taxonomy(taxonomy)
+          .vocabulary(vocabulary)
+          .term(term);
+      }
+
+      if (angular.isString(taxonomy)) {
+        return TaxonomyResource.get({
+          target: target,
+          taxonomy: taxonomy
+        }).$promise.then(function (taxonomy) {
+          vocabulary = taxonomy.vocabularies.filter(function (v) {
+            return v.name === vocabulary || VocabularyService.vocabularyAlias(v) === vocabulary;
+          })[0];
+          term = vocabulary && vocabulary.terms ?
+            vocabulary.terms.filter(function (t) { return t.name === term; })[0] :
+            null;
+
+          return createBuilder(taxonomy, vocabulary, term).build();
+        });
+      }
+
+      return createBuilder(taxonomy, vocabulary, term).build();
+    };
+
+    /**
+     * Adds new item to the item tree
+     *
+     * @param rootItem
+     * @param item
+     */
+    this.addCriteriaItem = function (rootRql, newItem, logicalOp) {
+      var target = rootRql.args.filter(function (query) {
+        return newItem.target === query.name;
+      }).pop();
+
+      if (!target) {
+        target = new RqlQuery(RQL_NODE[newItem.target.toUpperCase()]);
+        rootRql.args.push(target);
+      }
+
+      var rqlQuery = newItem.rqlQuery ? newItem.rqlQuery : RqlQueryUtils.buildRqlQuery(newItem);
+      return RqlQueryUtils.addQuery(target, rqlQuery, logicalOp);
+    };
+
+    /**
+     * Update an existing item to the item tree
+     *
+     * @param rootItem
+     * @param item
+     */
+    this.updateCriteriaItem = function (existingItem, newItem, replace) {
+      var newTerms;
+      var isRepeatable = existingItem.isRepeatable();
+      var isMatchNode = !isRepeatable && existingItem.rqlQuery.name === RQL_NODE.MATCH;
+
+      function updateItemForExistsQuery() {
+        existingItem = isRepeatable ? existingItem.first() : existingItem;
+        existingItem.rqlQuery.name = RQL_NODE.EXISTS;
+        existingItem.rqlQuery.args.splice(1, 1);
+      }
+
+      if (newItem.rqlQuery && RQL_NODE.EXISTS === newItem.rqlQuery.name) {
+        updateItemForExistsQuery();
+      } else {
+
+        if (replace && newItem.rqlQuery) {
+          existingItem.rqlQuery.name = newItem.rqlQuery.name;
+        }
+
+        if (newItem.rqlQuery) {
+          newTerms = newItem.rqlQuery.args[isMatchNode ? 0 : 1];
+        } else if (newItem.term) {
+          newTerms = [newItem.term.name];
+        } else {
+          updateItemForExistsQuery();
+        }
+
+        if (newTerms) {
+          if (isRepeatable) {
+            RqlQueryUtils.updateRepeatableQueryArgValues(existingItem, newTerms);
+          } else {
+            RqlQueryUtils.updateQueryArgValues(existingItem.rqlQuery, newTerms, replace);
+          }
+        }
+      }
+    };
+
+    this.getTaxonomyByTarget = function (target) {
+      var deferred = $q.defer();
+      var taxonomy = taxonomiesCache[target];
+      if (taxonomy) {
+        deferred.resolve(taxonomy);
+      } else {
+        TaxonomiesResource.get({
+          target: target
+        }).$promise.then(function (response) {
+          taxonomiesCache[target] = response;
+          deferred.resolve(response);
+        });
+      }
+
+      return deferred.promise;
+    };
+
+    /**
+     * Builders registry
+     *
+     * @type {{variable: builders.variable, study: builders.study}}
+     */
+    this.builders = function (target, rootRql, rootItem, lang) {
+      var deferred = $q.defer();
+
+      function build(rootRql, rootItem) {
+        var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang);
+        builder.initialize(target);
+        builder.build();
+        deferred.resolve({ root: builder.getRootItem(), map: builder.getLeafItemMap() });
+      }
+
+      self.getTaxonomyByTarget(target).then(function () {
+        build(rootRql, rootItem);
+      });
+
+      return deferred.promise;
+    };
+
+    /**
+     * Builds the criteria tree
+     *
+     * @param rootRql
+     * @param lang
+     * @returns {*}
+     */
+    this.createCriteria = function (rootRql, lang) {
+      var deferred = $q.defer();
+      var rootItem = new CriteriaItemBuilder().type(RQL_NODE.AND).rqlQuery(rootRql).build();
+      var leafItemMap = {};
+
+      if (!RqlQueryUtils.hasTargetQuery(rootRql)) {
+        deferred.resolve({ root: rootItem, map: leafItemMap });
+        return deferred.promise;
+      }
+
+      var queries = [];
       var self = this;
-      var searchOptions = ngObibaMicaSearch.getOptions();
-      this.findItemNodeById = function (root, targetId, result, strict) {
-        if (root && root.children && result) {
-          return root.children.some(function (child) {
-            if (strict ? targetId === child.id : targetId.indexOf(child.id) > -1) {
-              result.item = child;
-              return true;
-            }
+      var resolvedCount = 0;
 
-            return self.findItemNodeById(child, targetId, result, strict);
-          });
+      rootRql.args.forEach(function (node) {
+        if (QUERY_TARGETS[node.name.toUpperCase()]) {
+          queries.push(node);
         }
+      });
 
-        return false;
-      };
+      queries.forEach(function (node) {
+        self.builders(node.name, node, rootItem, lang).then(function (result) {
+          rootItem.children.push(result.root);
+          leafItemMap = angular.extend(leafItemMap, result.map);
+          resolvedCount++;
+          if (resolvedCount === queries.length) {
+            deferred.resolve({ root: rootItem, map: leafItemMap });
+          }
+        });
+      });
 
-      this.findItemNode = function (root, item, result) {
-        return self.findItemNodeById(root, item.id, result);
-      };
+      return deferred.promise;
+    };
 
-      function findTargetCriteria(target, rootCriteria) {
-        return rootCriteria.children.filter(function (child) {
-          return child.target === target;
-        }).pop();
-      }
-
-      function findCriteriaItemFromTreeById(target, targetId, rootCriteria, strict) {
-        var targetItem = findTargetCriteria(target, rootCriteria);
-        var result = {};
-        if (self.findItemNodeById(targetItem, targetId, result, strict)) {
-          return result.item;
-        }
-
-        return null;
-      }
-
-      function findCriteriaItemFromTree(item, rootCriteria) {
-        var targetItem = findTargetCriteria(item.target, rootCriteria);
-        var result = {};
-        if (self.findItemNode(targetItem, item, result)) {
-          return result.item;
-        }
-
-        return null;
-      }
-
-      function findTargetQuery(target, query) {
-        return query.args.filter(function (arg) {
-          return arg.name === target;
-        }).pop();
-      }
-
-      function findQueryInTargetByTaxonomyVocabulary(target, taxonomy, vocabulary) {
-        if (!target) {
+    /**
+     * Append the aggregate and facet for criteria term listing.
+     *
+     * @param query
+     * @para
+     * @returns the new query
+     */
+    this.prepareCriteriaTermsQuery = function (query, item, lang) {
+      function iterReplaceQuery(query, criteriaId, newQuery) {
+        if (!query || !query.args) {
           return null;
         }
 
-        function search(parent, rx, result) {
-          return parent.args.some(function (arg) {
-            if (null !== rx.exec(arg)) {
-              result.parent = parent;
-              return true;
-            }
-
-            if (arg instanceof RqlQuery) {
-              return search(arg, rx, result);
-            }
-
-            return false;
-
-          });
+        if ((query.name === RQL_NODE.IN || query.name === RQL_NODE.MISSING || query.name === RQL_NODE.CONTAINS) && query.args[0] === criteriaId) {
+          return query;
         }
 
-        var result = {};
-        search(target, new RegExp((taxonomy ? taxonomy : '') + '\\.' + vocabulary + '$'), result);
-        return result.parent;
-      }
+        for (var i = query.args.length; i--;) {
+          var res = iterReplaceQuery(query.args[i], criteriaId, newQuery);
 
-      function findQueryInTargetByVocabulary(target, vocabulary) {
-        return findQueryInTargetByTaxonomyVocabulary(target, null, vocabulary);
-      }
-
-      function getSourceFields(context, target) {
-        switch (context) {
-          case DISPLAY_TYPES.LIST:
-            switch (target) {
-              case QUERY_TARGETS.STUDY:
-                return RqlQueryUtils.fields(searchOptions.studies.fields);
-
-              case QUERY_TARGETS.VARIABLE:
-                return RqlQueryUtils.fields(
-                  [
-                    'attributes.label.*',
-                    'variableType',
-                    'datasetId',
-                    'datasetAcronym'
-                  ]);
-
-              case QUERY_TARGETS.DATASET:
-                return RqlQueryUtils.fields(searchOptions.datasets.fields);
-
-              case QUERY_TARGETS.NETWORK:
-                return RqlQueryUtils.fields(searchOptions.networks.fields);
-            }
-            break;
-        }
-
-        return null;
-      }
-
-      this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
-      this.findCriteriaItemFromTree = findCriteriaItemFromTree;
-      this.findTargetCriteria = findTargetCriteria;
-      this.findTargetQuery = findTargetQuery;
-      this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
-      this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
-
-      function isOperator(name) {
-        switch (name) {
-          case RQL_NODE.AND:
-          case RQL_NODE.NAND:
-          case RQL_NODE.OR:
-          case RQL_NODE.NOR:
-            return true;
-        }
-
-        return false;
-      }
-
-      function isLeaf(name) {
-        switch (name) {
-          case RQL_NODE.CONTAINS:
-          case RQL_NODE.IN:
-          case RQL_NODE.OUT:
-          case RQL_NODE.EQ:
-          case RQL_NODE.GT:
-          case RQL_NODE.GE:
-          case RQL_NODE.LT:
-          case RQL_NODE.LE:
-          case RQL_NODE.BETWEEN:
-          case RQL_NODE.MATCH:
-          case RQL_NODE.EXISTS:
-          case RQL_NODE.MISSING:
-            return true;
-        }
-
-        return false;
-      }
-
-      function isLeafCriteria(item) {
-        return isLeaf(item.type);
-      }
-
-      function deleteNode(item) {
-        var parent = item.parent;
-        var query = item.rqlQuery;
-        var queryArgs = query.args;
-        var parentQuery = item.parent.rqlQuery;
-        var index = parentQuery.args.indexOf(query);
-        var indexChild = parent.children.indexOf(item);
-
-        if (index === -1 || indexChild === -1) {
-          throw new Error('Criteria node not found: ' + item);
-        }
-
-        parent.children.splice(indexChild, 1);
-        item.children.forEach(function (c) {
-          c.parent = parent;
-        });
-        parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
-
-        parentQuery.args.splice(index, 1);
-
-        if (queryArgs) {
-          if (queryArgs instanceof Array) {
-            parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
-          } else {
-            parentQuery.args.splice(index, 0, queryArgs);
+          if (res) {
+            query.args[i] = newQuery;
           }
         }
-
-        if (parent.parent !== null && parentQuery.args.length === 0) {
-          deleteNode(parent);
-        }
       }
 
-      function deleteNodeCriteriaWithOrphans(item) {
-        var parent = item.parent;
-        var query = item.rqlQuery;
-        var queryArgs = query.args;
-        var parentQuery = item.parent.rqlQuery;
-        var index = parentQuery.args.indexOf(query);
-        var indexChild = parent.children.indexOf(item);
+      var parsedQuery = this.parseQuery(query);
+      var targetQuery = parsedQuery.args.filter(function (node) {
+        return node.name === item.target;
+      }).pop();
 
-        if (index === -1 || indexChild === -1) {
-          throw new Error('Criteria node not found: ' + item);
-        }
+      if (targetQuery) {
+        var anyQuery = new RqlQuery(RQL_NODE.EXISTS),
+          criteriaId = RqlQueryUtils.criteriaId(item.taxonomy, item.vocabulary);
 
-        parent.children.splice(indexChild, 1);
-        item.children.forEach(function (c) {
-          c.parent = parent;
-        });
-        parent.children.splice.apply(parent.children, [indexChild, 0].concat(item.children));
-
-        parentQuery.args.splice(index, 1);
-
-        if (queryArgs) {
-          if (queryArgs instanceof Array) {
-            parentQuery.args.splice.apply(parentQuery.args, [index, 0].concat(queryArgs));
-          } else {
-            parentQuery.args.splice(index, 0, queryArgs);
-          }
-        }
-
-        if (parentQuery.args.length === 0) {
-          deleteNode(parent);
-        }
+        anyQuery.args.push(criteriaId);
+        iterReplaceQuery(targetQuery, criteriaId, anyQuery);
+        targetQuery.args.push(RqlQueryUtils.aggregate([criteriaId]));
+        targetQuery.args.push(RqlQueryUtils.limit(0, 0));
       }
 
-      function deleteLeafCriteria(item) {
-        var parent = item.parent;
-        if (!parent) {
-          throw new Error('Cannot remove criteria when parent is NULL');
-        }
+      parsedQuery.args.push(new RqlQuery(RQL_NODE.FACET));
 
-        var query = item.rqlQuery;
-        var parentQuery = item.parent.rqlQuery;
-        var index = parentQuery.args.indexOf(query);
-
-        if (index === -1) {
-          throw new Error('Criteria node not found: ' + item);
-        }
-
-        parentQuery.args.splice(index, 1);
-
-        if ([RQL_NODE.OR, RQL_NODE.AND, RQL_NODE.NAND, RQL_NODE.NOR].indexOf(parent.type) !== -1) {
-          deleteNodeCriteriaWithOrphans(parent);
-        } else if (parentQuery.args.length === 0) {
-          deleteNode(parent);
-        }
-
+      if (lang) {
+        RqlQueryUtils.addLocaleQuery(parsedQuery, lang);
       }
 
-      /**
-       * NOTE: once the FreeTextMatch has a UI this is no longer needed.
-       *
-       * @param query
-       * @returns boolean if target has more than a FreeTextMatch
-       */
-      function queryHasCriteria(query) {
-        if (query && query.args) {
-          var leafQueries = query.args.filter(function (arg) {
-            return isLeaf(arg.name) || isOperator(arg.name);
-          });
+      return parsedQuery.serializeArgs(parsedQuery.args);
+    };
 
-          if (leafQueries.length === 1 && RqlQueryUtils.isFreeTextMatch(leafQueries[0])) {
-            return false;
-          }
-
-          return leafQueries.length > 0;
-        }
-
-        return false;
-      }
-
-      function getRenderableTargetCriteria(targets) {
-        return (targets || []).filter(function (target) {
-          return queryHasCriteria(target.rqlQuery);
-        });
-      }
-
-      function getRenderableTargetCriteriaFromRoot(rootCriteria) {
-        return rootCriteria ?
-          getRenderableTargetCriteria(rootCriteria.children) :
-          [];
-      }
-
-      this.getRenderableTargetCriteria = getRenderableTargetCriteria;
-      this.getRenderableTargetCriteriaFromRoot = getRenderableTargetCriteriaFromRoot;
-
-      this.parseQuery = function (query) {
-        try {
-          return new RqlParser().parse(query);
-        } catch (e) {
-          $log.error(e.message);
-        }
-
-        return new RqlQuery();
-      };
-
-      /**
-       * Removes the item from criteria item tree. This should be from a leaf.
-       * @param item
-       */
-      this.removeCriteriaItem = function (item) {
-        if (isLeafCriteria(item)) {
-          deleteLeafCriteria(item);
-        } else {
-          deleteNode(item);
-        }
-      };
-
-      /**
-       * Creates a criteria item
-       * @param target
-       * @param taxonomy
-       * @param vocabulary
-       * @param term
-       * @param lang
-       * @returns A criteria item
-       */
-      this.createCriteriaItem = function (target, taxonomy, vocabulary, term, lang) {
-        function createBuilder(taxonomy, vocabulary, term) {
-          return new CriteriaItemBuilder(LocalizedValues, lang)
-            .target(target)
-            .taxonomy(taxonomy)
-            .vocabulary(vocabulary)
-            .term(term);
-        }
-
-        if (angular.isString(taxonomy)) {
-          return TaxonomyResource.get({
-            target: target,
-            taxonomy: taxonomy
-          }).$promise.then(function (taxonomy) {
-            vocabulary = taxonomy.vocabularies.filter(function (v) {
-              return v.name === vocabulary || VocabularyService.vocabularyAlias(v) === vocabulary;
-            })[0];
-            term = vocabulary && vocabulary.terms ?
-              vocabulary.terms.filter(function (t) { return t.name === term; })[0] :
-              null;
-
-            return createBuilder(taxonomy, vocabulary, term).build();
-          });
-        }
-
-        return createBuilder(taxonomy, vocabulary, term).build();
-      };
-
-      /**
-       * Adds new item to the item tree
-       *
-       * @param rootItem
-       * @param item
-       */
-      this.addCriteriaItem = function (rootRql, newItem, logicalOp) {
-        var target = rootRql.args.filter(function (query) {
-          return newItem.target === query.name;
+    this.getTargetQuerySort = function (type, query) {
+      var target = typeToTarget(type);
+      var targetQuery = findTargetQuery(target, query);
+      var sort = null;
+      if (targetQuery) {
+        sort = targetQuery.args.filter(function (arg) {
+          return arg.name === RQL_NODE.SORT;
         }).pop();
-
-        if (!target) {
-          target = new RqlQuery(RQL_NODE[newItem.target.toUpperCase()]);
-          rootRql.args.push(target);
-        }
-
-        var rqlQuery = newItem.rqlQuery ? newItem.rqlQuery : RqlQueryUtils.buildRqlQuery(newItem);
-        return RqlQueryUtils.addQuery(target, rqlQuery, logicalOp);
-      };
-
-      /**
-       * Update an existing item to the item tree
-       *
-       * @param rootItem
-       * @param item
-       */
-      this.updateCriteriaItem = function (existingItem, newItem, replace) {
-        var newTerms;
-        var isRepeatable = existingItem.isRepeatable();
-        var isMatchNode = !isRepeatable && existingItem.rqlQuery.name === RQL_NODE.MATCH;
-
-        function updateItemForExistsQuery() {
-          existingItem = isRepeatable ? existingItem.first() : existingItem;
-          existingItem.rqlQuery.name = RQL_NODE.EXISTS;
-          existingItem.rqlQuery.args.splice(1, 1);
-        }
-
-        if (newItem.rqlQuery && RQL_NODE.EXISTS === newItem.rqlQuery.name) {
-          updateItemForExistsQuery();
-        } else {
-
-          if (replace && newItem.rqlQuery) {
-            existingItem.rqlQuery.name = newItem.rqlQuery.name;          
-          }
-  
-          if (newItem.rqlQuery) {
-            newTerms = newItem.rqlQuery.args[isMatchNode ? 0 : 1];
-          } else if (newItem.term) {
-            newTerms = [newItem.term.name];
-          } else {
-            updateItemForExistsQuery();
-          }  
-
-          if (newTerms) {
-            if (isRepeatable) {
-              RqlQueryUtils.updateRepeatableQueryArgValues(existingItem, newTerms);
-            } else {
-              RqlQueryUtils.updateQueryArgValues(existingItem.rqlQuery, newTerms, replace);
-            }
-          }
-        }
-      };
-
-      this.getTaxonomyByTarget = function (target) {
-        var deferred = $q.defer();
-        var taxonomy = taxonomiesCache[target];
-        if (taxonomy) {
-          deferred.resolve(taxonomy);
-        } else {
-          TaxonomiesResource.get({
-            target: target
-          }).$promise.then(function (response) {
-            taxonomiesCache[target] = response;
-            deferred.resolve(response);
-          });
-        }
-
-        return deferred.promise;
-      };
-
-      /**
-       * Builders registry
-       *
-       * @type {{variable: builders.variable, study: builders.study}}
-       */
-      this.builders = function (target, rootRql, rootItem, lang) {
-        var deferred = $q.defer();
-
-        function build(rootRql, rootItem) {
-          var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang);
-          builder.initialize(target);
-          builder.build();
-          deferred.resolve({ root: builder.getRootItem(), map: builder.getLeafItemMap() });
-        }
-
-        self.getTaxonomyByTarget(target).then(function () {
-          build(rootRql, rootItem);
-        });
-
-        return deferred.promise;
-      };
-
-      /**
-       * Builds the criteria tree
-       *
-       * @param rootRql
-       * @param lang
-       * @returns {*}
-       */
-      this.createCriteria = function (rootRql, lang) {
-        var deferred = $q.defer();
-        var rootItem = new CriteriaItemBuilder().type(RQL_NODE.AND).rqlQuery(rootRql).build();
-        var leafItemMap = {};
-
-        if (!RqlQueryUtils.hasTargetQuery(rootRql)) {
-          deferred.resolve({ root: rootItem, map: leafItemMap });
-          return deferred.promise;
-        }
-
-        var queries = [];
-        var self = this;
-        var resolvedCount = 0;
-
-        rootRql.args.forEach(function (node) {
-          if (QUERY_TARGETS[node.name.toUpperCase()]) {
-            queries.push(node);
-          }
-        });
-
-        queries.forEach(function (node) {
-          self.builders(node.name, node, rootItem, lang).then(function (result) {
-            rootItem.children.push(result.root);
-            leafItemMap = angular.extend(leafItemMap, result.map);
-            resolvedCount++;
-            if (resolvedCount === queries.length) {
-              deferred.resolve({ root: rootItem, map: leafItemMap });
-            }
-          });
-        });
-
-        return deferred.promise;
-      };
-
-      /**
-       * Append the aggregate and facet for criteria term listing.
-       *
-       * @param query
-       * @para
-       * @returns the new query
-       */
-      this.prepareCriteriaTermsQuery = function (query, item, lang) {
-        function iterReplaceQuery(query, criteriaId, newQuery) {
-          if (!query || !query.args) {
-            return null;
-          }
-
-          if ((query.name === RQL_NODE.IN || query.name === RQL_NODE.MISSING || query.name === RQL_NODE.CONTAINS) && query.args[0] === criteriaId) {
-            return query;
-          }
-
-          for (var i = query.args.length; i--;) {
-            var res = iterReplaceQuery(query.args[i], criteriaId, newQuery);
-
-            if (res) {
-              query.args[i] = newQuery;
-            }
-          }
-        }
-
-        var parsedQuery = this.parseQuery(query);
-        var targetQuery = parsedQuery.args.filter(function (node) {
-          return node.name === item.target;
-        }).pop();
-
-        if (targetQuery) {
-          var anyQuery = new RqlQuery(RQL_NODE.EXISTS),
-            criteriaId = RqlQueryUtils.criteriaId(item.taxonomy, item.vocabulary);
-
-          anyQuery.args.push(criteriaId);
-          iterReplaceQuery(targetQuery, criteriaId, anyQuery);
-          targetQuery.args.push(RqlQueryUtils.aggregate([criteriaId]));
-          targetQuery.args.push(RqlQueryUtils.limit(0, 0));
-        }
-
-        parsedQuery.args.push(new RqlQuery(RQL_NODE.FACET));
-
-        if (lang) {
-          RqlQueryUtils.addLocaleQuery(parsedQuery, lang);
-        }
-
-        return parsedQuery.serializeArgs(parsedQuery.args);
-      };
-
-      this.getTargetQuerySort = function (type, query) {
-        var target = typeToTarget(type);
-        var targetQuery = findTargetQuery(target, query);
-        var sort = null;
-        if (targetQuery) {
-          sort = targetQuery.args.filter(function (arg) {
-            return arg.name === RQL_NODE.SORT;
-          }).pop();
-        }
-
-        return sort;
-      };
-
-      function prepareSearchQueryInternal(context, type, query, pagination, lang, sort, addFieldsQuery) {
-        var rqlQuery = angular.copy(query);
-        var target = typeToTarget(type);
-        RqlQueryUtils.addLocaleQuery(rqlQuery, lang);
-        var targetQuery = findTargetQuery(target, rqlQuery);
-
-        if (!targetQuery) {
-          targetQuery = new RqlQuery(target);
-          rqlQuery.args.push(targetQuery);
-        }
-
-        var limit = pagination[target] || { from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target) };
-        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
-
-        if (addFieldsQuery) {
-          var fieldsQuery = getSourceFields(context, target);
-          if (fieldsQuery) {
-            RqlQueryUtils.addFields(targetQuery, fieldsQuery);
-          }
-        }
-
-        if (sort) {
-          RqlQueryUtils.addSort(targetQuery, sort);
-        }
-
-        return rqlQuery;
       }
 
-      this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
-        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, true);
-      };
+      return sort;
+    };
 
-      this.prepareSearchQueryNoFields = function (context, type, query, pagination, lang, sort) {
-        return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, false);
-      };
+    function prepareSearchQueryInternal(context, type, query, pagination, lang, sort, addFieldsQuery) {
+      var rqlQuery = angular.copy(query);
+      var target = typeToTarget(type);
+      RqlQueryUtils.addLocaleQuery(rqlQuery, lang);
+      var targetQuery = findTargetQuery(target, rqlQuery);
 
-      this.prepareSearchQueryAndSerialize = function (context, type, query, pagination, lang, sort) {
-        return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, pagination, lang, sort).args);
-      };
+      if (!targetQuery) {
+        targetQuery = new RqlQuery(target);
+        rqlQuery.args.push(targetQuery);
+      }
 
-      /**
-       * Append the aggregate and bucket operations to the variable.
-       *
-       * @param query
-       * @param bucketArg
-       * @returns the new query
-       */
-      this.prepareCoverageQuery = function (query, bucketArg) {
-        var parsedQuery = this.parseQuery(query);
-        var aggregate = new RqlQuery('aggregate');
-        var bucketField;
+      var limit = pagination[target] || { from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target) };
+      RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
 
-        var parts = bucketArg.split('-');
-        var groupBy = parts[0];
-        var filterBy = parts.length > 1 ? parts[1] : undefined;
-
-        switch (groupBy) {
-          case BUCKET_TYPES.NETWORK:
-            bucketField = 'networkId';
-            break;
-          case BUCKET_TYPES.STUDY:
-          case BUCKET_TYPES.STUDY_INDIVIDUAL:
-          case BUCKET_TYPES.STUDY_HARMONIZATION:
-            bucketField = 'studyId';
-            break;
-          case BUCKET_TYPES.DCE:
-          case BUCKET_TYPES.DCE_INDIVIDUAL:
-            bucketField = 'dceId';
-            break;
-          case BUCKET_TYPES.DATASCHEMA:
-          case BUCKET_TYPES.DATASET:
-          case BUCKET_TYPES.DATASET_COLLECTED:
-          case BUCKET_TYPES.DATASET_HARMONIZED:
-            bucketField = 'datasetId';
-            break;
+      if (addFieldsQuery) {
+        var fieldsQuery = getSourceFields(context, target);
+        if (fieldsQuery) {
+          RqlQueryUtils.addFields(targetQuery, fieldsQuery);
         }
+      }
 
-        var bucket = new RqlQuery('bucket');
-        bucket.args.push(bucketField);
-        aggregate.args.push(bucket);
+      if (sort) {
+        RqlQueryUtils.addSort(targetQuery, sort);
+      }
 
-        // variable RQL
-        var variable;
-        parsedQuery.args.forEach(function (arg) {
-          if (!variable && arg.name === 'variable') {
-            variable = arg;
-          }
-        });
-        if (!variable) {
-          variable = new RqlQuery('variable');
-          parsedQuery.args.push(variable);
+      return rqlQuery;
+    }
+
+    this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
+      return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, true);
+    };
+
+    this.prepareSearchQueryNoFields = function (context, type, query, pagination, lang, sort) {
+      return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, false);
+    };
+
+    this.prepareSearchQueryAndSerialize = function (context, type, query, pagination, lang, sort) {
+      return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, pagination, lang, sort).args);
+    };
+
+    /**
+     * Append the aggregate and bucket operations to the variable.
+     *
+     * @param query
+     * @param bucketArg
+     * @returns the new query
+     */
+    this.prepareCoverageQuery = function (query, bucketArg) {
+      var parsedQuery = this.parseQuery(query);
+      var aggregate = new RqlQuery('aggregate');
+      var bucketField;
+
+      var parts = bucketArg.split('-');
+      var groupBy = parts[0];
+      var filterBy = parts.length > 1 ? parts[1] : undefined;
+
+      switch (groupBy) {
+        case BUCKET_TYPES.NETWORK:
+          bucketField = 'networkId';
+          break;
+        case BUCKET_TYPES.STUDY:
+        case BUCKET_TYPES.STUDY_INDIVIDUAL:
+        case BUCKET_TYPES.STUDY_HARMONIZATION:
+          bucketField = 'studyId';
+          break;
+        case BUCKET_TYPES.DCE:
+        case BUCKET_TYPES.DCE_INDIVIDUAL:
+          bucketField = 'dceId';
+          break;
+        case BUCKET_TYPES.DATASCHEMA:
+        case BUCKET_TYPES.DATASET:
+        case BUCKET_TYPES.DATASET_COLLECTED:
+        case BUCKET_TYPES.DATASET_HARMONIZED:
+          bucketField = 'datasetId';
+          break;
+      }
+
+      var bucket = new RqlQuery('bucket');
+      bucket.args.push(bucketField);
+      aggregate.args.push(bucket);
+
+      // variable RQL
+      var variable;
+      parsedQuery.args.forEach(function (arg) {
+        if (!variable && arg.name === 'variable') {
+          variable = arg;
         }
+      });
+      if (!variable) {
+        variable = new RqlQuery('variable');
+        parsedQuery.args.push(variable);
+      }
 
-        if (variable.args.length > 0 && variable.args[0].name !== 'limit') {
-          var variableType = new RqlQuery('in');
-          variableType.args.push('Mica_variable.variableType');
-          if (filterBy === undefined) {
-            if (bucketArg === BUCKET_TYPES.DATASET_HARMONIZED || bucketArg === BUCKET_TYPES.DATASCHEMA) {
-              variableType.args.push('Dataschema');
-            } else {
-              variableType.args.push(['Collected', 'Dataschema']);
-            }
-          } else if (['individual', 'collected'].indexOf(filterBy) > -1) {
-            variableType.args.push('Collected');
-          } else if (['harmonization', 'harmonized'].indexOf(filterBy) > -1) {
+      if (variable.args.length > 0 && variable.args[0].name !== 'limit') {
+        var variableType = new RqlQuery('in');
+        variableType.args.push('Mica_variable.variableType');
+        if (filterBy === undefined) {
+          if (bucketArg === BUCKET_TYPES.DATASET_HARMONIZED || bucketArg === BUCKET_TYPES.DATASCHEMA) {
             variableType.args.push('Dataschema');
+          } else {
+            variableType.args.push(['Collected', 'Dataschema']);
           }
-          var andVariableType = new RqlQuery('and');
-          andVariableType.args.push(variableType);
-          andVariableType.args.push(variable.args[0]);
-          variable.args[0] = andVariableType;
+        } else if (['individual', 'collected'].indexOf(filterBy) > -1) {
+          variableType.args.push('Collected');
+        } else if (['harmonization', 'harmonized'].indexOf(filterBy) > -1) {
+          variableType.args.push('Dataschema');
         }
+        var andVariableType = new RqlQuery('and');
+        andVariableType.args.push(variableType);
+        andVariableType.args.push(variable.args[0]);
+        variable.args[0] = andVariableType;
+      }
 
-        variable.args.push(aggregate);
+      variable.args.push(aggregate);
 
-        return parsedQuery.serializeArgs(parsedQuery.args);
-      };
+      return parsedQuery.serializeArgs(parsedQuery.args);
+    };
 
-      this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs) {
-        var parsedQuery = this.parseQuery(query);
-        // aggregate
-        var aggregate = new RqlQuery(RQL_NODE.AGGREGATE);
-        aggregateArgs.forEach(function (a) {
-          aggregate.args.push(a);
+    this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs) {
+      var parsedQuery = this.parseQuery(query);
+      // aggregate
+      var aggregate = new RqlQuery(RQL_NODE.AGGREGATE);
+      aggregateArgs.forEach(function (a) {
+        aggregate.args.push(a);
+      });
+      //bucket
+      if (bucketArgs && bucketArgs.length > 0) {
+        var bucket = new RqlQuery(RQL_NODE.BUCKET);
+        bucketArgs.forEach(function (b) {
+          bucket.args.push(b);
         });
-        //bucket
-        if (bucketArgs && bucketArgs.length > 0) {
-          var bucket = new RqlQuery(RQL_NODE.BUCKET);
-          bucketArgs.forEach(function (b) {
-            bucket.args.push(b);
-          });
-          aggregate.args.push(bucket);
-        }
+        aggregate.args.push(bucket);
+      }
 
-        // study
-        var study;
-        var hasQuery = false;
-        var hasStudyTarget = false;
-        parsedQuery.args.forEach(function (arg) {
-          if (arg.name === 'study') {
-            hasStudyTarget = true;
-            var limitIndex = null;
-            hasQuery = arg.args.filter(function (requestArg, index) {
-              if (requestArg.name === 'limit') {
-                limitIndex = index;
+      // study
+      var study;
+      var hasQuery = false;
+      var hasStudyTarget = false;
+      parsedQuery.args.forEach(function (arg) {
+        if (arg.name === 'study') {
+          hasStudyTarget = true;
+          var limitIndex = null;
+          hasQuery = arg.args.filter(function (requestArg, index) {
+            if (requestArg.name === 'limit') {
+              limitIndex = index;
+            }
+            return ['limit', 'sort', 'aggregate'].indexOf(requestArg.name) < 0;
+          }).length;
+          if (limitIndex !== null) {
+            arg.args.splice(limitIndex, 1);
+          }
+          study = arg;
+        }
+      });
+      // Study match all if no study query.
+      if (!hasStudyTarget) {
+        study = new RqlQuery('study');
+        parsedQuery.args.push(study);
+      }
+      if (!hasQuery) {
+        study.args.push(new RqlQuery(RQL_NODE.MATCH));
+      }
+      study.args.push(aggregate);
+      // facet
+      parsedQuery.args.push(new RqlQuery('facet'));
+      return parsedQuery.serializeArgs(parsedQuery.args);
+    };
+
+    this.getTargetAggregations = function (joinQueryResponse, criterion, lang) {
+
+      /**
+       * Helper to merge the terms that are not in the aggregation list
+       *
+       * @param aggs
+       * @param vocabulary
+       * @returns Array of aggs
+       */
+      function addMissingTerms(aggs, vocabulary) {
+        var terms = vocabulary.terms;
+        if (terms && terms.length > 0) {
+          var keys = aggs && aggs.map(function (agg) {
+            return agg.key;
+          }) || [];
+
+          if (aggs) {
+            // Add the missing terms not present in the aggs list
+            var missingTerms = [];
+
+            terms.forEach(function (term) {
+              if (keys.length === 0 || keys.indexOf(term.name) === -1) {
+                missingTerms.push({
+                  count: 0,
+                  default: 0,
+                  description: LocalizedValues.forLocale(term.description, lang),
+                  key: term.name,
+                  title: LocalizedValues.forLocale(term.title, lang)
+                });
               }
-              return ['limit', 'sort', 'aggregate'].indexOf(requestArg.name) < 0;
-            }).length;
-            if (limitIndex !== null) {
-              arg.args.splice(limitIndex, 1);
-            }
-            study = arg;
-          }
-        });
-        // Study match all if no study query.
-        if (!hasStudyTarget) {
-          study = new RqlQuery('study');
-          parsedQuery.args.push(study);
-        }
-        if (!hasQuery) {
-          study.args.push(new RqlQuery(RQL_NODE.MATCH));
-        }
-        study.args.push(aggregate);
-        // facet
-        parsedQuery.args.push(new RqlQuery('facet'));
-        return parsedQuery.serializeArgs(parsedQuery.args);
-      };
-
-      this.getTargetAggregations = function (joinQueryResponse, criterion, lang) {
-
-        /**
-         * Helper to merge the terms that are not in the aggregation list
-         *
-         * @param aggs
-         * @param vocabulary
-         * @returns Array of aggs
-         */
-        function addMissingTerms(aggs, vocabulary) {
-          var terms = vocabulary.terms;
-          if (terms && terms.length > 0) {
-            var keys = aggs && aggs.map(function (agg) {
-              return agg.key;
-            }) || [];
-
-            if (aggs) {
-              // Add the missing terms not present in the aggs list
-              var missingTerms = [];
-
-              terms.forEach(function (term) {
-                if (keys.length === 0 || keys.indexOf(term.name) === -1) {
-                  missingTerms.push({
-                    count: 0,
-                    default: 0,
-                    description: LocalizedValues.forLocale(term.description, lang),
-                    key: term.name,
-                    title: LocalizedValues.forLocale(term.title, lang)
-                  });
-                }
-              });
-
-              return aggs.concat(missingTerms);
-            }
-
-            // The query didn't have any match, return default empty aggs based on the vocabulary terms
-            return terms.map(function (term) {
-              return {
-                count: 0,
-                default: 0,
-                description: LocalizedValues.forLocale(term.description, lang),
-                key: term.name,
-                title: LocalizedValues.forLocale(term.title, lang)
-              };
             });
 
+            return aggs.concat(missingTerms);
           }
 
-          return aggs;
+          // The query didn't have any match, return default empty aggs based on the vocabulary terms
+          return terms.map(function (term) {
+            return {
+              count: 0,
+              default: 0,
+              description: LocalizedValues.forLocale(term.description, lang),
+              key: term.name,
+              title: LocalizedValues.forLocale(term.title, lang)
+            };
+          });
+
         }
 
-        function getChildAggragations(parentAgg, aggKey) {
-          if (parentAgg.children) {
-            var child = parentAgg.children.filter(function (child) {
-              return child.hasOwnProperty(aggKey);
-            }).pop();
+        return aggs;
+      }
 
-            if (child) {
-              return child[aggKey];
-            }
-          }
-
-          return null;
-        }
-
-        var alias = VocabularyService.vocabularyAlias(criterion.vocabulary);
-        var targetResponse = joinQueryResponse[criterion.target + 'ResultDto'];
-
-        if (targetResponse && targetResponse.aggs) {
-          var isProperty = criterion.taxonomy.name.startsWith('Mica_');
-          var filter = isProperty ? alias : criterion.taxonomy.name;
-          var filteredAgg = targetResponse.aggs.filter(function (agg) {
-            return agg.aggregation === filter;
+      function getChildAggragations(parentAgg, aggKey) {
+        if (parentAgg.children) {
+          var child = parentAgg.children.filter(function (child) {
+            return child.hasOwnProperty(aggKey);
           }).pop();
 
-          if (filteredAgg) {
-            if (isProperty) {
-              if (VocabularyService.isNumericVocabulary(criterion.vocabulary)) {
-                return filteredAgg['obiba.mica.StatsAggregationResultDto.stats'];
-              } else {
-                return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
-                  addMissingTerms(filteredAgg['obiba.mica.RangeAggregationResultDto.ranges'], criterion.vocabulary) :
-                  addMissingTerms(filteredAgg['obiba.mica.TermsAggregationResultDto.terms'], criterion.vocabulary);
-              }
-            } else {
-              var vocabularyAgg = filteredAgg.children.filter(function (agg) {
-                return agg.aggregation === alias;
-              }).pop();
+          if (child) {
+            return child[aggKey];
+          }
+        }
 
-              if (vocabularyAgg) {
-                return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
-                  addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.RangeAggregationResultDto.ranges'), criterion.vocabulary) :
-                  addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.TermsAggregationResultDto.terms'), criterion.vocabulary);
-              }
+        return null;
+      }
+
+      var alias = VocabularyService.vocabularyAlias(criterion.vocabulary);
+      var targetResponse = joinQueryResponse[criterion.target + 'ResultDto'];
+
+      if (targetResponse && targetResponse.aggs) {
+        var isProperty = criterion.taxonomy.name.startsWith('Mica_');
+        var filter = isProperty ? alias : criterion.taxonomy.name;
+        var filteredAgg = targetResponse.aggs.filter(function (agg) {
+          return agg.aggregation === filter;
+        }).pop();
+
+        if (filteredAgg) {
+          if (isProperty) {
+            if (VocabularyService.isNumericVocabulary(criterion.vocabulary)) {
+              return filteredAgg['obiba.mica.StatsAggregationResultDto.stats'];
+            } else {
+              return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
+                addMissingTerms(filteredAgg['obiba.mica.RangeAggregationResultDto.ranges'], criterion.vocabulary) :
+                addMissingTerms(filteredAgg['obiba.mica.TermsAggregationResultDto.terms'], criterion.vocabulary);
+            }
+          } else {
+            var vocabularyAgg = filteredAgg.children.filter(function (agg) {
+              return agg.aggregation === alias;
+            }).pop();
+
+            if (vocabularyAgg) {
+              return VocabularyService.isRangeVocabulary(criterion.vocabulary) ?
+                addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.RangeAggregationResultDto.ranges'), criterion.vocabulary) :
+                addMissingTerms(getChildAggragations(filteredAgg, 'obiba.mica.TermsAggregationResultDto.terms'), criterion.vocabulary);
             }
           }
         }
+      }
 
-        return addMissingTerms([], criterion.vocabulary);
-      };
+      return addMissingTerms([], criterion.vocabulary);
+    };
 
-      this.findCriterion = function (criteria, id) {
-        function inner(criteria, id) {
-          var result;
-          if (criteria.id === id) { return criteria; }
-          var children = criteria.children.filter(function (childCriterion) { return childCriterion instanceof CriteriaItem; });
+    this.findCriterion = function (criteria, id) {
+      function inner(criteria, id) {
+        var result;
+        if (criteria.id === id) { return criteria; }
+        var children = criteria.children.filter(function (childCriterion) { return childCriterion instanceof CriteriaItem; });
 
-          for (var i = children.length; i--;) {
-            result = inner(children[i], id);
+        for (var i = children.length; i--;) {
+          result = inner(children[i], id);
 
-            if (result) { return result; }
-          }
+          if (result) { return result; }
         }
+      }
 
-        return inner(criteria, id);
-      };
-    }]);
+      return inner(criteria, id);
+    };
+  }
+
+  ngObibaMica.search.service('RqlQueryService',
+    ['$q',
+      '$log',
+      'TaxonomiesResource',
+      'TaxonomyResource',
+      'LocalizedValues',
+      'VocabularyService',
+      'RqlQueryUtils',
+      'ngObibaMicaSearch',
+      RqlQueryService]);
+})();
 ;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -5940,7 +5759,7 @@ ngObibaMica.search.service('RqlQueryService',
 
 (function () {
 
-  ngObibaMica.search.RqlQueryUtils = function(VocabularyService) {
+  function RqlQueryUtils(VocabularyService) {
 
     /**
      * Finds the parent node to which new queries can be added
@@ -6390,9 +6209,9 @@ ngObibaMica.search.service('RqlQueryService',
     this.addLimit = addLimit;
     this.addSort = addSort;
     this.criteriaId = criteriaId;
-  };
+  }
 
-  ngObibaMica.search.service('RqlQueryUtils', ['VocabularyService', ngObibaMica.search.RqlQueryUtils]);
+  ngObibaMica.search.service('RqlQueryUtils', ['VocabularyService', RqlQueryUtils]);
 
 })();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -6407,7 +6226,7 @@ ngObibaMica.search.service('RqlQueryService',
 'use strict';
 
 (function () {
-  ngObibaMica.search.SearchContext = function () {
+  function SearchContext() {
     var selectedLocale = null;
 
     this.setLocale = function (locale) {
@@ -6418,9 +6237,9 @@ ngObibaMica.search.service('RqlQueryService',
       return selectedLocale;
     };
 
-  };
+  }
 
-  ngObibaMica.search.service('SearchContext', ngObibaMica.search.SearchContext);
+  ngObibaMica.search.service('SearchContext', SearchContext);
 })();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -6434,7 +6253,7 @@ ngObibaMica.search.service('RqlQueryService',
 'use strict';
 
 (function () {
-  ngObibaMica.search.StudyFilterShortcutService = function ($location, RqlQueryService) {
+  function StudyFilterShortcutService($location, RqlQueryService) {
     function getCurrentClassName(rqlQuery) {
       rqlQuery = rqlQuery || RqlQueryService.parseQuery($location.search().query);
       var targetQuery = RqlQueryService.findTargetQuery(QUERY_TARGETS.STUDY, rqlQuery);
@@ -6521,10 +6340,10 @@ ngObibaMica.search.service('RqlQueryService',
         choseHarmonization: classNameQueryHasHarmonizationStudyArg(getCurrentClassName())
       };
     };
-  };
+  }
 
   ngObibaMica.search.service('StudyFilterShortcutService',
-    ['$location', 'RqlQueryService', ngObibaMica.search.StudyFilterShortcutService]);
+    ['$location', 'RqlQueryService', StudyFilterShortcutService]);
 })();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -6537,9 +6356,9 @@ ngObibaMica.search.service('RqlQueryService',
 
 'use strict';
 
-(function() {
+(function () {
 
-  ngObibaMica.search.TaxonomyService = function($q, TaxonomiesResource, TaxonomyResource, VocabularyService) {
+  function TaxonomyService($q, TaxonomiesResource, TaxonomyResource, VocabularyService) {
 
     /**
      * @returns Returns a taxonomy
@@ -6559,7 +6378,7 @@ ngObibaMica.search.service('RqlQueryService',
     }
 
     function sortTaxonomies(order, taxonomies) {
-      taxonomies.sort(function(a, b) {
+      taxonomies.sort(function (a, b) {
         return order.indexOf(a.name) - order.indexOf(b.name);
       });
     }
@@ -6590,15 +6409,15 @@ ngObibaMica.search.service('RqlQueryService',
     function getTaxonomies(target, taxonomyNames) {
       var deferred = $q.defer();
       if (Array.isArray(taxonomyNames)) {
-        getTaxonomiesInternal(target, taxonomyNames).then(function(taxonomies) {
-          taxonomies.forEach(function(taxonomy) {
+        getTaxonomiesInternal(target, taxonomyNames).then(function (taxonomies) {
+          taxonomies.forEach(function (taxonomy) {
             taxonomy.vocabularies = VocabularyService.visibleVocabularies(taxonomy.vocabularies);
           });
           sortTaxonomies(taxonomyNames, taxonomies);
           deferred.resolve(taxonomies);
         });
       } else {
-        getTaxonomy(target, taxonomyNames).then(function(taxonomy) {
+        getTaxonomy(target, taxonomyNames).then(function (taxonomy) {
           taxonomy.vocabularies = VocabularyService.visibleVocabularies(taxonomy.vocabularies);
           deferred.resolve(taxonomy);
         });
@@ -6610,11 +6429,11 @@ ngObibaMica.search.service('RqlQueryService',
     this.findVocabularyInTaxonomy = findVocabularyInTaxonomy;
     this.getTaxonomy = getTaxonomy;
     this.getTaxonomies = getTaxonomies;
-  };
+  }
 
   ngObibaMica.search
     .service('TaxonomyService',
-      ['$q', 'TaxonomiesResource', 'TaxonomyResource', 'VocabularyService', ngObibaMica.search.TaxonomyService]);
+      ['$q', 'TaxonomiesResource', 'TaxonomyResource', 'VocabularyService', TaxonomyService]);
 
 })();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -6628,9 +6447,9 @@ ngObibaMica.search.service('RqlQueryService',
 
 'use strict';
 
-(function() {
+(function () {
 
-  ngObibaMica.search.VocabularyService = function($translate, LocalizedValues, MetaTaxonomyService) {
+  function VocabularyService($translate, LocalizedValues, MetaTaxonomyService) {
 
     const TOKEN_LENGTH = 1;
 
@@ -6667,9 +6486,9 @@ ngObibaMica.search.service('RqlQueryService',
         return (vocabulariesToFilter || []).filter(function (vocabulary) {
           vocabulary.filteredTerms = (vocabulary.terms || []).filter(function (term) {
             // Filter on configurable field
-            var toMatchField = fieldsToFilter.reduce(function(toMatchField, field){
+            var toMatchField = fieldsToFilter.reduce(function (toMatchField, field) {
               return toMatchField + ' ' + translateField(term[field]);
-            },fieldsToFilter[0] );
+            }, fieldsToFilter[0]);
             // term is selected when each of the token is included
             var toMatch = asciiFold(toMatchField).trim().toLowerCase();
             return tokens.map(function (token) {
@@ -6681,7 +6500,7 @@ ngObibaMica.search.service('RqlQueryService',
                 return toMatch.indexOf(ntoken) === -1;
               }
               return toMatch.indexOf(token) >= 0;
-            }).reduce(function(acc, val) {
+            }).reduce(function (acc, val) {
               return acc && val;
             }, true);
 
@@ -6697,7 +6516,7 @@ ngObibaMica.search.service('RqlQueryService',
         return false;
       }
 
-      var hidden = vocabulary.attributes ? vocabulary.attributes.filter(function(a) {
+      var hidden = vocabulary.attributes ? vocabulary.attributes.filter(function (a) {
         return a.key === 'hidden';
       }).pop() : null;
 
@@ -6709,9 +6528,9 @@ ngObibaMica.search.service('RqlQueryService',
         return false;
       }
 
-      var result = vocabulary.attributes.filter(function(attribute) {
-        return ['hidden' ,'facet'].indexOf(attribute.key) > -1;
-      }).reduce(function(a, i) {
+      var result = vocabulary.attributes.filter(function (attribute) {
+        return ['hidden', 'facet'].indexOf(attribute.key) > -1;
+      }).reduce(function (a, i) {
         a[i.key] = i.value;
         return a;
       }, {});
@@ -6720,9 +6539,9 @@ ngObibaMica.search.service('RqlQueryService',
     }
 
     function findVocabularyAttributes(vocabulary, pattern) {
-      return (vocabulary.attributes || []).filter(function(attribute){
+      return (vocabulary.attributes || []).filter(function (attribute) {
         return attribute.key.search(pattern) > -1;
-      }).reduce(function(a, i) {
+      }).reduce(function (a, i) {
         a[i.key] = i.value;
         return a;
       }, {});
@@ -6825,13 +6644,13 @@ ngObibaMica.search.service('RqlQueryService',
     this.sortVocabularyTerms = sortVocabularyTerms;
     this.sortFilteredVocabularyTerms = sortFilteredVocabularyTerms;
     this.vocabularyAlias = vocabularyAlias;
-    this.vocabularyField= vocabularyField;
+    this.vocabularyField = vocabularyField;
 
     return this;
-  };
+  }
 
   ngObibaMica.search.service('VocabularyService',
-    ['$translate','LocalizedValues', 'MetaTaxonomyService', ngObibaMica.search.VocabularyService]);
+    ['$translate', 'LocalizedValues', 'MetaTaxonomyService', VocabularyService]);
 
 })();;'use strict';
 
@@ -10453,6 +10272,234 @@ ngObibaMica.search
 
 (function () {
 
+  function Controller(
+    $translate,
+    VocabularyService, 
+    RqlQueryService, 
+    AlertService, 
+    StringUtils,
+    LocaleStringUtils, 
+    ServerErrorUtils, 
+    TaxonomiesSearchResource) {
+
+    // vocabulary (or term) can be used in search if it doesn't have the 'showSearch' attribute
+    function canSearch(taxonomyEntity, hideSearchList) {
+      if ((hideSearchList || []).indexOf(taxonomyEntity.name) > -1) {
+        return false;
+      }
+
+      return (taxonomyEntity.attributes || []).filter(function (attr) { return attr.key === 'showSearch'; }).length === 0;
+    }
+
+    function score(query, item) {
+      var result = 0;
+      var regExp = new RegExp(query, 'ig');
+
+      if (item.itemTitle.match(regExp)) {
+        result = 10;
+      } else if (item.itemDescription && item.itemDescription.match(regExp)) {
+        result = 8;
+      } else if (item.itemParentTitle.match(regExp)) {
+        result = 6;
+      } else if (item.itemParentDescription && item.itemParentDescription.match(regExp)) {
+        result = 4;
+      }
+
+      return result;
+    }
+
+    function processBundle(query, bundle) {
+      var results = [];
+      var total = 0;
+      var target = bundle.target;
+      var taxonomy = bundle.taxonomy;
+      if (taxonomy.vocabularies) {
+        taxonomy.vocabularies.filter(function (vocabulary) {
+          return VocabularyService.isVisibleVocabulary(vocabulary) && canSearch(vocabulary, ctrl.hideSearch);
+        }).forEach(function (vocabulary) {
+          if (vocabulary.terms) {
+            vocabulary.terms.filter(function (term) {
+              return canSearch(term, ctrl.hideSearch);
+            }).forEach(function (term) {
+              var item = RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, term, ctrl.lang);
+              results.push({
+                score: score(query, item),
+                item: item
+              });
+              total++;
+            });
+          } else {
+            var item = RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, null, ctrl.lang);
+            results.push({
+              score: score(query, item),
+              item: item
+            });
+            total++;
+          }
+        });
+      }
+      return { results: results, total: total };
+    }
+
+    function searchCriteria(query) {
+      // search for taxonomy terms
+      // search for matching variables/studies/... count
+
+      var criteria = TaxonomiesSearchResource.get({
+        query: StringUtils.quoteQuery(query.replace(/\/.*/g, '')),
+        locale: ctrl.lang,
+        target: ctrl.documents.search.target
+      }).$promise.then(function (response) {
+        if (response) {
+          var results = [];
+          var total = 0;
+          var size = 10;
+
+          response.forEach(function (bundle) {
+            var rval = processBundle(query, bundle);
+            results.push.apply(results, rval.results);
+            total = total + rval.total;
+          });
+
+          results.sort(function (a, b) {
+            return b.score - a.score;
+          });
+
+          results = results.splice(0, size);
+
+          if (total > results.length) {
+            var note = {
+              query: query,
+              total: total,
+              size: size,
+              message: LocaleStringUtils.translate('search.showing', [size, total]),
+              status: 'has-warning'
+            };
+            results.push({ score: -1, item: note });
+          }
+
+          return results.map(function (result) {
+            return result.item;
+          });
+        } else {
+          return [];
+        }
+      }, function (response) {
+        AlertService.alert({
+          id: ctrl.alertId,
+          type: 'danger',
+          msg: ServerErrorUtils.buildMessage(response),
+          delay: 5000
+        });
+      });
+
+      return criteria;
+    }
+
+    function showTaxonomy(target, name) {
+      if (ctrl.target === target && ctrl.taxonomyName === name && ctrl.taxonomiesShown) {
+        ctrl.taxonomiesShown = false;
+        return;
+      }
+
+      ctrl.taxonomiesShown = true;
+      ctrl.target = target;
+      ctrl.taxonomyName = name;
+    }
+
+    function clearTaxonomy() {
+      ctrl.target = null;
+      ctrl.taxonomyName = null;
+    }
+
+    function selectSearchTarget(target) {
+      ctrl.documents.search.target = target;
+    }
+
+    function selectCriteria(item) {
+      ctrl.onSelectCriteria({item: item});
+      ctrl.selectedCriteria = null;
+    }
+
+    function translateTaxonomyNav(taxonomy, key) {
+      var value = taxonomy[key] && taxonomy[key].filter(function (item) {
+        return item.locale === $translate.use();
+      }).pop();
+
+      return value ? value.text : key;
+    }
+
+    function goToClassifications() {
+      ctrl.onGotoClassifications({});
+    }
+
+    function selectTerm(target, taxonomy, vocabulary, args) {
+      ctrl.onSelectTerm({target: target, taxonomy: taxonomy, vocabulary: vocabulary, args: args});
+    }
+
+    var ctrl = this;
+
+    ctrl.selectedCriteria = null;
+    ctrl.target = null;
+    ctrl.documents = {
+      search: {
+        text: null,
+        active: false,
+        target: null
+      }
+    };
+
+    ctrl.selectCriteria = selectCriteria;
+    ctrl.searchCriteria = searchCriteria;
+    ctrl.selectSearchTarget = selectSearchTarget;
+    ctrl.clearTaxonomy = clearTaxonomy;
+    ctrl.showTaxonomy = showTaxonomy;
+    ctrl.translateTaxonomyNav = translateTaxonomyNav;
+    ctrl.goToClassifications = goToClassifications;
+    ctrl.selectTerm = selectTerm;
+  }
+
+  ngObibaMica.search.component('searchBoxRegion',
+    {
+      // transclude: true,
+      bindings: {
+        targets: '<',
+        options: '<',
+        alertId: '@',
+        lang: '<',
+        taxonomyNav: '<',
+        onSelectCriteria: '&',
+        onGotoClassifications: '&',
+        onSelectTerm: '&'
+      },
+      templateUrl: 'search/components/search-box-region/component.html',
+      controller: [
+        '$translate',
+        'VocabularyService',
+        'RqlQueryService',
+        'AlertService',
+        'StringUtils',
+        'LocaleStringUtils',
+        'ServerErrorUtils',
+        'TaxonomiesSearchResource',
+        Controller]
+    });
+
+})();
+;/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+'use strict';
+
+(function () {
+
   function StudyFilterShortcut($location, $translate, RqlQueryService, StudyFilterShortcutService) {
     return {
       restrict: 'EA',
@@ -12659,7 +12706,7 @@ ngObibaMica.fileBrowser
       }
     };
   }]);
-;angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/search-result-list-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/criteria-root/component.html', 'search/components/criteria/criteria-target/component.html', 'search/components/criteria/item-region/dropdown/component.html', 'search/components/criteria/item-region/item-node/component.html', 'search/components/criteria/item-region/match/component.html', 'search/components/criteria/item-region/numeric/component.html', 'search/components/criteria/item-region/region/component.html', 'search/components/criteria/item-region/string-terms/component.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/facets/taxonomy/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/panel/classification/component.html', 'search/components/panel/taxonomies-panel/component.html', 'search/components/panel/taxonomy-panel/component.html', 'search/components/panel/term-panel/component.html', 'search/components/panel/vocabulary-panel/component.html', 'search/components/result/coverage-result/component.html', 'search/components/result/datasets-result-table/component.html', 'search/components/result/graphics-result/component.html', 'search/components/result/networks-result-table/component.html', 'search/components/result/pagination/component.html', 'search/components/result/search-result/component.html', 'search/components/result/search-result/coverage.html', 'search/components/result/search-result/graphics.html', 'search/components/result/search-result/list.html', 'search/components/result/studies-result-table/component.html', 'search/components/result/tabs-order-count/component.html', 'search/components/result/variables-result-table/component.html', 'search/components/study-filter-shortcut/component.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/target-template.html', 'search/views/list/pagination-template.html', 'search/views/search-layout.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search.html', 'search/views/search2.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
+;angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/search-result-list-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/criteria-root/component.html', 'search/components/criteria/criteria-target/component.html', 'search/components/criteria/item-region/dropdown/component.html', 'search/components/criteria/item-region/item-node/component.html', 'search/components/criteria/item-region/match/component.html', 'search/components/criteria/item-region/numeric/component.html', 'search/components/criteria/item-region/region/component.html', 'search/components/criteria/item-region/string-terms/component.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/facets/taxonomy/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/panel/classification/component.html', 'search/components/panel/taxonomies-panel/component.html', 'search/components/panel/taxonomy-panel/component.html', 'search/components/panel/term-panel/component.html', 'search/components/panel/vocabulary-panel/component.html', 'search/components/result/coverage-result/component.html', 'search/components/result/datasets-result-table/component.html', 'search/components/result/graphics-result/component.html', 'search/components/result/networks-result-table/component.html', 'search/components/result/pagination/component.html', 'search/components/result/search-result/component.html', 'search/components/result/search-result/coverage.html', 'search/components/result/search-result/graphics.html', 'search/components/result/search-result/list.html', 'search/components/result/studies-result-table/component.html', 'search/components/result/tabs-order-count/component.html', 'search/components/result/variables-result-table/component.html', 'search/components/search-box-region/component.html', 'search/components/study-filter-shortcut/component.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/target-template.html', 'search/views/list/pagination-template.html', 'search/views/search-layout.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search.html', 'search/views/search2.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
 
 angular.module("access/views/data-access-request-documents-view.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("access/views/data-access-request-documents-view.html",
@@ -15741,6 +15788,113 @@ angular.module("search/components/result/variables-result-table/component.html",
     "</div>");
 }]);
 
+angular.module("search/components/search-box-region/component.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("search/components/search-box-region/component.html",
+    "<div id=\"search-region\" class=\"{{tabs && tabs.length>1 ? 'tab-content voffset4' : ''}}\">\n" +
+    "  <div ng-if=\"$ctrl.options.showSearchBox\" id=\"search-box-region\" class=\"{{hasFacetedTaxonomies ? '' : 'row'}}\">\n" +
+    "    <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-3'}}\"></div>\n" +
+    "    <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-6'}}\">\n" +
+    "      <script type=\"text/ng-template\" id=\"customTemplate.html\">\n" +
+    "        <a ng-if=\"match.model.id\">\n" +
+    "          <table style=\"border:none;\">\n" +
+    "            <tbody>\n" +
+    "            <tr>\n" +
+    "              <td style=\"min-width: 30px;\">\n" +
+    "                <span title=\"{{match.model.target + '-classifications' | translate}}\">\n" +
+    "                  <i class=\"{{'i-obiba-large i-obiba-' + match.model.target}}\"></i>\n" +
+    "                </span>\n" +
+    "              </td>\n" +
+    "              <td>\n" +
+    "            <span\n" +
+    "              uib-popover-html=\"match.model.itemDescription | uibTypeaheadHighlight:query\"\n" +
+    "              popover-title=\"{{match.model.itemTitle}}\"\n" +
+    "              popover-placement=\"bottom\"\n" +
+    "              popover-trigger=\"'mouseenter'\"\n" +
+    "              ng-bind-html=\"match.model.itemTitle | uibTypeaheadHighlight:query\">\n" +
+    "            </span>\n" +
+    "                <small class=\"help-block no-margin\" title=\"{{match.model.itemParentDescription}}\">\n" +
+    "                  {{match.model.itemParentTitle}}\n" +
+    "                </small>\n" +
+    "              </td>\n" +
+    "            </tr>\n" +
+    "            </tbody>\n" +
+    "          </table>\n" +
+    "        </a>\n" +
+    "        <a ng-if=\"!match.model.id\" class=\"{{match.model.status}}\">\n" +
+    "          <small class=\"help-block no-margin\">\n" +
+    "            {{match.model.message}}\n" +
+    "          </small>\n" +
+    "        </a>\n" +
+    "      </script>\n" +
+    "      <span class=\"input-group input-group-sm\">\n" +
+    "        <span class=\"input-group-btn\" uib-dropdown>\n" +
+    "          <button type=\"button\" class=\"btn btn-primary\" uib-dropdown-toggle>\n" +
+    "            {{'taxonomy.target.' + ($ctrl.documents.search.target ? $ctrl.documents.search.target : 'all')| translate}}\n" +
+    "            <span class=\"caret\"></span>\n" +
+    "          </button>\n" +
+    "          <ul uib-dropdown-menu role=\"menu\">\n" +
+    "            <li>\n" +
+    "              <a href ng-click=\"$ctrl.selectSearchTarget()\" translate>taxonomy.target.all</a>\n" +
+    "            </li>\n" +
+    "            <li ng-repeat=\"target in $ctrl.targets\" role=\"menuitem\">\n" +
+    "              <a href ng-click=\"$ctrl.selectSearchTarget(target)\">{{'taxonomy.target.' + target | translate}}</a>\n" +
+    "            </li>\n" +
+    "          </ul>\n" +
+    "        </span>\n" +
+    "        <input type=\"text\" ng-model=\"$ctrl.selectedCriteria\" placeholder=\"{{'search.placeholder.' + ($ctrl.documents.search.target ? $ctrl.documents.search.target : 'all') | translate}}\"\n" +
+    "          uib-typeahead=\"criteria for criteria in $ctrl.searchCriteria($viewValue)\" typeahead-min-length=\"2\" typeahead-loading=\"$ctrl.documents.search.active\"\n" +
+    "          typeahead-template-url=\"customTemplate.html\" typeahead-on-select=\"$ctrl.selectCriteria($item)\" class=\"form-control\">\n" +
+    "        <span class=\"input-group-addon\">\n" +
+    "          <i class=\"fa fa-search\"></i>\n" +
+    "        </span>\n" +
+    "        <span ng-if=\"$ctrl.options.SearchHelpLinkUrl\" class=\"input-group-btn\">\n" +
+    "          <a type=\"button\" target=\"_blank\" class=\"btn btn-default\" href=\"{{$ctrl.options.SearchHelpLinkUrl}}\">\n" +
+    "            <span class=\"fa fa-question-circle\"></span> {{$ctrl.options.SearchHelpLinkLabel}}</a>\n" +
+    "        </span>\n" +
+    "      </span>\n" +
+    "\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "  <div ng-if=\"$ctrl.options.showSearchBrowser\" id=\"search-selector-region\" class=\"{{hasFacetedTaxonomies ? '' : 'row'}}\">\n" +
+    "    <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-3'}}\"></div>\n" +
+    "    <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-6'}}\">\n" +
+    "      <small>\n" +
+    "        <ul class=\"nav nav-pills taxo-element\">\n" +
+    "          <li ng-if=\"hasClassificationsTitle\">\n" +
+    "            <label class=\"nav-label\" translate>search.classifications-title</label>\n" +
+    "          </li>\n" +
+    "          <li ng-repeat=\"t in $ctrl.taxonomyNav track by $index\" title=\"{{$ctrl.translateTaxonomyNav(t, 'description')}}\">\n" +
+    "            <a href ng-click=\"$ctrl.showTaxonomy(t.target, t.name)\" ng-if=\"!t.terms\">{{$ctrl.translateTaxonomyNav(t, 'title')}}</a>\n" +
+    "            <span uib-dropdown ng-if=\"t.terms\">\n" +
+    "              <ul class=\"nav nav-pills\">\n" +
+    "                <li>\n" +
+    "                  <a href uib-dropdown-toggle>{{$ctrl.translateTaxonomyNav(t, 'title')}}\n" +
+    "                    <span class=\"caret\"></span>\n" +
+    "                  </a>\n" +
+    "                </li>\n" +
+    "              </ul>\n" +
+    "              <ul uib-dropdown-menu class=\"innerul\">\n" +
+    "                <li ng-repeat=\"st in t.terms\">\n" +
+    "                  <a href ng-click=\"$ctrl.showTaxonomy(t.target, st.name)\" title=\"{{$ctrl.translateTaxonomyNav(st, 'description')}}\">{{$ctrl.translateTaxonomyNav(st, 'title')}}</a>\n" +
+    "                </li>\n" +
+    "              </ul>\n" +
+    "            </span>\n" +
+    "          </li>\n" +
+    "          <li>\n" +
+    "            <a href ng-click=\"$ctrl.goToClassifications()\" title=\"{{'search.classifications-show' | translate}}\">\n" +
+    "              <span ng-if=\"hasClassificationsLinkLabel\" translate>search.classifications-link</span>\n" +
+    "              <i class=\"fa fa-ellipsis-h\" ng-if=\"!hasClassificationsLinkLabel\"></i>\n" +
+    "            </a>\n" +
+    "          </li>\n" +
+    "        </ul>\n" +
+    "      </small>\n" +
+    "    </div>\n" +
+    "  </div>\n" +
+    "  <taxonomies-panel ng-if=\"$ctrl.options.showSearchBrowser\" taxonomy-name=\"$ctrl.taxonomyName\" target=\"$ctrl.target\" on-select-term=\"$ctrl.selectTerm\"\n" +
+    "    on-close=\"$ctrl.clearTaxonomy\" lang=\"$ctrl.lang\" taxonomies-shown=\"$ctrl.taxonomiesShown\"></taxonomies-panel>\n" +
+    "</div>");
+}]);
+
 angular.module("search/components/study-filter-shortcut/component.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/components/study-filter-shortcut/component.html",
     "<div class=\"voffset2\">\n" +
@@ -16085,7 +16239,7 @@ angular.module("search/views/search-layout.html", []).run(["$templateCache", fun
     "\n" +
     "    <div ng-switch on=\"search.layout\">\n" +
     "      <div ng-switch-when=\"layout1\">\n" +
-    "        <ng-include  src=\"'search/views/search.html'\"></ng-include>\n" +
+    "        <ng-include src=\"'search/views/search.html'\"></ng-include>\n" +
     "      </div>\n" +
     "      <div ng-switch-default>\n" +
     "        <ng-include src=\"'search/views/search2.html'\"></ng-include>\n" +
@@ -16207,111 +16361,16 @@ angular.module("search/views/search.html", []).run(["$templateCache", function($
     "                    on-refresh=\"refreshQuery\" lang=\"lang\"></taxonomies-facets-panel>\n" +
     "    </div>\n" +
     "    <div class=\"{{hasFacetedTaxonomies ? 'col-md-9' : 'col-md-12'}}\">\n" +
-    "\n" +
-    "      <!-- Search box region -->\n" +
-    "      <div id=\"search-region\" class=\"{{tabs && tabs.length>1 ? 'tab-content voffset4' : ''}}\">\n" +
-    "        <div ng-if=\"options.showSearchBox\" id=\"search-box-region\" class=\"{{hasFacetedTaxonomies ? '' : 'row'}}\">\n" +
-    "          <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-3'}}\"></div>\n" +
-    "          <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-6'}}\">\n" +
-    "            <script type=\"text/ng-template\" id=\"customTemplate.html\">\n" +
-    "              <a ng-if=\"match.model.id\">\n" +
-    "                <table style=\"border:none;\">\n" +
-    "                  <tbody>\n" +
-    "                  <tr>\n" +
-    "                    <td style=\"min-width: 30px;\">\n" +
-    "                  <span title=\"{{match.model.target + '-classifications' | translate}}\">\n" +
-    "                    <i class=\"{{'i-obiba-large i-obiba-' + match.model.target}}\"></i>\n" +
-    "                  </span>\n" +
-    "                    </td>\n" +
-    "                    <td>\n" +
-    "                  <span\n" +
-    "                          uib-popover-html=\"match.model.itemDescription | uibTypeaheadHighlight:query\"\n" +
-    "                          popover-title=\"{{match.model.itemTitle}}\"\n" +
-    "                          popover-placement=\"bottom\"\n" +
-    "                          popover-trigger=\"'mouseenter'\"\n" +
-    "                          ng-bind-html=\"match.model.itemTitle | uibTypeaheadHighlight:query\">\n" +
-    "                  </span>\n" +
-    "                      <small class=\"help-block no-margin\" title=\"{{match.model.itemParentDescription}}\">\n" +
-    "                        {{match.model.itemParentTitle}}\n" +
-    "                      </small>\n" +
-    "                    </td>\n" +
-    "                  </tr>\n" +
-    "                  </tbody>\n" +
-    "                </table>\n" +
-    "              </a>\n" +
-    "              <a ng-if=\"!match.model.id\" class=\"{{match.model.status}}\">\n" +
-    "                <small class=\"help-block no-margin\">\n" +
-    "                  {{match.model.message}}\n" +
-    "                </small>\n" +
-    "              </a>\n" +
-    "            </script>\n" +
-    "          <span class=\"input-group input-group-sm\">\n" +
-    "            <span class=\"input-group-btn\" uib-dropdown>\n" +
-    "              <button type=\"button\" class=\"btn btn-primary\" uib-dropdown-toggle>\n" +
-    "                {{'taxonomy.target.' + (documents.search.target ? documents.search.target : 'all')| translate}} <span\n" +
-    "                      class=\"caret\"></span>\n" +
-    "              </button>\n" +
-    "              <ul uib-dropdown-menu role=\"menu\">\n" +
-    "                <li>\n" +
-    "                  <a href ng-click=\"selectSearchTarget()\" translate>taxonomy.target.all</a>\n" +
-    "                </li>\n" +
-    "                <li ng-repeat=\"target in targets\" role=\"menuitem\"><a href ng-click=\"selectSearchTarget(target)\">{{'taxonomy.target.'\n" +
-    "                  + target | translate}}</a></li>\n" +
-    "              </ul>\n" +
-    "            </span>\n" +
-    "            <input type=\"text\" ng-model=\"search.selectedCriteria\"\n" +
-    "                   placeholder=\"{{'search.placeholder.' + (documents.search.target ? documents.search.target : 'all') | translate}}\"\n" +
-    "                   uib-typeahead=\"criteria for criteria in searchCriteria($viewValue)\"\n" +
-    "                   typeahead-min-length=\"2\"\n" +
-    "                   typeahead-loading=\"documents.search.active\"\n" +
-    "                   typeahead-template-url=\"customTemplate.html\"\n" +
-    "                   typeahead-on-select=\"selectCriteria($item)\"\n" +
-    "                   class=\"form-control\">\n" +
-    "            <span class=\"input-group-addon\"><i class=\"fa fa-search\"></i></span>\n" +
-    "            <span ng-if=\"options.SearchHelpLinkUrl\" class=\"input-group-btn\">\n" +
-    "              <a type=\"button\" target=\"_blank\" class=\"btn btn-default\" href=\"{{options.SearchHelpLinkUrl}}\">\n" +
-    "                <span class=\"fa fa-question-circle\"></span> {{options.SearchHelpLinkLabel}}</a>\n" +
-    "            </span>\n" +
-    "          </span>\n" +
-    "\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "        <div ng-if=\"options.showSearchBrowser\" id=\"search-selector-region\" class=\"{{hasFacetedTaxonomies ? '' : 'row'}}\">\n" +
-    "          <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-3'}}\"></div>\n" +
-    "          <div class=\"{{hasFacetedTaxonomies ? '' : 'col-md-6'}}\">\n" +
-    "            <small>\n" +
-    "              <ul class=\"nav nav-pills taxo-element\">\n" +
-    "                <li ng-if=\"hasClassificationsTitle\">\n" +
-    "                  <label class=\"nav-label\" translate>search.classifications-title</label>\n" +
-    "                </li>\n" +
-    "                <li ng-repeat=\"t in taxonomyNav track by $index\" title=\"{{translateTaxonomyNav(t, 'description')}}\">\n" +
-    "                  <a href ng-click=\"showTaxonomy(t.target, t.name)\" ng-if=\"!t.terms\">{{translateTaxonomyNav(t, 'title')}}</a>\n" +
-    "            <span uib-dropdown ng-if=\"t.terms\">\n" +
-    "              <ul class=\"nav nav-pills\">\n" +
-    "                <li>\n" +
-    "                  <a href uib-dropdown-toggle>{{translateTaxonomyNav(t, 'title')}} <span class=\"caret\"></span></a>\n" +
-    "                </li>\n" +
-    "              </ul>\n" +
-    "              <ul uib-dropdown-menu class=\"innerul\">\n" +
-    "                <li ng-repeat=\"st in t.terms\">\n" +
-    "                  <a href ng-click=\"showTaxonomy(t.target, st.name)\" title=\"{{translateTaxonomyNav(st, 'description')}}\">{{translateTaxonomyNav(st, 'title')}}</a>\n" +
-    "                </li>\n" +
-    "              </ul>\n" +
-    "            </span>\n" +
-    "                </li>\n" +
-    "                <li>\n" +
-    "                  <a href ng-click=\"goToClassifications()\" title=\"{{'search.classifications-show' | translate}}\">\n" +
-    "                    <span ng-if=\"hasClassificationsLinkLabel\" translate>search.classifications-link</span>\n" +
-    "                    <i class=\"fa fa-ellipsis-h\" ng-if=\"!hasClassificationsLinkLabel\"></i>\n" +
-    "                  </a>\n" +
-    "                </li>\n" +
-    "              </ul>\n" +
-    "            </small>\n" +
-    "          </div>\n" +
-    "        </div>\n" +
-    "        <taxonomies-panel ng-if=\"options.showSearchBrowser\" taxonomy-name=\"taxonomyName\" target=\"target\" on-select-term=\"onSelectTerm\"\n" +
-    "                          on-close=\"clearTaxonomy\" lang=\"lang\" taxonomies-shown=\"taxonomiesShown\"></taxonomies-panel>\n" +
-    "      </div>\n" +
+    "      <search-box-region \n" +
+    "        targets=\"targets\"\n" +
+    "        options=\"options\" \n" +
+    "        alert-id=\"'SearchController'\" \n" +
+    "        lang=\"lang\"\n" +
+    "        taxonomy-nav=\"taxonomyNav\"\n" +
+    "        on-select-criteria=\"selectCriteria(item)\"\n" +
+    "        on-goto-classifications=\"goToClassifications()\",\n" +
+    "        on-select-term=\"onSelectTerm(target, taxonomy, vocabulary, args)\">\n" +
+    "      </search-box-region>\n" +
     "\n" +
     "      <div ng-if=\"hasFacetedTaxonomies && hasFacetedNavigationHelp && !(search.criteria.children && search.criteria.children.length > 0)\">\n" +
     "        <p class=\"help-block\" translate>search.faceted-navigation-help</p>\n" +
@@ -16391,10 +16450,6 @@ angular.module("search/views/search2.html", []).run(["$templateCache", function(
     "            on-toggle=\"onTaxonomyFilterPanelToggleVisibility(target, taxonomy)\"></meta-taxonomy-filter-panel>\n" +
     "      </div>\n" +
     "      <div class=\"col-md-9\">\n" +
-    "        <div\n" +
-    "            ng-if=\"hasFacetedTaxonomies && hasFacetedNavigationHelp && !(search.criteria.children && search.criteria.children.length > 0)\">\n" +
-    "          <p class=\"help-block\" translate>search.faceted-navigation-help</p>\n" +
-    "        </div>\n" +
     "        <!-- Search Results region -->\n" +
     "        <div class=\"panel panel-default\" ng-if=\"search.showTaxonomyPanel\">\n" +
     "          <taxonomy-filter-panel\n" +
