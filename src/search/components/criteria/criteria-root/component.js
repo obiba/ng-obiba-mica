@@ -17,7 +17,7 @@ var CRITERIA_ITEM_EVENT = {
 };
 
 (function () {  
-  function CriteriaRoot() {
+  function CriteriaRootDirective() {
     return {
       restrict: 'EA',
       replace: true,
@@ -42,5 +42,5 @@ var CRITERIA_ITEM_EVENT = {
     };
   }
 
-  ngObibaMica.search.directive('criteriaRoot', CriteriaRoot);
+  ngObibaMica.search.directive('criteriaRoot', CriteriaRootDirective);
 })();

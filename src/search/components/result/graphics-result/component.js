@@ -7,7 +7,7 @@ ngObibaMica.search
     'RqlQueryService',
     '$filter',
     '$scope',
-    'D3GeoConfig', 
+    'D3GeoConfig',
     'D3ChartConfig',
     function (GraphicChartsConfig,
       GraphicChartsUtils,

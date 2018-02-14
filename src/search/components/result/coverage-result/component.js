@@ -575,7 +575,7 @@ ngObibaMica.search
         }
       });
 
-      $scope.updateCriteria = function (id, term, idx, type) { //
+      $scope.updateCriteria = function (id, term, idx, type) {
         var vocabulary = $scope.bucket.startsWith('dce') ? 'dceId' : 'id';
         var criteria = { varItem: RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, term.taxonomyName, term.vocabularyName, term.entity.name) };
 

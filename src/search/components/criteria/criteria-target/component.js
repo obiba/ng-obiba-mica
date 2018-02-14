@@ -10,7 +10,7 @@
 
 'use strict';
 (function () {
-  function CriteriaTarget() {
+  function CriteriaTargetDirective() {
     return {
       restrict: 'EA',
       replace: true,
@@ -23,5 +23,5 @@
     };
   }
 
-  ngObibaMica.search.directive('criteriaTarget', CriteriaTarget);
+  ngObibaMica.search.directive('criteriaTarget', CriteriaTargetDirective);
 })();

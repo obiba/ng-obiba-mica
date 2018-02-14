@@ -127,10 +127,10 @@
               </div>
               <div class="progress no-margin">
                 <div class="progress-bar progress-bar-transparent" role="progressbar" aria-valuenow="{{::col.start}}" aria-valuemin="{{::col.min}}"
-                  aria-valuemax="{{::col.start}}" style="{{'width: ' + col.progressStart + '%'}}">
+                  aria-valuemax="{{::col.start}}" ng-style="{'width': col.progressStart + '%'}">
                 </div>
                 <div class="{{'progress-bar progress-bar-' + col.progressClass}}" role="progressbar" aria-valuenow="{{col.current}}" aria-valuemin="{{::col.start}}"
-                  aria-valuemax="{{::col.end ? col.end : col.current}}" style="{{'width: ' + col.progress + '%'}}">
+                  aria-valuemax="{{::col.end ? col.end : col.current}}" ng-style="{'width': col.progress + '%'}">
                 </div>
               </div>
             </div>
