@@ -28,7 +28,7 @@ var ngObibaMica;
     'angularUtils.directives.dirPagination'
   ]);
 
-  ngObibaMica.NgObibaMicaUrlProvider = function() {
+  ngObibaMica.NgObibaMicaUrlProvider = function () {
     var registry = {
       'DataAccessClientDetailPath': '',
       'DataAccessClientListPath': '',
@@ -91,7 +91,7 @@ var ngObibaMica;
     };
   };
 
-  ngObibaMica.NgObibaMicaTemplateUrlFactory = function(){
+  ngObibaMica.NgObibaMicaTemplateUrlFactory = function () {
     var templates = {
       'searchStudiesResultTable': 'search/components/result/studies-result-table/component.html',
       'searchNetworksResultTable': 'search/components/result/networks-result-table/component.html',
@@ -104,7 +104,7 @@ var ngObibaMica;
       'searchResultCoverage': 'search/components/result/search-result/coverage.html',
       'searchResultGraphics': 'search/components/result/search-result/graphics.html'
     };
-    var factory = {registry: null};
+    var factory = { registry: null };
 
     function TemplateUrlProvider(registry) {
       var urlRegistry = registry;
@@ -163,8 +163,8 @@ var ngObibaMica;
     };
   };
 
-  ngObibaMica.ServerConfigResourceProvider = function() {
-    var provider  = this;
+  ngObibaMica.ServerConfigResourceProvider = function () {
+    var provider = this;
 
     function setFactory(value) {
       provider.$get = value;
@@ -173,7 +173,7 @@ var ngObibaMica;
     /**
      * Default
      */
-    provider.$get = function() {
+    provider.$get = function () {
       throw new Error('The provider factory method $get() must be overridden by client code.');
     };
 

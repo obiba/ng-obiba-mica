@@ -11,7 +11,7 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.ObibaSearchConfig = function () {
+  function ObibaSearchConfig() {
     var options = {
       networks: {
         showSearchTab: 1
@@ -40,7 +40,7 @@
     this.getOptions = function () {
       return angular.copy(options);
     };
-  };
+  }
 
-  ngObibaMica.search.service('ObibaSearchConfig', ngObibaMica.search.ObibaSearchConfig);
+  ngObibaMica.search.service('ObibaSearchConfig', ObibaSearchConfig);
 })();

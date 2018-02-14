@@ -10,7 +10,6 @@
 
 'use strict';
 
-
 /* exported DISPLAY_TYPES */
 var DISPLAY_TYPES = {
   LIST: 'list',

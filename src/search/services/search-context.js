@@ -11,7 +11,7 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.SearchContext = function () {
+  function SearchContext() {
     var selectedLocale = null;
 
     this.setLocale = function (locale) {
@@ -22,7 +22,7 @@
       return selectedLocale;
     };
 
-  };
+  }
 
-  ngObibaMica.search.service('SearchContext', ngObibaMica.search.SearchContext);
+  ngObibaMica.search.service('SearchContext', SearchContext);
 })();

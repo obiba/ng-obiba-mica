@@ -12,7 +12,7 @@
 
 (function () {
 
-  ngObibaMica.search.RqlQueryUtils = function(VocabularyService) {
+  function RqlQueryUtils(VocabularyService) {
 
     /**
      * Finds the parent node to which new queries can be added
@@ -462,8 +462,8 @@
     this.addLimit = addLimit;
     this.addSort = addSort;
     this.criteriaId = criteriaId;
-  };
+  }
 
-  ngObibaMica.search.service('RqlQueryUtils', ['VocabularyService', ngObibaMica.search.RqlQueryUtils]);
+  ngObibaMica.search.service('RqlQueryUtils', ['VocabularyService', RqlQueryUtils]);
 
 })();

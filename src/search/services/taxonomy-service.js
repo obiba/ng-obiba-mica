@@ -10,9 +10,9 @@
 
 'use strict';
 
-(function() {
+(function () {
 
-  ngObibaMica.search.TaxonomyService = function($q, TaxonomiesResource, TaxonomyResource, VocabularyService) {
+  function TaxonomyService($q, TaxonomiesResource, TaxonomyResource, VocabularyService) {
 
     /**
      * @returns Returns a taxonomy
@@ -32,7 +32,7 @@
     }
 
     function sortTaxonomies(order, taxonomies) {
-      taxonomies.sort(function(a, b) {
+      taxonomies.sort(function (a, b) {
         return order.indexOf(a.name) - order.indexOf(b.name);
       });
     }
@@ -63,15 +63,15 @@
     function getTaxonomies(target, taxonomyNames) {
       var deferred = $q.defer();
       if (Array.isArray(taxonomyNames)) {
-        getTaxonomiesInternal(target, taxonomyNames).then(function(taxonomies) {
-          taxonomies.forEach(function(taxonomy) {
+        getTaxonomiesInternal(target, taxonomyNames).then(function (taxonomies) {
+          taxonomies.forEach(function (taxonomy) {
             taxonomy.vocabularies = VocabularyService.visibleVocabularies(taxonomy.vocabularies);
           });
           sortTaxonomies(taxonomyNames, taxonomies);
           deferred.resolve(taxonomies);
         });
       } else {
-        getTaxonomy(target, taxonomyNames).then(function(taxonomy) {
+        getTaxonomy(target, taxonomyNames).then(function (taxonomy) {
           taxonomy.vocabularies = VocabularyService.visibleVocabularies(taxonomy.vocabularies);
           deferred.resolve(taxonomy);
         });
@@ -83,10 +83,10 @@
     this.findVocabularyInTaxonomy = findVocabularyInTaxonomy;
     this.getTaxonomy = getTaxonomy;
     this.getTaxonomies = getTaxonomies;
-  };
+  }
 
   ngObibaMica.search
     .service('TaxonomyService',
-      ['$q', 'TaxonomiesResource', 'TaxonomyResource', 'VocabularyService', ngObibaMica.search.TaxonomyService]);
+      ['$q', 'TaxonomiesResource', 'TaxonomyResource', 'VocabularyService', TaxonomyService]);
 
 })();

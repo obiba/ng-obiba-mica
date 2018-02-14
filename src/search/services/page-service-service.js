@@ -11,7 +11,7 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.PageUrlService = function (ngObibaMicaUrl, StringUtils, urlEncode) {
+  function PageUrlService(ngObibaMicaUrl, StringUtils, urlEncode) {
 
     this.studyPage = function (id, type) {
       var sType = (type.toLowerCase().indexOf('individual') > -1 ? 'individual' : 'harmonization') + '-study';
@@ -41,7 +41,7 @@
     };
 
     return this;
-  };
+  }
 
-  ngObibaMica.search.service('PageUrlService',['ngObibaMicaUrl', 'StringUtils', 'urlEncode',ngObibaMica.search.PageUrlService]);
+  ngObibaMica.search.service('PageUrlService', ['ngObibaMicaUrl', 'StringUtils', 'urlEncode', PageUrlService]);
 })();

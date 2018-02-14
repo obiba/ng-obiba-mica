@@ -10,9 +10,9 @@
 
 'use strict';
 
-(function() {
+(function () {
 
-  ngObibaMica.search.VocabularyService = function($translate, LocalizedValues, MetaTaxonomyService) {
+  function VocabularyService($translate, LocalizedValues, MetaTaxonomyService) {
 
     const TOKEN_LENGTH = 1;
 
@@ -49,9 +49,9 @@
         return (vocabulariesToFilter || []).filter(function (vocabulary) {
           vocabulary.filteredTerms = (vocabulary.terms || []).filter(function (term) {
             // Filter on configurable field
-            var toMatchField = fieldsToFilter.reduce(function(toMatchField, field){
+            var toMatchField = fieldsToFilter.reduce(function (toMatchField, field) {
               return toMatchField + ' ' + translateField(term[field]);
-            },fieldsToFilter[0] );
+            }, fieldsToFilter[0]);
             // term is selected when each of the token is included
             var toMatch = asciiFold(toMatchField).trim().toLowerCase();
             return tokens.map(function (token) {
@@ -63,7 +63,7 @@
                 return toMatch.indexOf(ntoken) === -1;
               }
               return toMatch.indexOf(token) >= 0;
-            }).reduce(function(acc, val) {
+            }).reduce(function (acc, val) {
               return acc && val;
             }, true);
 
@@ -79,7 +79,7 @@
         return false;
       }
 
-      var hidden = vocabulary.attributes ? vocabulary.attributes.filter(function(a) {
+      var hidden = vocabulary.attributes ? vocabulary.attributes.filter(function (a) {
         return a.key === 'hidden';
       }).pop() : null;
 
@@ -91,9 +91,9 @@
         return false;
       }
 
-      var result = vocabulary.attributes.filter(function(attribute) {
-        return ['hidden' ,'facet'].indexOf(attribute.key) > -1;
-      }).reduce(function(a, i) {
+      var result = vocabulary.attributes.filter(function (attribute) {
+        return ['hidden', 'facet'].indexOf(attribute.key) > -1;
+      }).reduce(function (a, i) {
         a[i.key] = i.value;
         return a;
       }, {});
@@ -102,9 +102,9 @@
     }
 
     function findVocabularyAttributes(vocabulary, pattern) {
-      return (vocabulary.attributes || []).filter(function(attribute){
+      return (vocabulary.attributes || []).filter(function (attribute) {
         return attribute.key.search(pattern) > -1;
-      }).reduce(function(a, i) {
+      }).reduce(function (a, i) {
         a[i.key] = i.value;
         return a;
       }, {});
@@ -207,12 +207,12 @@
     this.sortVocabularyTerms = sortVocabularyTerms;
     this.sortFilteredVocabularyTerms = sortFilteredVocabularyTerms;
     this.vocabularyAlias = vocabularyAlias;
-    this.vocabularyField= vocabularyField;
+    this.vocabularyField = vocabularyField;
 
     return this;
-  };
+  }
 
   ngObibaMica.search.service('VocabularyService',
-    ['$translate','LocalizedValues', 'MetaTaxonomyService', ngObibaMica.search.VocabularyService]);
+    ['$translate', 'LocalizedValues', 'MetaTaxonomyService', VocabularyService]);
 
 })();

@@ -11,7 +11,7 @@
 'use strict';
 
 (function () {
-  ngObibaMica.search.StudyFilterShortcutService = function ($location, RqlQueryService) {
+  function StudyFilterShortcutService($location, RqlQueryService) {
     function getCurrentClassName(rqlQuery) {
       rqlQuery = rqlQuery || RqlQueryService.parseQuery($location.search().query);
       var targetQuery = RqlQueryService.findTargetQuery(QUERY_TARGETS.STUDY, rqlQuery);
@@ -98,8 +98,8 @@
         choseHarmonization: classNameQueryHasHarmonizationStudyArg(getCurrentClassName())
       };
     };
-  };
+  }
 
   ngObibaMica.search.service('StudyFilterShortcutService',
-    ['$location', 'RqlQueryService', ngObibaMica.search.StudyFilterShortcutService]);
+    ['$location', 'RqlQueryService', StudyFilterShortcutService]);
 })();
