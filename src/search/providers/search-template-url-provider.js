@@ -9,11 +9,14 @@
  */
 
 'use strict';
+
+/* global NgObibaMicaTemplateUrlFactory */
+
 (function () {
 
   ngObibaMica.search
     .config(['$provide', function ($provide) {
-      $provide.provider('ngObibaMicaSearchTemplateUrl', new ngObibaMica.NgObibaMicaTemplateUrlFactory().create(
+      $provide.provider('ngObibaMicaSearchTemplateUrl', new NgObibaMicaTemplateUrlFactory().create(
         {
           search: { header: null, footer: null },
           searchStudiesResultTable: { template: null },
