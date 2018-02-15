@@ -157,9 +157,11 @@ function typeToTarget(type) {
     var self = this;
     var searchOptions = ngObibaMicaSearch.getOptions();
     this.findItemNodeById = function (root, targetId, result, strict) {
+      var splitTagetId = targetId.split('.');
+
       if (root && root.children && result) {
         return root.children.some(function (child) {
-          if (strict ? targetId === child.id : targetId.indexOf(child.id) > -1) {
+          if (strict ? targetId === child.id : (child.id && child.id.split('.').reduce(function (acc, val) { return acc && splitTagetId.indexOf(val) > -1; }, true))) {
             result.item = child;
             return true;
           }
