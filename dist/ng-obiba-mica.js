@@ -19,194 +19,194 @@
 
 var ngObibaMica;
 
-(function () {
+/* exported NgObibaMicaTemplateUrlFactory */
+function NgObibaMicaTemplateUrlFactory() {
+  var templates = {
+    'searchStudiesResultTable': 'search/components/result/studies-result-table/component.html',
+    'searchNetworksResultTable': 'search/components/result/networks-result-table/component.html',
+    'searchDatasetsResultTable': 'search/components/result/datasets-result-table/component.html',
+    'searchCriteriaRegionTemplate': 'search/components/criteria/item-region/region/component.html',
+    'vocabularyFilterDetailHeading': 'search/components/vocabulary-filter-detail-heading/component.html',
+    'CriterionDropdownTemplate': 'search/components/criteria/item-region/dropdown/component.html',
+    'searchResultList': 'search/components/result/search-result/list.html',
+    'searchInputList': 'lists/views/input-search-widget/input-search-widget-template.html',
+    'searchResultCoverage': 'search/components/result/search-result/coverage.html',
+    'searchResultGraphics': 'search/components/result/search-result/graphics.html'
+  };
+  var factory = { registry: null };
 
-  ngObibaMica = angular.module('ngObibaMica', [
-    'schemaForm',
-    'ngCookies',
-    'obiba.mica.utils',
-    'obiba.mica.file',
-    'obiba.mica.attachment',
-    'obiba.mica.access',
-    'obiba.mica.search',
-    'obiba.mica.graphics',
-    'obiba.mica.localized',
-    'obiba.mica.fileBrowser',
-    'angularUtils.directives.dirPagination'
-  ]);
+  function TemplateUrlProvider(registry) {
+    var urlRegistry = registry;
 
-  ngObibaMica.NgObibaMicaUrlProvider = function () {
-    var registry = {
-      'DataAccessClientDetailPath': '',
-      'DataAccessClientListPath': '',
-      'DataAccessFormConfigResource': 'ws/config/data-access-form',
-      'DataAccessRequestsResource': 'ws/data-access-requests',
-      'DataAccessRequestsExportCsvResource': 'ws/data-access-requests/csv?lang=:lang',
-      'DataAccessRequestResource': 'ws/data-access-request/:id',
-      'DataAccessRequestAttachmentsUpdateResource': '/ws/data-access-request/:id/_attachments',
-      'DataAccessRequestAttachmentDownloadResource': '/ws/data-access-request/:id/attachments/:attachmentId/_download',
-      'SchemaFormAttachmentDownloadResource': '/ws/:path/form/attachments/:attachmentName/:attachmentId/_download',
-      'DataAccessRequestDownloadPdfResource': '/ws/data-access-request/:id/_pdf',
-      'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
-      'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
-      'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
-      'TempFileUploadResource': 'ws/files/temp',
-      'TempFileResource': 'ws/files/temp/:id',
-      'TaxonomiesSearchResource': 'ws/taxonomies/_search',
-      'TaxonomiesResource': 'ws/taxonomies/_filter',
-      'TaxonomyResource': 'ws/taxonomy/:taxonomy/_filter',
-      'VocabularyResource': 'ws/taxonomy/:taxonomy/vocabulary/:vocabulary/_filter',
-      'JoinQuerySearchResource': 'ws/:type/_rql',
-      'JoinQuerySearchCsvResource': 'ws/:type/_rql_csv?query=:query',
-      'JoinQuerySearchCsvReportResource': 'ws/:type/_report?query=:query',
-      'JoinQuerySearchCsvReportByNetworkResource': 'ws/:type/_report_by_network?networkId=:networkId&locale=:locale',
-      'JoinQueryCoverageResource': 'ws/variables/_coverage',
-      'JoinQueryCoverageDownloadResource': 'ws/variables/_coverage_download?query=:query',
-      'VariablePage': '',
-      'NetworkPage': '#/network/:network',
-      'StudyPage': '#/:type/:study',
-      'StudyPopulationsPage': '#/:type/:study',
-      'DatasetPage': '#/:type/:dataset',
-      'BaseUrl': '/',
-      'FileBrowserFileResource': 'ws/file/:path/',
-      'FileBrowserSearchResource': 'ws/files-search/:path',
-      'FileBrowserDownloadUrl': 'ws/draft/file-dl/:path?inline=:inline',
-      'SearchBaseUrl': '#/search',
-      'DocumentSuggestion': 'ws/:documentType/_suggest'
+    this.getHeaderUrl = function (key) {
+      if (key in urlRegistry) {
+        return urlRegistry[key].header;
+      }
+
+      return null;
     };
 
-    function UrlProvider(registry) {
-      var urlRegistry = registry;
+    this.getFooterUrl = function (key) {
+      if (key in urlRegistry) {
+        return urlRegistry[key].footer;
+      }
 
-      this.getUrl = function (resource) {
-        if (resource in urlRegistry) {
-          return urlRegistry[resource];
+      return null;
+    };
+
+    this.getTemplateUrl = function (key) {
+      if (key in urlRegistry) {
+        return urlRegistry[key].template ? urlRegistry[key].template : templates[key];
+      }
+
+      return null;
+    };
+  }
+
+
+  factory.setTemplateUrl = function (key, url) {
+    if (key in this.registry) {
+      this.registry[key].template = url;
+    }
+  };
+
+  factory.setHeaderUrl = function (key, url) {
+    if (key in this.registry) {
+      this.registry[key].header = url;
+    }
+  };
+
+  factory.setFooterUrl = function (key, url) {
+    if (key in this.registry) {
+      this.registry[key].footer = url;
+    }
+  };
+
+  factory.$get = function () {
+    return new TemplateUrlProvider(this.registry);
+  };
+
+  this.create = function (inputRegistry) {
+    factory.registry = inputRegistry;
+    return factory;
+  };
+}
+
+  (function () {
+    ngObibaMica = angular.module('ngObibaMica', [
+      'schemaForm',
+      'ngCookies',
+      'obiba.mica.utils',
+      'obiba.mica.file',
+      'obiba.mica.attachment',
+      'obiba.mica.access',
+      'obiba.mica.search',
+      'obiba.mica.graphics',
+      'obiba.mica.localized',
+      'obiba.mica.fileBrowser',
+      'angularUtils.directives.dirPagination'
+    ]);
+
+    function ServerConfigResourceProvider () {
+      var provider = this;
+    
+      function setFactory(value) {
+        provider.$get = value;
+      }
+    
+      /**
+       * Default
+       */
+      provider.$get = function () {
+        throw new Error('The provider factory method $get() must be overridden by client code.');
+      };
+    
+      /**
+       * Clients can override the $get() method to provide their MicaConfigResource object.
+       * @type {setFactory}
+       */
+      provider.setFactory = setFactory;
+    }
+
+    function NgObibaMicaUrlProvider() {
+      var registry = {
+        'DataAccessClientDetailPath': '',
+        'DataAccessClientListPath': '',
+        'DataAccessFormConfigResource': 'ws/config/data-access-form',
+        'DataAccessRequestsResource': 'ws/data-access-requests',
+        'DataAccessRequestsExportCsvResource': 'ws/data-access-requests/csv?lang=:lang',
+        'DataAccessRequestResource': 'ws/data-access-request/:id',
+        'DataAccessRequestAttachmentsUpdateResource': '/ws/data-access-request/:id/_attachments',
+        'DataAccessRequestAttachmentDownloadResource': '/ws/data-access-request/:id/attachments/:attachmentId/_download',
+        'SchemaFormAttachmentDownloadResource': '/ws/:path/form/attachments/:attachmentName/:attachmentId/_download',
+        'DataAccessRequestDownloadPdfResource': '/ws/data-access-request/:id/_pdf',
+        'DataAccessRequestCommentsResource': 'ws/data-access-request/:id/comments',
+        'DataAccessRequestCommentResource': 'ws/data-access-request/:id/comment/:commentId',
+        'DataAccessRequestStatusResource': 'ws/data-access-request/:id/_status?to=:status',
+        'TempFileUploadResource': 'ws/files/temp',
+        'TempFileResource': 'ws/files/temp/:id',
+        'TaxonomiesSearchResource': 'ws/taxonomies/_search',
+        'TaxonomiesResource': 'ws/taxonomies/_filter',
+        'TaxonomyResource': 'ws/taxonomy/:taxonomy/_filter',
+        'VocabularyResource': 'ws/taxonomy/:taxonomy/vocabulary/:vocabulary/_filter',
+        'JoinQuerySearchResource': 'ws/:type/_rql',
+        'JoinQuerySearchCsvResource': 'ws/:type/_rql_csv?query=:query',
+        'JoinQuerySearchCsvReportResource': 'ws/:type/_report?query=:query',
+        'JoinQuerySearchCsvReportByNetworkResource': 'ws/:type/_report_by_network?networkId=:networkId&locale=:locale',
+        'JoinQueryCoverageResource': 'ws/variables/_coverage',
+        'JoinQueryCoverageDownloadResource': 'ws/variables/_coverage_download?query=:query',
+        'VariablePage': '',
+        'NetworkPage': '#/network/:network',
+        'StudyPage': '#/:type/:study',
+        'StudyPopulationsPage': '#/:type/:study',
+        'DatasetPage': '#/:type/:dataset',
+        'BaseUrl': '/',
+        'FileBrowserFileResource': 'ws/file/:path/',
+        'FileBrowserSearchResource': 'ws/files-search/:path',
+        'FileBrowserDownloadUrl': 'ws/draft/file-dl/:path?inline=:inline',
+        'SearchBaseUrl': '#/search',
+        'DocumentSuggestion': 'ws/:documentType/_suggest'
+      };
+
+      function UrlProvider(registry) {
+        var urlRegistry = registry;
+
+        this.getUrl = function (resource) {
+          if (resource in urlRegistry) {
+            return urlRegistry[resource];
+          }
+
+          return null;
+        };
+      }
+
+      this.setUrl = function (key, url) {
+        if (key in registry) {
+          registry[key] = url;
         }
+      };
 
-        return null;
+      this.$get = function () {
+        return new UrlProvider(registry);
       };
     }
 
-    this.setUrl = function (key, url) {
-      if (key in registry) {
-        registry[key] = url;
-      }
-    };
+    ngObibaMica
+      .constant('USER_ROLES', {
+        all: '*',
+        admin: 'mica-administrator',
+        reviewer: 'mica-reviewer',
+        editor: 'mica-editor',
+        user: 'mica-user',
+        dao: 'mica-data-access-officer'
+      })
+      .config(['$provide', 'paginationTemplateProvider', function ($provide, paginationTemplateProvider) {
+        $provide.provider('ngObibaMicaUrl', NgObibaMicaUrlProvider);
+        $provide.provider('ObibaServerConfigResource', ServerConfigResourceProvider);
+        paginationTemplateProvider.setPath('views/pagination-template.html');
+      }]);
 
-    this.$get = function () {
-      return new UrlProvider(registry);
-    };
-  };
-
-  ngObibaMica.NgObibaMicaTemplateUrlFactory = function () {
-    var templates = {
-      'searchStudiesResultTable': 'search/components/result/studies-result-table/component.html',
-      'searchNetworksResultTable': 'search/components/result/networks-result-table/component.html',
-      'searchDatasetsResultTable': 'search/components/result/datasets-result-table/component.html',
-      'searchCriteriaRegionTemplate': 'search/components/criteria/item-region/region/component.html',
-      'vocabularyFilterDetailHeading': 'search/components/vocabulary-filter-detail-heading/component.html',
-      'CriterionDropdownTemplate': 'search/components/criteria/item-region/dropdown/component.html',
-      'searchResultList': 'search/components/result/search-result/list.html',
-      'searchInputList': 'lists/views/input-search-widget/input-search-widget-template.html',
-      'searchResultCoverage': 'search/components/result/search-result/coverage.html',
-      'searchResultGraphics': 'search/components/result/search-result/graphics.html'
-    };
-    var factory = { registry: null };
-
-    function TemplateUrlProvider(registry) {
-      var urlRegistry = registry;
-
-      this.getHeaderUrl = function (key) {
-        if (key in urlRegistry) {
-          return urlRegistry[key].header;
-        }
-
-        return null;
-      };
-
-      this.getFooterUrl = function (key) {
-        if (key in urlRegistry) {
-          return urlRegistry[key].footer;
-        }
-
-        return null;
-      };
-
-      this.getTemplateUrl = function (key) {
-        if (key in urlRegistry) {
-          return urlRegistry[key].template ? urlRegistry[key].template : templates[key];
-        }
-
-        return null;
-      };
-    }
-
-
-    factory.setTemplateUrl = function (key, url) {
-      if (key in this.registry) {
-        this.registry[key].template = url;
-      }
-    };
-
-    factory.setHeaderUrl = function (key, url) {
-      if (key in this.registry) {
-        this.registry[key].header = url;
-      }
-    };
-
-    factory.setFooterUrl = function (key, url) {
-      if (key in this.registry) {
-        this.registry[key].footer = url;
-      }
-    };
-
-    factory.$get = function () {
-      return new TemplateUrlProvider(this.registry);
-    };
-
-    this.create = function (inputRegistry) {
-      factory.registry = inputRegistry;
-      return factory;
-    };
-  };
-
-  ngObibaMica.ServerConfigResourceProvider = function () {
-    var provider = this;
-
-    function setFactory(value) {
-      provider.$get = value;
-    }
-
-    /**
-     * Default
-     */
-    provider.$get = function () {
-      throw new Error('The provider factory method $get() must be overridden by client code.');
-    };
-
-    /**
-     * Clients can override the $get() method to provide their MicaConfigResource object.
-     * @type {setFactory}
-     */
-    provider.setFactory = setFactory;
-  };
-
-  ngObibaMica
-    .constant('USER_ROLES', {
-      all: '*',
-      admin: 'mica-administrator',
-      reviewer: 'mica-reviewer',
-      editor: 'mica-editor',
-      user: 'mica-user',
-      dao: 'mica-data-access-officer'
-    })
-    .config(['$provide', 'paginationTemplateProvider', function ($provide, paginationTemplateProvider) {
-      $provide.provider('ngObibaMicaUrl', ngObibaMica.NgObibaMicaUrlProvider);
-      $provide.provider('ObibaServerConfigResource', ngObibaMica.ServerConfigResourceProvider);
-      paginationTemplateProvider.setPath('views/pagination-template.html');
-    }]);
-
-})();;/*
+  })();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
  * This program and the accompanying materials
@@ -713,6 +713,8 @@ ngObibaMica.attachment
 
 'use strict';
 
+/* global NgObibaMicaTemplateUrlFactory */
+
 ngObibaMica.access = angular.module('obiba.mica.access', [
     'pascalprecht.translate',
     'obiba.alert',
@@ -725,7 +727,7 @@ ngObibaMica.access = angular.module('obiba.mica.access', [
 
 ngObibaMica.access
   .config(['$provide', function ($provide) {
-    $provide.provider('ngObibaMicaAccessTemplateUrl', new ngObibaMica.NgObibaMicaTemplateUrlFactory().create(
+    $provide.provider('ngObibaMicaAccessTemplateUrl', new NgObibaMicaTemplateUrlFactory().create(
       {
         list: {header: null, footer: null},
         view: {header: null, footer: null},
@@ -2287,11 +2289,14 @@ ngObibaMica.search = angular.module('obiba.mica.search', [
  */
 
 'use strict';
+
+/* global NgObibaMicaTemplateUrlFactory */
+
 (function () {
 
   ngObibaMica.search
     .config(['$provide', function ($provide) {
-      $provide.provider('ngObibaMicaSearchTemplateUrl', new ngObibaMica.NgObibaMicaTemplateUrlFactory().create(
+      $provide.provider('ngObibaMicaSearchTemplateUrl', new NgObibaMicaTemplateUrlFactory().create(
         {
           search: { header: null, footer: null },
           searchStudiesResultTable: { template: null },
@@ -2794,7 +2799,146 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
   return this.list.length > 0 ? this.list[0].getTarget() : null;
 };
 
-;/*
+;'use strict';
+
+(function () {
+  function SearchControllerFacetHelperService(MetaTaxonomyService, ngObibaMicaSearch) {
+    var metaTaxonomiesPromise = MetaTaxonomyService.getMetaTaxonomiesPromise(),
+      options = ngObibaMicaSearch.getOptions(),
+      taxonomyNav = [],
+      tabOrderTodisplay = [],
+      facetedTaxonomies = {},
+      hasFacetedTaxonomies = false;
+
+    function flattenTaxonomies(terms) {
+      function termsReducer(accumulator, termsArray) {
+        return termsArray.reduce(function (acc, val) {
+          if (!Array.isArray(val.terms)) {
+            acc.push(val);
+            return acc;
+          } else {
+            return termsReducer(acc, val.terms);
+          }
+        }, accumulator || []);
+      }
+
+      return termsReducer([], terms);
+    }
+
+    function doTabOrderToDisplay(targetTabsOrder, lang) {
+      return metaTaxonomiesPromise.then(function (metaTaxonomy) {
+        targetTabsOrder.forEach(function (target) {
+          var targetVocabulary = metaTaxonomy.vocabularies.filter(function (vocabulary) {
+            if (vocabulary.name === target) {
+              tabOrderTodisplay.push(target);
+              return true;
+            }
+          }).pop();
+
+          if (targetVocabulary && targetVocabulary.terms) {
+            targetVocabulary.terms.forEach(function (term) {
+              term.target = target;
+              var title = term.title.filter(function (t) {
+                return t.locale === lang;
+              })[0];
+
+              var description = term.description ? term.description.filter(function (t) {
+                return t.locale === lang;
+              })[0] : undefined;
+
+              term.locale = {
+                title: title,
+                description: description
+              };
+
+              if (term.terms) {
+                term.terms.forEach(function (trm) {
+                  var title = trm.title.filter(function (t) {
+                    return t.locale === lang;
+                  })[0];
+
+                  var description = trm.description ? trm.description.filter(function (t) {
+                    return t.locale === lang;
+                  })[0] : undefined;
+
+                  trm.locale = {
+                    title: title,
+                    description: description
+                  };
+                });
+              }
+
+              taxonomyNav.push(term);
+            });
+          }
+        });
+      });
+    }
+
+    function doFacetedTaxonomies() {
+      return metaTaxonomiesPromise.then(function (metaTaxonomy) {
+        metaTaxonomy.vocabularies.reduce(function (accumulator, target) {
+          var taxonomies = flattenTaxonomies(target.terms);
+
+          function getTaxonomy(taxonomyName) {
+            return taxonomies.filter(function (taxonomy) {
+              return taxonomy.name === taxonomyName;
+            })[0];
+          }
+
+          function notNull(value) {
+            return value !== null && value !== undefined;
+          }
+
+          if (options.showAllFacetedTaxonomies) {
+            accumulator[target.name] = taxonomies.filter(function (taxonomy) {
+              return taxonomy.attributes && taxonomy.attributes.some(function (attribute) {
+                return attribute.key === 'showFacetedNavigation' && attribute.value.toString() === 'true';
+              });
+            });
+          } else {
+            accumulator[target.name] = (options[target.name + 'TaxonomiesOrder'] || []).map(getTaxonomy).filter(notNull);
+          }
+
+          hasFacetedTaxonomies = hasFacetedTaxonomies || accumulator[target.name].length;
+
+          return accumulator;
+        }, facetedTaxonomies);
+      });
+    }
+
+    function getTaxonomyNav() {
+      return taxonomyNav;
+    }
+
+    function getFacetedTaxonomies() {
+      return facetedTaxonomies;
+    }
+
+    function getTabOrderTodisplay() {
+      return tabOrderTodisplay;
+    }
+
+    function getHasFacetedTaxonomies() {
+      return hasFacetedTaxonomies;
+    }
+
+    function help(targetTabsOrder, lang) {
+      return Promise.all([doFacetedTaxonomies(), doTabOrderToDisplay(targetTabsOrder, lang)]).then(function () {
+        return {
+          getTaxonomyNav: getTaxonomyNav,
+          getFacetedTaxonomies: getFacetedTaxonomies,
+          getTabOrderTodisplay: getTabOrderTodisplay,
+          getHasFacetedTaxonomies: getHasFacetedTaxonomies
+        };
+      });
+    }
+
+    this.help = help;
+  }
+
+  ngObibaMica.search.service('SearchControllerFacetHelperService', ['MetaTaxonomyService', 'ngObibaMicaSearch', SearchControllerFacetHelperService]);
+})();;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
  * This program and the accompanying materials
@@ -2807,7 +2951,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
 'use strict';
 
 (function() {
-
 
   /**
    * Parses each metaTaxonomies taxonomy and returns a list of :
@@ -3229,20 +3372,13 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
   }
 
   ngObibaMica.search
-
     .controller('SearchController', [
       '$scope',
       '$rootScope',
-      '$timeout',
-      '$routeParams',
       '$location',
       '$translate',
       '$filter',
       '$cookies',
-      'TaxonomiesSearchResource',
-      'TaxonomiesResource',
-      'TaxonomyResource',
-      'VocabularyResource',
       'ngObibaMicaSearchTemplateUrl',
       'ObibaServerConfigResource',
       'JoinQuerySearchResource',
@@ -3255,22 +3391,15 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
       'SearchContext',
       'CoverageGroupByService',
       'VocabularyService',
-      'LocaleStringUtils',
-      'StringUtils',
       'EntitySuggestionRqlUtilityService',
+      'SearchControllerFacetHelperService',
       'options',
       function ($scope,
         $rootScope,
-        $timeout,
-        $routeParams,
         $location,
         $translate,
         $filter,
         $cookies,
-        TaxonomiesSearchResource,
-        TaxonomiesResource,
-        TaxonomyResource,
-        VocabularyResource,
         ngObibaMicaSearchTemplateUrl,
         ObibaServerConfigResource,
         JoinQuerySearchResource,
@@ -3283,9 +3412,8 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         SearchContext,
         CoverageGroupByService,
         VocabularyService,
-        LocaleStringUtils,
-        StringUtils,
         EntitySuggestionRqlUtilityService,
+        SearchControllerFacetHelperService,
         options) {
 
         $scope.options = options;
@@ -3319,65 +3447,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
 
         $scope.targets = [];
         $scope.lang = $translate.use();
-        $scope.metaTaxonomy = TaxonomyResource.get({
-          target: 'taxonomy',
-          taxonomy: 'Mica_taxonomy'
-        }, function (t) {
-          var stuff = t.vocabularies.map(function (v) {
-            return v.name;
-          });
-
-          $scope.targets = stuff.filter(function (target) {
-            return searchTaxonomyDisplay[target];
-          });
-
-          function flattenTaxonomies(terms) {
-            function inner(acc, terms) {
-              angular.forEach(terms, function (t) {
-                if (!t.terms) {
-                  acc.push(t);
-                  return;
-                }
-
-                inner(acc, t.terms);
-              });
-
-              return acc;
-            }
-
-            return inner([], terms);
-          }
-
-          $scope.hasFacetedTaxonomies = false;
-
-          $scope.facetedTaxonomies = t.vocabularies.reduce(function (res, target) {
-            var taxonomies = flattenTaxonomies(target.terms);
-
-            function getTaxonomy(taxonomyName) {
-              return taxonomies.filter(function (t) {
-                return t.name === taxonomyName;
-              })[0];
-            }
-
-            function notNull(t) {
-              return t !== null && t !== undefined;
-            }
-
-            if ($scope.options.showAllFacetedTaxonomies) {
-              res[target.name] = taxonomies.filter(function (t) {
-                return t.attributes && t.attributes.some(function (att) {
-                  return att.key === 'showFacetedNavigation' && att.value.toString() === 'true';
-                });
-              });
-            } else {
-              res[target.name] = ($scope.options[target.name + 'TaxonomiesOrder'] || []).map(getTaxonomy).filter(notNull);
-            }
-
-            $scope.hasFacetedTaxonomies = $scope.hasFacetedTaxonomies || res[target.name].length;
-
-            return res;
-          }, {});
-        });
 
         function initSearchTabs() {
           $scope.taxonomyNav = [];
@@ -3412,49 +3481,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
           } else if (!$scope.target) {
             $scope.target = $scope.targetTabsOrder[0];
           }
-
-          $scope.metaTaxonomy.$promise.then(function (metaTaxonomy) {
-            var tabOrderTodisplay = [];
-            $scope.targetTabsOrder.forEach(function (target) {
-              var targetVocabulary = metaTaxonomy.vocabularies.filter(function (vocabulary) {
-                if (vocabulary.name === target) {
-                  tabOrderTodisplay.push(target);
-                  return true;
-                }
-              }).pop();
-              if (targetVocabulary && targetVocabulary.terms) {
-                targetVocabulary.terms.forEach(function (term) {
-                  term.target = target;
-                  var title = term.title.filter(function (t) {
-                    return t.locale === $scope.lang;
-                  })[0];
-                  var description = term.description ? term.description.filter(function (t) {
-                    return t.locale === $scope.lang;
-                  })[0] : undefined;
-                  term.locale = {
-                    title: title,
-                    description: description
-                  };
-                  if (term.terms) {
-                    term.terms.forEach(function (trm) {
-                      var title = trm.title.filter(function (t) {
-                        return t.locale === $scope.lang;
-                      })[0];
-                      var description = trm.description ? trm.description.filter(function (t) {
-                        return t.locale === $scope.lang;
-                      })[0] : undefined;
-                      trm.locale = {
-                        title: title,
-                        description: description
-                      };
-                    });
-                  }
-                  $scope.taxonomyNav.push(term);
-                });
-              }
-            });
-            $scope.targetTabsOrder = tabOrderTodisplay;
-          });
         }
 
         function onError(response) {
@@ -4135,8 +4161,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         });
 
         $scope.$on('$locationChangeSuccess', function (event, newLocation, oldLocation) {
-          initSearchTabs();
-
           if (newLocation !== oldLocation) {
             try {
               validateBucket($location.search().bucket);
@@ -4172,6 +4196,14 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
           $scope.lang = $translate.use();
           SearchContext.setLocale($scope.lang);
           initSearchTabs();
+
+          SearchControllerFacetHelperService.help($scope.targetTabsOrder, $scope.lang).then(function (data) {
+            $scope.facetedTaxonomies = data.getFacetedTaxonomies();
+            $scope.hasFacetedTaxonomies = data.getHasFacetedTaxonomies();
+            $scope.targetTabsOrder = data.getTabOrderTodisplay();
+            $scope.taxonomyNav = data.getTaxonomyNav();
+          });
+
           executeSearchQuery();
         }
 
@@ -4587,8 +4619,8 @@ ngObibaMica.search
 
 (function () {
   function MetaTaxonomyService($q, $translate, TaxonomyResource, ngObibaMicaSearch) {
-    var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions;
-    var parser = new ngObibaMica.search.MetaTaxonomyParser(taxonomyPanelOptions);
+    var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions,
+      parser = new ngObibaMica.search.MetaTaxonomyParser(taxonomyPanelOptions);
 
     /**
      * Returns the taxonomy of taxonomy
@@ -4641,9 +4673,11 @@ ngObibaMica.search
     function getTaxonomyPanelOptions() {
       return taxonomyPanelOptions;
     }
+
     // exported functions
     this.getTaxonomyPanelOptions = getTaxonomyPanelOptions;
     this.getMetaTaxonomyForTargets = getMetaTaxonomyForTargets;
+    this.getMetaTaxonomiesPromise = getMetaTaxonomies;
   }
 
   ngObibaMica.search
@@ -4905,9 +4939,11 @@ function typeToTarget(type) {
     var self = this;
     var searchOptions = ngObibaMicaSearch.getOptions();
     this.findItemNodeById = function (root, targetId, result, strict) {
+      var splitTagetId = targetId.split('.');
+
       if (root && root.children && result) {
         return root.children.some(function (child) {
-          if (strict ? targetId === child.id : targetId.indexOf(child.id) > -1) {
+          if (strict ? targetId === child.id : (child.id && child.id.split('.').reduce(function (acc, val) { return acc && splitTagetId.indexOf(val) > -1; }, true))) {
             result.item = child;
             return true;
           }
@@ -6787,7 +6823,7 @@ var CRITERIA_ITEM_EVENT = {
 };
 
 (function () {  
-  function CriteriaRoot() {
+  function CriteriaRootDirective() {
     return {
       restrict: 'EA',
       replace: true,
@@ -6812,7 +6848,7 @@ var CRITERIA_ITEM_EVENT = {
     };
   }
 
-  ngObibaMica.search.directive('criteriaRoot', CriteriaRoot);
+  ngObibaMica.search.directive('criteriaRoot', CriteriaRootDirective);
 })();
 ;/*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -6826,7 +6862,7 @@ var CRITERIA_ITEM_EVENT = {
 
 'use strict';
 (function () {
-  function CriteriaTarget() {
+  function CriteriaTargetDirective() {
     return {
       restrict: 'EA',
       replace: true,
@@ -6839,7 +6875,7 @@ var CRITERIA_ITEM_EVENT = {
     };
   }
 
-  ngObibaMica.search.directive('criteriaTarget', CriteriaTarget);
+  ngObibaMica.search.directive('criteriaTarget', CriteriaTargetDirective);
 })();
 ;'use strict';
 
@@ -9257,7 +9293,7 @@ ngObibaMica.search
         }
       });
 
-      $scope.updateCriteria = function (id, term, idx, type) { //
+      $scope.updateCriteria = function (id, term, idx, type) {
         var vocabulary = $scope.bucket.startsWith('dce') ? 'dceId' : 'id';
         var criteria = { varItem: RqlQueryService.createCriteriaItem(QUERY_TARGETS.VARIABLE, term.taxonomyName, term.vocabularyName, term.entity.name) };
 
@@ -9459,7 +9495,7 @@ ngObibaMica.search
     'RqlQueryService',
     '$filter',
     '$scope',
-    'D3GeoConfig', 
+    'D3GeoConfig',
     'D3ChartConfig',
     function (GraphicChartsConfig,
       GraphicChartsUtils,
@@ -14504,9 +14540,9 @@ angular.module("search/components/criteria/terms-vocabulary-filter-detail/compon
     "             popover-trigger=\"'mouseenter'\"\n" +
     "             popover-popup-delay=\"250\"\n" +
     "             popover-class=\"right-panel-popover\"\n" +
-    "             for=\"term-{{$ctrl.vocabulary.name + '-' + $index}}\"\n" +
+    "             for=\"term-{{$ctrl.vocabulary.name + '-' + $index + '-' + term.name}}\"\n" +
     "             class=\"word-break\">\n" +
-    "        <input id=\"term-{{$ctrl.vocabulary.name + '-' + $index}}\"\n" +
+    "        <input id=\"term-{{$ctrl.vocabulary.name + '-' + $index + '-' + term.name}}\"\n" +
     "               type=\"checkbox\"\n" +
     "               ng-model=\"term.selected\"\n" +
     "               ng-click=\"$ctrl.clickCheckbox(term)\"> {{term.title | localizedString}}\n" +
@@ -15246,10 +15282,10 @@ angular.module("search/components/result/coverage-result/component.html", []).ru
     "              </div>\n" +
     "              <div class=\"progress no-margin\">\n" +
     "                <div class=\"progress-bar progress-bar-transparent\" role=\"progressbar\" aria-valuenow=\"{{::col.start}}\" aria-valuemin=\"{{::col.min}}\"\n" +
-    "                  aria-valuemax=\"{{::col.start}}\" style=\"{{'width: ' + col.progressStart + '%'}}\">\n" +
+    "                  aria-valuemax=\"{{::col.start}}\" ng-style=\"{'width': col.progressStart + '%'}\">\n" +
     "                </div>\n" +
     "                <div class=\"{{'progress-bar progress-bar-' + col.progressClass}}\" role=\"progressbar\" aria-valuenow=\"{{col.current}}\" aria-valuemin=\"{{::col.start}}\"\n" +
-    "                  aria-valuemax=\"{{::col.end ? col.end : col.current}}\" style=\"{{'width: ' + col.progress + '%'}}\">\n" +
+    "                  aria-valuemax=\"{{::col.end ? col.end : col.current}}\" ng-style=\"{'width': col.progress + '%'}\">\n" +
     "                </div>\n" +
     "              </div>\n" +
     "            </div>\n" +
