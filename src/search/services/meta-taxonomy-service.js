@@ -12,8 +12,8 @@
 
 (function () {
   function MetaTaxonomyService($q, $translate, TaxonomyResource, ngObibaMicaSearch) {
-    var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions;
-    var parser = new ngObibaMica.search.MetaTaxonomyParser(taxonomyPanelOptions);
+    var taxonomyPanelOptions = ngObibaMicaSearch.getOptions().taxonomyPanelOptions,
+      parser = new ngObibaMica.search.MetaTaxonomyParser(taxonomyPanelOptions);
 
     /**
      * Returns the taxonomy of taxonomy
@@ -66,9 +66,11 @@
     function getTaxonomyPanelOptions() {
       return taxonomyPanelOptions;
     }
+
     // exported functions
     this.getTaxonomyPanelOptions = getTaxonomyPanelOptions;
     this.getMetaTaxonomyForTargets = getMetaTaxonomyForTargets;
+    this.getMetaTaxonomiesPromise = getMetaTaxonomies;
   }
 
   ngObibaMica.search

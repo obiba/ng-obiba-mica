@@ -12,7 +12,6 @@
 
 (function() {
 
-
   /**
    * Parses each metaTaxonomies taxonomy and returns a list of :
    * [

@@ -57,20 +57,13 @@
   }
 
   ngObibaMica.search
-
     .controller('SearchController', [
       '$scope',
       '$rootScope',
-      '$timeout',
-      '$routeParams',
       '$location',
       '$translate',
       '$filter',
       '$cookies',
-      'TaxonomiesSearchResource',
-      'TaxonomiesResource',
-      'TaxonomyResource',
-      'VocabularyResource',
       'ngObibaMicaSearchTemplateUrl',
       'ObibaServerConfigResource',
       'JoinQuerySearchResource',
@@ -83,22 +76,15 @@
       'SearchContext',
       'CoverageGroupByService',
       'VocabularyService',
-      'LocaleStringUtils',
-      'StringUtils',
       'EntitySuggestionRqlUtilityService',
+      'SearchControllerFacetHelperService',
       'options',
       function ($scope,
         $rootScope,
-        $timeout,
-        $routeParams,
         $location,
         $translate,
         $filter,
         $cookies,
-        TaxonomiesSearchResource,
-        TaxonomiesResource,
-        TaxonomyResource,
-        VocabularyResource,
         ngObibaMicaSearchTemplateUrl,
         ObibaServerConfigResource,
         JoinQuerySearchResource,
@@ -111,9 +97,8 @@
         SearchContext,
         CoverageGroupByService,
         VocabularyService,
-        LocaleStringUtils,
-        StringUtils,
         EntitySuggestionRqlUtilityService,
+        SearchControllerFacetHelperService,
         options) {
 
         $scope.options = options;
@@ -147,65 +132,6 @@
 
         $scope.targets = [];
         $scope.lang = $translate.use();
-        $scope.metaTaxonomy = TaxonomyResource.get({
-          target: 'taxonomy',
-          taxonomy: 'Mica_taxonomy'
-        }, function (t) {
-          var stuff = t.vocabularies.map(function (v) {
-            return v.name;
-          });
-
-          $scope.targets = stuff.filter(function (target) {
-            return searchTaxonomyDisplay[target];
-          });
-
-          function flattenTaxonomies(terms) {
-            function inner(acc, terms) {
-              angular.forEach(terms, function (t) {
-                if (!t.terms) {
-                  acc.push(t);
-                  return;
-                }
-
-                inner(acc, t.terms);
-              });
-
-              return acc;
-            }
-
-            return inner([], terms);
-          }
-
-          $scope.hasFacetedTaxonomies = false;
-
-          $scope.facetedTaxonomies = t.vocabularies.reduce(function (res, target) {
-            var taxonomies = flattenTaxonomies(target.terms);
-
-            function getTaxonomy(taxonomyName) {
-              return taxonomies.filter(function (t) {
-                return t.name === taxonomyName;
-              })[0];
-            }
-
-            function notNull(t) {
-              return t !== null && t !== undefined;
-            }
-
-            if ($scope.options.showAllFacetedTaxonomies) {
-              res[target.name] = taxonomies.filter(function (t) {
-                return t.attributes && t.attributes.some(function (att) {
-                  return att.key === 'showFacetedNavigation' && att.value.toString() === 'true';
-                });
-              });
-            } else {
-              res[target.name] = ($scope.options[target.name + 'TaxonomiesOrder'] || []).map(getTaxonomy).filter(notNull);
-            }
-
-            $scope.hasFacetedTaxonomies = $scope.hasFacetedTaxonomies || res[target.name].length;
-
-            return res;
-          }, {});
-        });
 
         function initSearchTabs() {
           $scope.taxonomyNav = [];
@@ -240,49 +166,6 @@
           } else if (!$scope.target) {
             $scope.target = $scope.targetTabsOrder[0];
           }
-
-          $scope.metaTaxonomy.$promise.then(function (metaTaxonomy) {
-            var tabOrderTodisplay = [];
-            $scope.targetTabsOrder.forEach(function (target) {
-              var targetVocabulary = metaTaxonomy.vocabularies.filter(function (vocabulary) {
-                if (vocabulary.name === target) {
-                  tabOrderTodisplay.push(target);
-                  return true;
-                }
-              }).pop();
-              if (targetVocabulary && targetVocabulary.terms) {
-                targetVocabulary.terms.forEach(function (term) {
-                  term.target = target;
-                  var title = term.title.filter(function (t) {
-                    return t.locale === $scope.lang;
-                  })[0];
-                  var description = term.description ? term.description.filter(function (t) {
-                    return t.locale === $scope.lang;
-                  })[0] : undefined;
-                  term.locale = {
-                    title: title,
-                    description: description
-                  };
-                  if (term.terms) {
-                    term.terms.forEach(function (trm) {
-                      var title = trm.title.filter(function (t) {
-                        return t.locale === $scope.lang;
-                      })[0];
-                      var description = trm.description ? trm.description.filter(function (t) {
-                        return t.locale === $scope.lang;
-                      })[0] : undefined;
-                      trm.locale = {
-                        title: title,
-                        description: description
-                      };
-                    });
-                  }
-                  $scope.taxonomyNav.push(term);
-                });
-              }
-            });
-            $scope.targetTabsOrder = tabOrderTodisplay;
-          });
         }
 
         function onError(response) {
@@ -963,8 +846,6 @@
         });
 
         $scope.$on('$locationChangeSuccess', function (event, newLocation, oldLocation) {
-          initSearchTabs();
-
           if (newLocation !== oldLocation) {
             try {
               validateBucket($location.search().bucket);
@@ -1000,6 +881,14 @@
           $scope.lang = $translate.use();
           SearchContext.setLocale($scope.lang);
           initSearchTabs();
+
+          SearchControllerFacetHelperService.help($scope.targetTabsOrder, $scope.lang).then(function (data) {
+            $scope.facetedTaxonomies = data.getFacetedTaxonomies();
+            $scope.hasFacetedTaxonomies = data.getHasFacetedTaxonomies();
+            $scope.targetTabsOrder = data.getTabOrderTodisplay();
+            $scope.taxonomyNav = data.getTaxonomyNav();
+          });
+
           executeSearchQuery();
         }
 
