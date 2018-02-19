@@ -52,6 +52,10 @@
             }
           );
 
+          taxonomies.sort(function(a, b) {
+            return targets.indexOf(a.name) - targets.indexOf(b.name);
+          });
+
           deferred.resolve(taxonomies || []);
         }
       );

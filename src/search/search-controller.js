@@ -610,33 +610,6 @@
           }
         };
 
-        /**
-         * Reduce the current query such that all irrelevant criteria is removed but the criterion. The exceptions are
-         * when the criterion is inside an AND, in this case this latter is reduced.
-         *
-         * @param parentItem
-         * @param criteriaItem
-         */
-        function reduce(parentItem, criteriaItem) {
-          if (parentItem.type === RQL_NODE.OR) {
-            var grandParentItem = parentItem.parent;
-            var parentItemIndex = grandParentItem.children.indexOf(parentItem);
-            grandParentItem.children[parentItemIndex] = criteriaItem;
-
-            var parentRql = parentItem.rqlQuery;
-            var grandParentRql = grandParentItem.rqlQuery;
-            var parentRqlIndex = grandParentRql.args.indexOf(parentRql);
-            grandParentRql.args[parentRqlIndex] = criteriaItem.rqlQuery;
-
-            if (grandParentItem.type !== QUERY_TARGETS.VARIABLE) {
-              reduce(grandParentItem, criteriaItem);
-            }
-          } else if (criteriaItem.type !== RQL_NODE.VARIABLE && parentItem.type === RQL_NODE.AND) {
-            // Reduce until parent is Variable node or another AND node
-            reduce(parentItem.parent, parentItem);
-          }
-        }
-
         var onUpdateCriteria = function (item, type, useCurrentDisplay, replaceTarget, showNotification, fullCoverage) {
           if (type) {
             onTypeChanged(type);
@@ -645,7 +618,7 @@
           if (replaceTarget) {
             var criteriaItem = RqlQueryService.findCriteriaItemFromTree(item, $scope.search.criteria);
             if (criteriaItem) {
-              reduce(criteriaItem.parent, criteriaItem);
+              ngObibaMica.search.CriteriaReducer.reduce(criteriaItem.parent, criteriaItem);
             }
           }
 

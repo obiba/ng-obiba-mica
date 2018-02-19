@@ -12,8 +12,12 @@
   <div class="row voffset2">
     <div class="col-md-3" ng-if="hasFacetedTaxonomies" >
       <!-- Search Facets region -->
-      <taxonomies-facets-panel id="search-facets-region" faceted-taxonomies="facetedTaxonomies" criteria="search.criteria" on-select-term="onSelectTerm"
-                    on-refresh="refreshQuery" lang="lang"></taxonomies-facets-panel>
+      <taxonomies-facets-panel id="search-facets-region"
+                               faceted-taxonomies="facetedTaxonomies"
+                               criteria="search.criteria"
+                               on-select-term="onSelectTerm"
+                               on-refresh="refreshQuery"
+                               lang="lang"></taxonomies-facets-panel>
     </div>
     <div class="{{hasFacetedTaxonomies ? 'col-md-9' : 'col-md-12'}}">
       <search-box-region 
