@@ -60,8 +60,7 @@
     ctrl.selectedTaxonomy = null;
     ctrl.onSelectTaxonomy = onSelectTaxonomy;
     ctrl.$onChanges = onChanges;
-
-    init();
+    ctrl.$onInit = init;
   }
 
   ngObibaMica.search
