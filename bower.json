@@ -23,7 +23,7 @@
     "angular-sanitize": "1.6.9",
     "angular-cookies": "1.6.9",
     "ng-obiba": "https://github.com/obiba/ng-obiba.git#master",
-    "filesize": "3.3.0",
+    "filesize": "3.6.0",
     "rql-nodojo": "https://github.com/RAMP-PCAR/rql-nodojo.git#1.0.0"
   },
   "devDependencies": {
