@@ -3648,7 +3648,7 @@ ngObibaMica.search
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-'use strict';
+"use strict";
 /* global BUCKET_TYPES  */
 var CoverageGroupByService = /** @class */ (function () {
     function CoverageGroupByService(ngObibaMicaSearch) {
@@ -3668,18 +3668,19 @@ var CoverageGroupByService = /** @class */ (function () {
         return this.groupByOptions.study || this.groupByOptions.dce;
     };
     CoverageGroupByService.prototype.canShowDce = function (bucket) {
-        return (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && this.groupByOptions.study && this.groupByOptions.dce;
+        return (bucket.indexOf("study") > -1 || bucket.indexOf("dce") > -1)
+            && this.groupByOptions.study && this.groupByOptions.dce;
     };
     CoverageGroupByService.prototype.canShowDataset = function () {
         return this.groupByOptions.dataset;
     };
     CoverageGroupByService.prototype.canShowVariableTypeFilter = function (bucket) {
-        var forStudy = (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && (this.groupByOptions.study);
-        var forDataset = bucket.indexOf('dataset') > -1 && this.groupByOptions.dataset;
+        var forStudy = (bucket.indexOf("study") > -1 || bucket.indexOf("dce") > -1) && (this.groupByOptions.study);
+        var forDataset = bucket.indexOf("dataset") > -1 && this.groupByOptions.dataset;
         return forStudy || forDataset;
     };
     CoverageGroupByService.prototype.studyTitle = function () {
-        return 'search.coverage-buckets.study';
+        return "search.coverage-buckets.study";
     };
     CoverageGroupByService.prototype.studyBucket = function () {
         return BUCKET_TYPES.STUDY;
@@ -3693,7 +3694,7 @@ var CoverageGroupByService = /** @class */ (function () {
         }
     };
     CoverageGroupByService.prototype.datasetTitle = function () {
-        return 'search.coverage-buckets.dataset';
+        return "search.coverage-buckets.dataset";
     };
     CoverageGroupByService.prototype.datasetBucket = function () {
         return BUCKET_TYPES.DATASET;
@@ -3731,13 +3732,11 @@ var CoverageGroupByService = /** @class */ (function () {
         else if (this.groupByOptions.dataset) {
             return this.datasetBucket();
         }
-        return '';
+        return "";
     };
     return CoverageGroupByService;
 }());
-(function () {
-    ngObibaMica.search.service('CoverageGroupByService', ['ngObibaMicaSearch', CoverageGroupByService]);
-})();
+ngObibaMica.search.service("CoverageGroupByService", ["ngObibaMicaSearch", CoverageGroupByService]);
 //# sourceMappingURL=coverage-group-by-service.js.map
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -6479,15 +6478,15 @@ ngObibaMica.search
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-'use strict';
+"use strict";
 var TermsVocabularyFilterDetailController = /** @class */ (function () {
     function TermsVocabularyFilterDetailController() {
         this.constantLimitNumber = 12;
         this.limitNumber = this.constantLimitNumber;
     }
     TermsVocabularyFilterDetailController.prototype.clickCheckbox = function (input) {
-        var args = { term: input };
-        this.onSelectArgs({ vocabulary: this.vocabulary, args: args });
+        var termInput = { term: input };
+        this.onSelectArgs({ vocabulary: this.vocabulary, args: termInput });
     };
     return TermsVocabularyFilterDetailController;
 }());
@@ -6495,17 +6494,17 @@ var TermsVocabularyFilterDetailComponent = /** @class */ (function () {
     function TermsVocabularyFilterDetailComponent() {
         this.transclude = true;
         this.bindings = {
-            vocabulary: '<',
-            onSelectArgs: '&'
+            onSelectArgs: "&",
+            vocabulary: "<",
         };
         this.controller = TermsVocabularyFilterDetailController;
-        this.controllerAs = '$ctrl';
-        this.templateUrl = 'search/components/criteria/terms-vocabulary-filter-detail/component.html';
+        this.controllerAs = "$ctrl";
+        this.templateUrl = "search/components/criteria/terms-vocabulary-filter-detail/component.html";
     }
     return TermsVocabularyFilterDetailComponent;
 }());
 ngObibaMica.search
-    .component('termsVocabularyFilterDetail', new TermsVocabularyFilterDetailComponent());
+    .component("termsVocabularyFilterDetail", new TermsVocabularyFilterDetailComponent());
 //# sourceMappingURL=component.js.map
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.

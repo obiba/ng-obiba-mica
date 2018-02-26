@@ -13,6 +13,21 @@
 module.exports = function (grunt) {
 
   grunt.initConfig({
+
+    tslint: {
+      options: {
+        // can be a configuration object or a filepath to tslint.json 
+        configuration: 'tslint.json',
+        // If set to true, tslint errors will be reported, but not fail the task 
+        // If set to false, tslint errors will be reported, and the task will fail 
+        force: false,
+        fix: false
+      },
+      files: {
+        src: ['src/**/*.ts']
+      }
+    },
+
     ts: {
       default : {
         src: ['./src/**/*.ts','./src/**/*.js'],
@@ -140,7 +155,7 @@ module.exports = function (grunt) {
     },
 
     jshint: {
-      files: ['built/**/*.js'],
+      files: ['src/**/*.js'],
       options: {
         jshintrc: '.jshintrc'
       }
@@ -174,6 +189,7 @@ module.exports = function (grunt) {
     }
   });
 
+  grunt.loadNpmTasks("grunt-tslint");
   grunt.loadNpmTasks('grunt-ts');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-less');
@@ -187,6 +203,6 @@ module.exports = function (grunt) {
 
   // TODO uncomment below and remove last line once unit tests are implemented
   // grunt.registerTask('default', ['clean:build', 'less', 'jshint', 'html2js', 'concat', 'clean:tmp', 'karma', 'uglify', 'copy']);
-  grunt.registerTask('default', ['clean:build', 'ts', 'less', 'jshint', 'html2js', 'concat', 'clean:tmp', 'uglify', 'copy']);
+  grunt.registerTask('default', ['clean:build', 'tslint', 'ts', 'less', 'jshint', 'html2js', 'concat', 'clean:tmp', 'uglify', 'copy']);
   grunt.registerTask('watchChanges', ['default', 'watch']);
 };

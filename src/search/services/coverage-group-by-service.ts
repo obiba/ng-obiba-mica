@@ -8,7 +8,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-'use strict';
+"use strict";
 
 interface ICoverageGroupByService {
   isSingleStudy(): boolean;
@@ -54,7 +54,8 @@ class CoverageGroupByService implements ICoverageGroupByService {
   }
 
   public canShowDce(bucket: string[]): boolean {
-    return (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && this.groupByOptions.study && this.groupByOptions.dce;
+    return (bucket.indexOf("study") > -1 || bucket.indexOf("dce") > -1)
+      && this.groupByOptions.study && this.groupByOptions.dce;
   }
 
   public canShowDataset(): boolean {
@@ -62,14 +63,13 @@ class CoverageGroupByService implements ICoverageGroupByService {
   }
 
   public canShowVariableTypeFilter(bucket: string[]): boolean {
-    let forStudy = (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && (this.groupByOptions.study);
-    let forDataset = bucket.indexOf('dataset') > -1 && this.groupByOptions.dataset;
-
+    const forStudy = (bucket.indexOf("study") > -1 || bucket.indexOf("dce") > -1) && (this.groupByOptions.study);
+    const forDataset = bucket.indexOf("dataset") > -1 && this.groupByOptions.dataset;
     return forStudy || forDataset;
   }
 
   public studyTitle(): string {
-    return 'search.coverage-buckets.study';
+    return "search.coverage-buckets.study";
   }
 
   public studyBucket(): string {
@@ -85,7 +85,7 @@ class CoverageGroupByService implements ICoverageGroupByService {
   }
 
   public datasetTitle(): string {
-    return 'search.coverage-buckets.dataset';
+    return "search.coverage-buckets.dataset";
   }
 
   public datasetBucket(): string {
@@ -93,7 +93,7 @@ class CoverageGroupByService implements ICoverageGroupByService {
   }
 
   public canGroupBy(bucket: string) {
-    var isAllowed = false;
+    let isAllowed = false;
 
     switch (bucket) {
       case BUCKET_TYPES.STUDY:
@@ -126,10 +126,8 @@ class CoverageGroupByService implements ICoverageGroupByService {
       return this.datasetBucket();
     }
 
-    return '';
+    return "";
   }
 }
 
-(function () {
-  ngObibaMica.search.service('CoverageGroupByService', ['ngObibaMicaSearch', CoverageGroupByService]);
-})();
+ngObibaMica.search.service("CoverageGroupByService", ["ngObibaMicaSearch", CoverageGroupByService]);
