@@ -13,50 +13,64 @@
 module.exports = function (grunt) {
 
   grunt.initConfig({
+    ts: {
+      default : {
+        src: ['./src/**/*.ts','./src/**/*.js'],
+        outDir: './built',
+        options: {
+          rootDir: './src',
+          allowJs: true,
+          target: 'es5',
+          sourceMap: true,
+          removeComments: false,
+          verbose: false
+        }
+      }
+    },
 
     meta: {
       pkg: grunt.file.readJSON('package.json'),
       src: {
         js: [
           // order is important!
-          'src/ng-obiba-mica.js',
-          'src/utils/utils.js',
-          'src/file/file.js',
-          'src/file/file-filter.js',
-          'src/file/file-service.js',
-          'src/attachment/attachment.js',
-          'src/attachment/attachment-directives.js',
-          'src/access/data-access-request.js',
-          'src/access/data-access-request-controller.js',
-          'src/access/data-access-request-router.js',
-          'src/access/data-access-request-service.js',
-          'src/access/data-access-request-directive.js',
-          'src/search/search.js',
-          'src/search/providers/**/*.js',
-          'src/search/commons/**/*.js',
-          'src/search/rest/**/*.js',
-          'src/search/search-controller.js',
-          'src/search/search-router.js',
-          'src/search/options/**/*.js',
-          'src/search/services/**/*.js',
-          'src/search/filters/**/*.js',
-          'src/search/components/**/*.js',
-          'src/lists/lists.js',
-          'src/lists/lists-service.js',
-          'src/lists/lists-controller.js',
-          'src/lists/lists-directive.js',
-          'src/graphics/graphics.js',
-          'src/graphics/graphics-directive.js',
-          'src/graphics/graphics-controller.js',
-          'src/graphics/graphics-service.js',
-          'src/localized/localized.js',
-          'src/localized/localized-directives.js',
-          'src/localized/localized-service.js',
-          'src/localized/localized-filter.js',
-          'src/file-browser/file-browser.js',
-          'src/file-browser/file-browser-directive.js',
-          'src/file-browser/file-browser-controller.js',
-          'src/file-browser/file-browser-service.js'
+          'built/ng-obiba-mica.js',
+          'built/utils/utils.js',
+          'built/file/file.js',
+          'built/file/file-filter.js',
+          'built/file/file-service.js',
+          'built/attachment/attachment.js',
+          'built/attachment/attachment-directives.js',
+          'built/access/data-access-request.js',
+          'built/access/data-access-request-controller.js',
+          'built/access/data-access-request-router.js',
+          'built/access/data-access-request-service.js',
+          'built/access/data-access-request-directive.js',
+          'built/search/search.js',
+          'built/search/providers/**/*.js',
+          'built/search/commons/**/*.js',
+          'built/search/rest/**/*.js',
+          'built/search/search-controller.js',
+          'built/search/search-router.js',
+          'built/search/options/**/*.js',
+          'built/search/services/**/*.js',
+          'built/search/filters/**/*.js',
+          'built/search/components/**/*.js',
+          'built/lists/lists.js',
+          'built/lists/lists-service.js',
+          'built/lists/lists-controller.js',
+          'built/lists/lists-directive.js',
+          'built/graphics/graphics.js',
+          'built/graphics/graphics-directive.js',
+          'built/graphics/graphics-controller.js',
+          'built/graphics/graphics-service.js',
+          'built/localized/localized.js',
+          'built/localized/localized-directives.js',
+          'built/localized/localized-service.js',
+          'built/localized/localized-filter.js',
+          'built/file-browser/file-browser.js',
+          'built/file-browser/file-browser-directive.js',
+          'built/file-browser/file-browser-controller.js',
+          'built/file-browser/file-browser-service.js'
         ]
       }
     },
@@ -77,7 +91,7 @@ module.exports = function (grunt) {
     },
 
     clean: {
-      build: ['<%= destination_dir %>/bower_components', 'tmp', 'dist'],
+      build: ['<%= destination_dir %>/bower_components', 'tmp', 'dist', 'built'],
       tmp: ['tmp']
     },
 
@@ -99,10 +113,10 @@ module.exports = function (grunt) {
 
     concat: {
       options: {
-        separator: ';',
+        separator: '\n',
         banner: '/*!\n' +
         ' * <%= meta.pkg.name %> - v<%= meta.pkg.version %>\n' +
-        ' * <%= meta.pkg.homepage %>\n\n' +
+        ' * <%= meta.pkg.homepage %>\n *\n' +
         ' * License: <%= meta.pkg.license %>\n' +
         ' * Date: <%= grunt.template.today("yyyy-mm-dd") %>\n' +
         ' */\n'
@@ -126,7 +140,7 @@ module.exports = function (grunt) {
     },
 
     jshint: {
-      files: ['src/**/*.js'],
+      files: ['built/**/*.js'],
       options: {
         jshintrc: '.jshintrc'
       }
@@ -153,12 +167,14 @@ module.exports = function (grunt) {
         files: [
           'src/**/*.html',
           'src/**/*.js',
+          'src/**/*.ts',
           'less/**/*.less'
         ],
         tasks: ['default']
     }
   });
 
+  grunt.loadNpmTasks('grunt-ts');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-less');
   grunt.loadNpmTasks('grunt-contrib-clean');
@@ -171,6 +187,6 @@ module.exports = function (grunt) {
 
   // TODO uncomment below and remove last line once unit tests are implemented
   // grunt.registerTask('default', ['clean:build', 'less', 'jshint', 'html2js', 'concat', 'clean:tmp', 'karma', 'uglify', 'copy']);
-  grunt.registerTask('default', ['clean:build', 'less', 'jshint', 'html2js', 'concat', 'clean:tmp', 'uglify', 'copy']);
+  grunt.registerTask('default', ['clean:build', 'ts', 'less', 'jshint', 'html2js', 'concat', 'clean:tmp', 'uglify', 'copy']);
   grunt.registerTask('watchChanges', ['default', 'watch']);
 };
