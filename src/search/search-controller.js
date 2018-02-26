@@ -134,8 +134,6 @@
         $scope.lang = $translate.use();
 
         function initSearchTabs() {
-          $scope.taxonomyNav = [];
-
           function getTabsOrderParam(arg) {
             var value = $location.search()[arg];
 
@@ -862,7 +860,8 @@
           searchSuggestion(target, suggestion, withSpecificFields);
         });
 
-        function init() {
+        function init() {          
+          $scope.taxonomyNav = [];
           $scope.lang = $translate.use();
           SearchContext.setLocale($scope.lang);
           initSearchTabs();

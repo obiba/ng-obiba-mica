@@ -4,10 +4,10 @@
   function SearchControllerFacetHelperService(MetaTaxonomyService, ngObibaMicaSearch) {
     var metaTaxonomiesPromise = MetaTaxonomyService.getMetaTaxonomiesPromise(),
       options = ngObibaMicaSearch.getOptions(),
-      taxonomyNav = [],
-      tabOrderTodisplay = [],
-      facetedTaxonomies = {},
-      hasFacetedTaxonomies = false;
+      taxonomyNav,
+      tabOrderTodisplay,
+      facetedTaxonomies,
+      hasFacetedTaxonomies;
 
     function flattenTaxonomies(terms) {
       function termsReducer(accumulator, termsArray) {
@@ -26,6 +26,9 @@
 
     function doTabOrderToDisplay(targetTabsOrder, lang) {
       return metaTaxonomiesPromise.then(function (metaTaxonomy) {
+        taxonomyNav = [];
+        tabOrderTodisplay = [];
+
         targetTabsOrder.forEach(function (target) {
           var targetVocabulary = metaTaxonomy.vocabularies.filter(function (vocabulary) {
             if (vocabulary.name === target) {
@@ -76,6 +79,9 @@
 
     function doFacetedTaxonomies() {
       return metaTaxonomiesPromise.then(function (metaTaxonomy) {
+        facetedTaxonomies = {};
+        hasFacetedTaxonomies = false;
+
         metaTaxonomy.vocabularies.reduce(function (accumulator, target) {
           var taxonomies = flattenTaxonomies(target.terms);
 

@@ -2427,7 +2427,7 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
 'use strict';
 (function () {
     function SearchControllerFacetHelperService(MetaTaxonomyService, ngObibaMicaSearch) {
-        var metaTaxonomiesPromise = MetaTaxonomyService.getMetaTaxonomiesPromise(), options = ngObibaMicaSearch.getOptions(), taxonomyNav = [], tabOrderTodisplay = [], facetedTaxonomies = {}, hasFacetedTaxonomies = false;
+        var metaTaxonomiesPromise = MetaTaxonomyService.getMetaTaxonomiesPromise(), options = ngObibaMicaSearch.getOptions(), taxonomyNav, tabOrderTodisplay, facetedTaxonomies, hasFacetedTaxonomies;
         function flattenTaxonomies(terms) {
             function termsReducer(accumulator, termsArray) {
                 return termsArray.reduce(function (acc, val) {
@@ -2444,6 +2444,8 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         }
         function doTabOrderToDisplay(targetTabsOrder, lang) {
             return metaTaxonomiesPromise.then(function (metaTaxonomy) {
+                taxonomyNav = [];
+                tabOrderTodisplay = [];
                 targetTabsOrder.forEach(function (target) {
                     var targetVocabulary = metaTaxonomy.vocabularies.filter(function (vocabulary) {
                         if (vocabulary.name === target) {
@@ -2486,6 +2488,8 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         }
         function doFacetedTaxonomies() {
             return metaTaxonomiesPromise.then(function (metaTaxonomy) {
+                facetedTaxonomies = {};
+                hasFacetedTaxonomies = false;
                 metaTaxonomy.vocabularies.reduce(function (accumulator, target) {
                     var taxonomies = flattenTaxonomies(target.terms);
                     function getTaxonomy(taxonomyName) {
@@ -2975,7 +2979,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
             $scope.targets = [];
             $scope.lang = $translate.use();
             function initSearchTabs() {
-                $scope.taxonomyNav = [];
                 function getTabsOrderParam(arg) {
                     var value = $location.search()[arg];
                     return value && value.split(',')
@@ -3592,6 +3595,7 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
                 searchSuggestion(target, suggestion, withSpecificFields);
             });
             function init() {
+                $scope.taxonomyNav = [];
                 $scope.lang = $translate.use();
                 SearchContext.setLocale($scope.lang);
                 initSearchTabs();
