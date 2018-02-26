@@ -23,7 +23,7 @@ class TermsVocabularyFilterDetailController implements ng.IComponentController {
   }
 
   public clickCheckbox(input: string) {
-    var args = { term: input };
+    let args = { term: input };
     this.ctrl.onSelectArgs({ vocabulary: this.ctrl.vocabulary, args: args });
   }
 }
