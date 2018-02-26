@@ -6482,13 +6482,12 @@ ngObibaMica.search
 'use strict';
 var TermsVocabularyFilterDetailController = /** @class */ (function () {
     function TermsVocabularyFilterDetailController() {
-        this.ctrl = this;
         this.constantLimitNumber = 12;
         this.limitNumber = this.constantLimitNumber;
     }
     TermsVocabularyFilterDetailController.prototype.clickCheckbox = function (input) {
         var args = { term: input };
-        this.ctrl.onSelectArgs({ vocabulary: this.ctrl.vocabulary, args: args });
+        this.onSelectArgs({ vocabulary: this.vocabulary, args: args });
     };
     return TermsVocabularyFilterDetailController;
 }());

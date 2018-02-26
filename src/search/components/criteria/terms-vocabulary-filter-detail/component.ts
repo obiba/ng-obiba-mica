@@ -12,19 +12,19 @@
 
 class TermsVocabularyFilterDetailController implements ng.IComponentController {
 
-  private ctrl: ng.IComponentController;
   readonly constantLimitNumber : number;
   public limitNumber : number;
+  public vocabulary: any;
+  public onSelectArgs:(any) => void;
 
   constructor() {
-    this.ctrl = this;
     this.constantLimitNumber = 12;
     this.limitNumber = this.constantLimitNumber;
   }
 
   public clickCheckbox(input: string) {
     let args = { term: input };
-    this.ctrl.onSelectArgs({ vocabulary: this.ctrl.vocabulary, args: args });
+    this.onSelectArgs({ vocabulary: this.vocabulary, args: args });
   }
 }
 
@@ -34,7 +34,7 @@ class TermsVocabularyFilterDetailComponent implements ng.IComponentOptions {
   public controllerAs: string;
   public templateUrl: string;
   public transclude: boolean;
-  public bindings;
+  public bindings: any;
 
   constructor() {
     this.transclude = true;
