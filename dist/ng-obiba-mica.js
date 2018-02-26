@@ -3650,90 +3650,92 @@ ngObibaMica.search
  */
 'use strict';
 /* global BUCKET_TYPES  */
-(function () {
+var CoverageGroupByService = /** @class */ (function () {
     function CoverageGroupByService(ngObibaMicaSearch) {
-        var self = this;
-        var options = ngObibaMicaSearch.getOptions();
-        var groupByOptions = options.coverage.groupBy;
-        this.isSingleStudy = function () {
-            // coverage => there are datasets and at least one study
-            // not showing study means that there is only one
-            return !options.studies.showSearchTab;
-        };
-        this.canShowStudyType = function () {
-            // showing study type column means that there are several
-            return options.studies.studiesColumn.showStudiesTypeColumn;
-        };
-        this.canShowStudy = function () {
-            return groupByOptions.study || groupByOptions.dce;
-        };
-        this.canShowDce = function (bucket) {
-            return (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && groupByOptions.study && groupByOptions.dce;
-        };
-        this.canShowDataset = function () {
-            return groupByOptions.dataset;
-        };
-        this.canShowVariableTypeFilter = function (bucket) {
-            var forStudy = (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && (groupByOptions.study);
-            var forDataset = bucket.indexOf('dataset') > -1 && groupByOptions.dataset;
-            return forStudy || forDataset;
-        };
-        this.studyTitle = function () {
-            return 'search.coverage-buckets.study';
-        };
-        this.studyBucket = function () {
-            return BUCKET_TYPES.STUDY;
-        };
-        this.dceBucket = function () {
-            if (groupByOptions.study && groupByOptions.dce) {
-                return BUCKET_TYPES.DCE;
-            }
-            else {
+        this.options = ngObibaMicaSearch.getOptions();
+        this.groupByOptions = this.options.coverage.groupBy;
+    }
+    CoverageGroupByService.prototype.isSingleStudy = function () {
+        // coverage => there are datasets and at least one study
+        // not showing study means that there is only one
+        return !this.options.studies.showSearchTab;
+    };
+    CoverageGroupByService.prototype.canShowStudyType = function () {
+        // showing study type column means that there are several
+        return this.options.studies.studiesColumn.showStudiesTypeColumn;
+    };
+    CoverageGroupByService.prototype.canShowStudy = function () {
+        return this.groupByOptions.study || this.groupByOptions.dce;
+    };
+    CoverageGroupByService.prototype.canShowDce = function (bucket) {
+        return (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && this.groupByOptions.study && this.groupByOptions.dce;
+    };
+    CoverageGroupByService.prototype.canShowDataset = function () {
+        return this.groupByOptions.dataset;
+    };
+    CoverageGroupByService.prototype.canShowVariableTypeFilter = function (bucket) {
+        var forStudy = (bucket.indexOf('study') > -1 || bucket.indexOf('dce') > -1) && (this.groupByOptions.study);
+        var forDataset = bucket.indexOf('dataset') > -1 && this.groupByOptions.dataset;
+        return forStudy || forDataset;
+    };
+    CoverageGroupByService.prototype.studyTitle = function () {
+        return 'search.coverage-buckets.study';
+    };
+    CoverageGroupByService.prototype.studyBucket = function () {
+        return BUCKET_TYPES.STUDY;
+    };
+    CoverageGroupByService.prototype.dceBucket = function () {
+        if (this.groupByOptions.study && this.groupByOptions.dce) {
+            return BUCKET_TYPES.DCE;
+        }
+        else {
+            return this.studyBucket();
+        }
+    };
+    CoverageGroupByService.prototype.datasetTitle = function () {
+        return 'search.coverage-buckets.dataset';
+    };
+    CoverageGroupByService.prototype.datasetBucket = function () {
+        return BUCKET_TYPES.DATASET;
+    };
+    CoverageGroupByService.prototype.canGroupBy = function (bucket) {
+        var isAllowed = false;
+        switch (bucket) {
+            case BUCKET_TYPES.STUDY:
+            case BUCKET_TYPES.STUDY_INDIVIDUAL:
+            case BUCKET_TYPES.STUDY_HARMONIZATION:
+                isAllowed = this.groupByOptions.study;
+                break;
+            case BUCKET_TYPES.DCE:
+            case BUCKET_TYPES.DCE_INDIVIDUAL:
+            case BUCKET_TYPES.DCE_HARMONIZATION:
+                isAllowed = this.groupByOptions.dce;
+                break;
+            case BUCKET_TYPES.DATASET:
+            case BUCKET_TYPES.DATASET_COLLECTED:
+            case BUCKET_TYPES.DATASCHEMA:
+            case BUCKET_TYPES.DATASET_HARMONIZED:
+                isAllowed = this.groupByOptions.dataset;
+        }
+        return isAllowed;
+    };
+    CoverageGroupByService.prototype.defaultBucket = function () {
+        if (this.groupByOptions.study) {
+            if (this.options.studies.showSearchTab) {
                 return this.studyBucket();
             }
-        };
-        this.datasetTitle = function () {
-            return 'search.coverage-buckets.dataset';
-        };
-        this.datasetBucket = function () {
-            return BUCKET_TYPES.DATASET;
-        };
-        this.canGroupBy = function (bucket) {
-            var isAllowed = false;
-            switch (bucket) {
-                case BUCKET_TYPES.STUDY:
-                case BUCKET_TYPES.STUDY_INDIVIDUAL:
-                case BUCKET_TYPES.STUDY_HARMONIZATION:
-                    isAllowed = groupByOptions.study;
-                    break;
-                case BUCKET_TYPES.DCE:
-                case BUCKET_TYPES.DCE_INDIVIDUAL:
-                case BUCKET_TYPES.DCE_HARMONIZATION:
-                    isAllowed = groupByOptions.dce;
-                    break;
-                case BUCKET_TYPES.DATASET:
-                case BUCKET_TYPES.DATASET_COLLECTED:
-                case BUCKET_TYPES.DATASCHEMA:
-                case BUCKET_TYPES.DATASET_HARMONIZED:
-                    isAllowed = groupByOptions.dataset;
+            else {
+                return this.dceBucket();
             }
-            return isAllowed;
-        };
-        this.defaultBucket = function () {
-            if (groupByOptions.study) {
-                if (options.studies.showSearchTab) {
-                    return self.studyBucket();
-                }
-                else {
-                    return self.dceBucket();
-                }
-            }
-            else if (groupByOptions.dataset) {
-                return self.datasetBucket();
-            }
-            return '';
-        };
-    }
+        }
+        else if (this.groupByOptions.dataset) {
+            return this.datasetBucket();
+        }
+        return '';
+    };
+    return CoverageGroupByService;
+}());
+(function () {
     ngObibaMica.search.service('CoverageGroupByService', ['ngObibaMicaSearch', CoverageGroupByService]);
 })();
 //# sourceMappingURL=coverage-group-by-service.js.map
