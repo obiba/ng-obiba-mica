@@ -14,7 +14,7 @@ class TermsVocabularyFilterDetailController implements ng.IComponentController {
 
   public readonly constantLimitNumber: number;
   public limitNumber: number;
-  public onSelectArgs: (...args: any[]) => void;
+  public onSelectArgs: (args: any) => void;
   public vocabulary: any;
 
   constructor() {
