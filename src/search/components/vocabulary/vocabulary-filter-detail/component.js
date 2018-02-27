@@ -25,7 +25,7 @@
     }
 
     function selectVocabularyArgs(args) {
-      if (!args.term.selected) {
+      if (ctrl.criterionType === 'string-terms' && !args.term.selected) {
         var selectedTerms = ctrl.vocabulary.terms.filter(function (term) {
           return term.selected;
         });
