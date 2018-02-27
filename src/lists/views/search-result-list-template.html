@@ -28,8 +28,10 @@
       </div>
       <div class="pull-right hoffset1">
         <div ng-repeat="res in resultTabsOrder" ng-show="activeTarget[targetTypeMap[res]].active" class="inline" test-ref="pager">
-          <span search-result-pagination show-total="false" target="activeTarget[targetTypeMap[res]].name" total-hits="activeTarget[targetTypeMap[res]].totalHits"
-            on-change="onPaginate">
+          <span search-result-pagination
+                show-total="false"
+                target="activeTarget[targetTypeMap[res]].name"
+                on-change="onPaginate">
           </span>
         </div>
       </div>

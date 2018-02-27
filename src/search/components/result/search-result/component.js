@@ -29,10 +29,10 @@ ngObibaMica.search
       $scope.QUERY_TYPES = QUERY_TYPES;
       $scope.options = ngObibaMicaSearch.getOptions();
       $scope.activeTarget = {};
-      $scope.activeTarget[QUERY_TYPES.VARIABLES] = { active: false, name: QUERY_TARGETS.VARIABLE, totalHits: 0 };
-      $scope.activeTarget[QUERY_TYPES.DATASETS] = { active: false, name: QUERY_TARGETS.DATASET, totalHits: 0 };
-      $scope.activeTarget[QUERY_TYPES.STUDIES] = { active: false, name: QUERY_TARGETS.STUDY, totalHits: 0 };
-      $scope.activeTarget[QUERY_TYPES.NETWORKS] = { active: false, name: QUERY_TARGETS.NETWORK, totalHits: 0 };
+      $scope.activeTarget[QUERY_TYPES.VARIABLES] = { active: false, name: QUERY_TARGETS.VARIABLE };
+      $scope.activeTarget[QUERY_TYPES.DATASETS] = { active: false, name: QUERY_TARGETS.DATASET };
+      $scope.activeTarget[QUERY_TYPES.STUDIES] = { active: false, name: QUERY_TARGETS.STUDY };
+      $scope.activeTarget[QUERY_TYPES.NETWORKS] = { active: false, name: QUERY_TARGETS.NETWORK };
 
       $scope.getUrlTemplate = function (tab) {
         switch (tab) {
@@ -122,6 +122,7 @@ ngObibaMica.search
         result: '=',
         lang: '=',
         loading: '=',
+        pagination: '<',
         searchTabsOrder: '=',
         resultTabsOrder: '=',
         onTypeChanged: '=',

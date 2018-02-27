@@ -79,10 +79,19 @@
         }
 
         if (study.args.length > 0) {
-          var andStudyClassName = new RqlQuery(RQL_NODE.AND);
-          study.args.forEach(function (arg) { andStudyClassName.args.push(arg); });
-          andStudyClassName.args.push(studyClassNameQuery);
-          study.args = [andStudyClassName];
+          var replace = study.args.filter(function (arg) {
+            return RqlQueryService.isLeaf(arg.name) || RqlQueryService.isOperator(arg.name);
+          }).pop();
+
+          if (replace) {
+            // replaceable args are operators or leaf nodes
+            var andStudyClassName = new RqlQuery(RQL_NODE.AND);
+            var index = study.args.indexOf(replace);
+            andStudyClassName.args.push(studyClassNameQuery, replace);
+            study.args[index] = andStudyClassName;
+          } else {
+            study.args.push(studyClassNameQuery);
+          }
         } else {
           study.args = [studyClassNameQuery];
         }

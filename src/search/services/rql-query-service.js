@@ -267,19 +267,24 @@ function typeToTarget(type) {
       return null;
     }
 
-    this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
-    this.findCriteriaItemFromTree = findCriteriaItemFromTree;
-    this.findTargetCriteria = findTargetCriteria;
-    this.findTargetQuery = findTargetQuery;
-    this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
-    this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
-
     function isOperator(name) {
       switch (name) {
         case RQL_NODE.AND:
         case RQL_NODE.NAND:
         case RQL_NODE.OR:
         case RQL_NODE.NOR:
+          return true;
+      }
+
+      return false;
+    }
+
+    function isTarget(name) {
+      switch (name) {
+        case RQL_NODE.VARIABLE:
+        case RQL_NODE.DATASET:
+        case RQL_NODE.NETWORK:
+        case RQL_NODE.STUDY:
           return true;
       }
 
@@ -702,7 +707,7 @@ function typeToTarget(type) {
       return sort;
     };
 
-    function prepareSearchQueryInternal(context, type, query, pagination, lang, sort, addFieldsQuery) {
+    function prepareSearchQueryInternal(context, type, query, lang, sort, addFieldsQuery) {
       var rqlQuery = angular.copy(query);
       var target = typeToTarget(type);
       RqlQueryUtils.addLocaleQuery(rqlQuery, lang);
@@ -713,8 +718,12 @@ function typeToTarget(type) {
         rqlQuery.args.push(targetQuery);
       }
 
-      var limit = pagination[target] || { from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target) };
-      RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
+      var limitQuery = RqlQueryUtils.getLimitQuery(targetQuery);
+      if (!limitQuery) {
+        RqlQueryUtils.addLimit(
+          targetQuery,
+          RqlQueryUtils.limit(0, ngObibaMicaSearch.getDefaultListPageSize(target)));
+      }
 
       if (addFieldsQuery) {
         var fieldsQuery = getSourceFields(context, target);
@@ -730,16 +739,54 @@ function typeToTarget(type) {
       return rqlQuery;
     }
 
-    this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
-      return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, true);
+    function prepareQueryPagination(rqlQuery, target, from, size) {
+      var targetQuery = findTargetQuery(target, rqlQuery);
+      if (!targetQuery) {
+        targetQuery = new RqlQuery(target);
+        rqlQuery.args.push(targetQuery);
+      }
+
+      RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(from, size));
+    }
+
+    function getQueryPaginations(rqlQuery) {
+      if (!rqlQuery || rqlQuery.args.length === 0) {
+        return {};
+      }
+
+      return rqlQuery.args.reduce(function(acc, query) {
+        if (isTarget(query.name)) {
+          var limitQuery = RqlQueryUtils.getLimitQuery(query);
+          if (limitQuery) {
+            acc[query.name] = { from: limitQuery.args[0], size: limitQuery.args[1] };
+          }
+        }
+
+        return acc;
+      }, {});
+    }
+
+    this.isOperator = isOperator;
+    this.isLeaf = isLeaf;
+    this.getQueryPaginations = getQueryPaginations;
+    this.prepareQueryPagination = prepareQueryPagination;
+    this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
+    this.findCriteriaItemFromTree = findCriteriaItemFromTree;
+    this.findTargetCriteria = findTargetCriteria;
+    this.findTargetQuery = findTargetQuery;
+    this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
+    this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
+
+    this.prepareSearchQuery = function (context, type, query, lang, sort) {
+      return prepareSearchQueryInternal(context, type, query, lang, sort, true);
     };
 
-    this.prepareSearchQueryNoFields = function (context, type, query, pagination, lang, sort) {
-      return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, false);
+    this.prepareSearchQueryNoFields = function (context, type, query, lang, sort) {
+      return prepareSearchQueryInternal(context, type, query, lang, sort, false);
     };
 
-    this.prepareSearchQueryAndSerialize = function (context, type, query, pagination, lang, sort) {
-      return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, pagination, lang, sort).args);
+    this.prepareSearchQueryAndSerialize = function (context, type, query, lang, sort) {
+      return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, lang, sort).args);
     };
 
     /**

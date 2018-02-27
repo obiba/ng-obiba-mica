@@ -1,77 +1,65 @@
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 'use strict';
 
-ngObibaMica.search
-  .controller('SearchResultPaginationController', ['$scope', 'ngObibaMicaSearch', function ($scope, ngObibaMicaSearch) {
+(function () {
 
-    function updateMaxSize() {
-      $scope.maxSize = Math.min(3, Math.ceil($scope.totalHits / $scope.pagination.selected.value));
+  function SearchResultPaginationController ($scope, ngObibaMicaSearch, PaginationService) {
+
+    function canShow () {
+      return angular.isUndefined ($scope.showTotal) || true === $scope.showTotal;
     }
 
-    function calculateRange() {
-      var pageSize = $scope.pagination.selected.value;
-      var current = $scope.pagination.currentPage;
-      $scope.pagination.from = pageSize * (current - 1) + 1;
-      $scope.pagination.to = Math.min($scope.totalHits, pageSize * current);
-    }
-
-    function canShow() {
-      return angular.isUndefined($scope.showTotal) || true === $scope.showTotal;
+    function onUpdate(state, preventPageChangeEvent) {
+      $scope.preventPageChangeEvent = preventPageChangeEvent;
+      $scope.pagination = state;
     }
 
     var pageChanged = function () {
-      calculateRange();
       if ($scope.onChange) {
-        $scope.onChange(
+        $scope.onChange (
           $scope.target,
           ($scope.pagination.currentPage - 1) * $scope.pagination.selected.value,
-          $scope.pagination.selected.value
+          $scope.pagination.selected.value,
+          true === $scope.preventPageChangeEvent
         );
+
+        $scope.preventPageChangeEvent = false;
       }
     };
 
     var pageSizeChanged = function () {
-      updateMaxSize();
-      $scope.pagination.currentPage = 1;
-      pageChanged();
+      pageChanged ();
     };
 
     $scope.canShow = canShow;
     $scope.pageChanged = pageChanged;
     $scope.pageSizeChanged = pageSizeChanged;
-    $scope.pageSizes = [
-      { label: '10', value: 10 },
-      { label: '20', value: 20 },
-      { label: '50', value: 50 },
-      { label: '100', value: 100 }
-    ];
+    this.onUpdate = onUpdate;
 
-    var listPageSize = ngObibaMicaSearch.getDefaultListPageSize($scope.target);
-    var initialTargetPageSize = $scope.pageSizes.filter(function (p) {
-      return p.value === listPageSize;
-    });
+    PaginationService.registerListener($scope.target, this);
+  }
 
-    $scope.pagination = {
-      selected: initialTargetPageSize.length > 0 ? initialTargetPageSize[0] : $scope.pageSizes[0],
-      currentPage: 1
-    };
-
-    $scope.$watch('totalHits', function () {
-      updateMaxSize();
-      calculateRange();
-    });
-  }])
-  
-  .directive('searchResultPagination', [function() {
+  ngObibaMica.search.directive ('searchResultPagination', [function () {
     return {
       restrict: 'EA',
       replace: true,
       scope: {
-        showTotal: '=',
-        target: '=',
-        totalHits: '=',
+        showTotal: '<',
+        target: '<',
         onChange: '='
       },
-      controller: 'SearchResultPaginationController',
+      controller: ['$scope', 'ngObibaMicaSearch', 'PaginationService', SearchResultPaginationController],
       templateUrl: 'search/components/result/pagination/component.html'
     };
   }]);
+
+}) ();

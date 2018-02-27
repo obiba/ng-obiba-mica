@@ -390,12 +390,18 @@
       }
     }
 
-    function addLimit(targetQuery, limitQuery) {
+    function getLimitQuery(targetQuery) {
       if (targetQuery && targetQuery.args) {
-        var found = targetQuery.args.filter(function (arg) {
+        return targetQuery.args.filter(function (arg) {
           return arg.name === RQL_NODE.LIMIT;
         }).pop();
+      }
+      return null;
+    }
 
+    function addLimit(targetQuery, limitQuery) {
+      if (targetQuery && targetQuery.args) {
+        var found = getLimitQuery(targetQuery);
         if (found) {
           found.args = limitQuery.args;
         } else {
@@ -459,6 +465,7 @@
     this.updateQuery = updateQuery;
     this.addLocaleQuery = addLocaleQuery;
     this.addFields = addFields;
+    this.getLimitQuery = getLimitQuery;
     this.addLimit = addLimit;
     this.addSort = addSort;
     this.criteriaId = criteriaId;

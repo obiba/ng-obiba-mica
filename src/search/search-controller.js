@@ -57,7 +57,7 @@
   }
 
   ngObibaMica.search
-    .controller('SearchController', [
+    .controller('SearchController', ['$timeout',
       '$scope',
       '$rootScope',
       '$location',
@@ -79,7 +79,8 @@
       'EntitySuggestionRqlUtilityService',
       'SearchControllerFacetHelperService',
       'options',
-      function ($scope,
+      'PaginationService',
+      function ($timeout, $scope,
         $rootScope,
         $location,
         $translate,
@@ -99,7 +100,8 @@
         VocabularyService,
         EntitySuggestionRqlUtilityService,
         SearchControllerFacetHelperService,
-        options) {
+        options,
+        PaginationService) {
 
         $scope.options = options;
         manageSearchHelpText($scope, $translate, $cookies);
@@ -316,7 +318,6 @@
               $scope.search.display,
               $scope.search.type,
               $scope.search.rqlQuery,
-              $scope.search.pagination,
               $scope.lang,
               updateSortByType()
             );
@@ -351,6 +352,10 @@
                   $scope.search.result.list = response;
                   $scope.search.loading = false;
                   $scope.search.countResult = getCountResultFromJoinQuerySearchResponse(response);
+                  $timeout(function() {
+                    var pagination = RqlQueryService.getQueryPaginations($scope.search.rqlQuery);
+                    PaginationService.update(pagination, $scope.search.countResult);
+                  });
                 },
                 onError);
               break;
@@ -524,6 +529,19 @@
           $location.search(search);
         };
 
+        /**
+         * Updates the URL location without triggering a query execution
+         */
+        var replaceQuery = function () {
+          var query = new RqlQuery().serializeArgs($scope.search.rqlQuery.args);
+          var search = $location.search();
+          if ('' === query) {
+            delete search.query;
+          } else {
+            search.query = query;
+          }
+          $location.search(search).replace();
+        };
 
         /**
          * Removes the item from the criteria tree
@@ -593,9 +611,26 @@
           }
         };
 
-        var onPaginate = function (target, from, size) {
-          $scope.search.pagination[target] = { from: from, size: size };
-          executeSearchQuery();
+        function onLocationChange (event, newLocation, oldLocation) {
+          if (newLocation !== oldLocation) {
+            try {
+              validateBucket($location.search().bucket);
+              executeSearchQuery();
+            } catch (error) {
+              var defaultBucket = CoverageGroupByService.defaultBucket();
+              $location.search('bucket', defaultBucket).replace();
+            }
+          }
+        }
+
+        var onPaginate = function (target, from, size, replace) {
+          $scope.search.rqlQuery = $scope.search.rqlQuery || new RqlQueryUtils(RQL_NODE.AND);
+          RqlQueryService.prepareQueryPagination($scope.search.rqlQuery, target, from, size);
+          if (replace) {
+            replaceQuery();
+          } else {
+            refreshQuery();
+          }
         };
 
         var onDisplayChanged = function (display) {
@@ -775,7 +810,6 @@
 
         $scope.search = {
           layout: 'layout2',
-          pagination: {},
           query: null,
           advanced: false,
           rqlQuery: new RqlQuery(),
@@ -828,17 +862,7 @@
             micaConfig.isCollectedDatasetEnabled || micaConfig.isHarmonizedDatasetEnabled;
         });
 
-        $scope.$on('$locationChangeSuccess', function (event, newLocation, oldLocation) {
-          if (newLocation !== oldLocation) {
-            try {
-              validateBucket($location.search().bucket);
-              executeSearchQuery();
-            } catch (error) {
-              var defaultBucket = CoverageGroupByService.defaultBucket();
-              $location.search('bucket', defaultBucket).replace();
-            }
-          }
-        });
+        $scope.unbindLocationChange = $scope.$on('$locationChangeSuccess', onLocationChange);
 
         $rootScope.$on('ngObibaMicaSearch.fullscreenChange', function (obj, isEnabled) {
           $scope.isFullscreen = isEnabled;
@@ -849,7 +873,6 @@
             $scope.search.display,
             $scope.search.type,
             $scope.search.rqlQuery,
-            {},
             $scope.lang,
             sort
           );
