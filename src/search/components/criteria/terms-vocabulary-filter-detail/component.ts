@@ -10,6 +10,8 @@
 
 "use strict";
 
+declare var ngObibaMica: any;
+
 class TermsVocabularyFilterDetailController implements ng.IComponentController {
 
   public readonly constantLimitNumber: number;
@@ -22,9 +24,9 @@ class TermsVocabularyFilterDetailController implements ng.IComponentController {
     this.limitNumber = this.constantLimitNumber;
   }
 
-  public clickCheckbox(input: string) {
-    const termInput = { term: input };
-    this.onSelectArgs({ vocabulary: this.vocabulary, args: termInput });
+  public clickCheckbox(input: any) {
+    const args = { term: input };
+    this.onSelectArgs({ vocabulary: this.vocabulary, args });
   }
 }
 

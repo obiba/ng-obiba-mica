@@ -25,11 +25,23 @@
     }
 
     function selectVocabularyArgs(args) {
-      ctrl.onSelectVocabularyArgs({vocabulary: ctrl.vocabulary, args: args});
+      if (!args.term.selected) {
+        var selectedTerms = ctrl.vocabulary.terms.filter(function (term) {
+          return term.selected;
+        });
+
+        if (selectedTerms.length === 0) {
+          ctrl.onRemoveCriterion({ item: ctrl.vocabulary.existingItem });
+        } else {
+          ctrl.onSelectVocabularyArgs({ vocabulary: ctrl.vocabulary, args: args });
+        }
+      } else {
+        ctrl.onSelectVocabularyArgs({ vocabulary: ctrl.vocabulary, args: args });
+      }     
     }
 
     function removeCriterion() {
-      ctrl.onRemoveCriterion({item: ctrl.vocabulary.existingItem});
+      ctrl.onRemoveCriterion({ item: ctrl.vocabulary.existingItem });
     }
 
     function selectAllFilteredVocabularyTerms(terms) {
@@ -38,7 +50,7 @@
         return term;
       });
 
-      selectVocabularyArgs({term: processedTerms});
+      selectVocabularyArgs({ term: processedTerms });
     }
 
     function canStillSelectMore(terms) {

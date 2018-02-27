@@ -134,8 +134,6 @@
         $scope.lang = $translate.use();
 
         function initSearchTabs() {
-          $scope.taxonomyNav = [];
-
           function getTabsOrderParam(arg) {
             var value = $location.search()[arg];
 
@@ -668,19 +666,31 @@
             var selected = vocabulary.terms.filter(function (t) { return t.selected; }).map(function (t) { return t.name; }),
               criterion = RqlQueryService.findCriterion($scope.search.criteria, CriteriaIdGenerator.generate(taxonomy, vocabulary));
 
-            if (criterion) {
-              if (selected.length === 0) {
-                RqlQueryService.removeCriteriaItem(criterion);
-              } else if (Object.keys(args).length === 0) {
-                RqlQueryService.updateCriteriaItem(criterion, RqlQueryService.createCriteriaItem(target, taxonomy, vocabulary, args && args.term, $scope.lang), true);
-              } else {
-                criterion.rqlQuery.name = RQL_NODE.IN;
-                RqlQueryUtils.updateQuery(criterion.rqlQuery, selected);
+            if (criterion && args.term) {
+              criterion.rqlQuery.name = RQL_NODE.IN;
 
-                if (vocabulary.terms.length > 1 && selected.length === vocabulary.terms.length) {
-                  criterion.rqlQuery.name = RQL_NODE.EXISTS;
-                  criterion.rqlQuery.args.pop();
+              if (args.term.selected) {
+                criterion.rqlQuery = RqlQueryUtils.mergeInQueryArgValues(criterion.rqlQuery, [args.term.name]);
+              } else {
+                var currentTerms = criterion.rqlQuery.args[1] || [], index = currentTerms.indexOf(args.term.name);
+                currentTerms = Array.isArray(currentTerms) ? currentTerms : [currentTerms];
+
+                if (index > -1) {
+                  currentTerms.splice(index, 1);
+
+                  if (currentTerms.length === 0) {
+                    criterion.rqlQuery.name = RQL_NODE.EXISTS;
+                  }
+                } else {
+                  currentTerms.push(args.term.name);
                 }
+
+                criterion.rqlQuery = RqlQueryUtils.mergeInQueryArgValues(criterion.rqlQuery, currentTerms);
+              }
+
+              if (vocabulary.terms.length > 1 && selected.length === vocabulary.terms.length) {
+                criterion.rqlQuery.name = RQL_NODE.EXISTS;
+                criterion.rqlQuery.args.pop();
               }
 
               $scope.refreshQuery();
@@ -811,7 +821,7 @@
           $scope.isFullscreen = !$scope.isFullscreen;
         };
         $scope.isSearchAvailable = true;
-        
+
         ObibaServerConfigResource.get(function (micaConfig) {
           $scope.isSearchAvailable = !micaConfig.isSingleStudyEnabled ||
             (micaConfig.isNetworkEnabled && !micaConfig.isSingleNetworkEnabled) ||
@@ -850,7 +860,8 @@
           searchSuggestion(target, suggestion, withSpecificFields);
         });
 
-        function init() {
+        function init() {          
+          $scope.taxonomyNav = [];
           $scope.lang = $translate.use();
           SearchContext.setLocale($scope.lang);
           initSearchTabs();
