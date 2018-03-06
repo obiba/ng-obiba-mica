@@ -63,15 +63,15 @@
     </div>
 
     <div class="table-responsive">
-      <table class="table table-bordered table-striped">
+      <table class="table table-bordered table-striped" obiba-table-sorter="requests">
         <thead>
         <tr>
-          <th>ID</th>
-          <th translate ng-if="showApplicant">data-access-request.applicant</th>
-          <th translate>data-access-request.title</th>
-          <th translate>data-access-request.lastUpdate</th>
-          <th translate>data-access-request.submissionDate</th>
-          <th translate>data-access-request.status</th>
+          <th data-column-name="id">ID</th>
+          <th ng-if="showApplicant" data-column-name="applicant">{{"data-access-request.applicant" | translate}}</th>
+          <th data-column-name="title">{{"data-access-request.title" | translate}}</th>
+          <th data-column-name="timestamps.lastUpdate">{{"data-access-request.lastUpdate" | translate}}</th>
+          <th data-column-name="submissionDate">{{"data-access-request.submissionDate" | translate}}</th>
+          <th data-column-name="status">{{"data-access-request.status" | translate}}</th>
           <th translate>actions</th>
         </tr>
         </thead>

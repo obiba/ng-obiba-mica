@@ -11341,15 +11341,15 @@ angular.module("access/views/data-access-request-list.html", []).run(["$template
     "    </div>\n" +
     "\n" +
     "    <div class=\"table-responsive\">\n" +
-    "      <table class=\"table table-bordered table-striped\">\n" +
+    "      <table class=\"table table-bordered table-striped\" obiba-table-sorter=\"requests\">\n" +
     "        <thead>\n" +
     "        <tr>\n" +
-    "          <th>ID</th>\n" +
-    "          <th translate ng-if=\"showApplicant\">data-access-request.applicant</th>\n" +
-    "          <th translate>data-access-request.title</th>\n" +
-    "          <th translate>data-access-request.lastUpdate</th>\n" +
-    "          <th translate>data-access-request.submissionDate</th>\n" +
-    "          <th translate>data-access-request.status</th>\n" +
+    "          <th data-column-name=\"id\">ID</th>\n" +
+    "          <th ng-if=\"showApplicant\" data-column-name=\"applicant\">{{\"data-access-request.applicant\" | translate}}</th>\n" +
+    "          <th data-column-name=\"title\">{{\"data-access-request.title\" | translate}}</th>\n" +
+    "          <th data-column-name=\"timestamps.lastUpdate\">{{\"data-access-request.lastUpdate\" | translate}}</th>\n" +
+    "          <th data-column-name=\"submissionDate\">{{\"data-access-request.submissionDate\" | translate}}</th>\n" +
+    "          <th data-column-name=\"status\">{{\"data-access-request.status\" | translate}}</th>\n" +
     "          <th translate>actions</th>\n" +
     "        </tr>\n" +
     "        </thead>\n" +
