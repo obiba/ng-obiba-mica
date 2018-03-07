@@ -2553,6 +2553,82 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
  */
 'use strict';
 (function () {
+    var pageSizes = [
+        { label: '10', value: 10 },
+        { label: '20', value: 20 },
+        { label: '50', value: 50 },
+        { label: '100', value: 100 }
+    ];
+    ngObibaMica.search.PaginationState = function (target, defaultPageSize) {
+        this.target = target;
+        this.initialPageSize = defaultPageSize;
+        this.currentPage = 1;
+        this.from = 0;
+        this.to = 0;
+        this.selected = this.findPageSize(defaultPageSize);
+        this.totalHits = null;
+        this.maxSize = 3;
+    };
+    ngObibaMica.search.PaginationState.prototype.calculateRange = function () {
+        var pageSize = this.selected.value;
+        var current = this.currentPage;
+        this.from = pageSize * (current - 1) + 1;
+        this.to = Math.min(this.totalHits, pageSize * current);
+    };
+    ngObibaMica.search.PaginationState.prototype.initializeCurrentPage = function (pagination) {
+        if (pagination && pagination.hasOwnProperty('from')) {
+            this.selected = this.findPageSize(pagination.size);
+            this.currentPage = 1 + pagination.from / this.selected.value;
+        }
+        else {
+            this.selected = this.findPageSize(this.initialPageSize);
+            this.currentPage = 1;
+        }
+    };
+    ngObibaMica.search.PaginationState.prototype.update = function (pagination, hits) {
+        this.totalHits = hits || null;
+        this.initializeCurrentPage(pagination);
+        this.calculateRange();
+        this.updateMaxSize();
+    };
+    ngObibaMica.search.PaginationState.prototype.findPageSize = function (pageSize) {
+        var result = pageSizes.filter(function (p) {
+            return p.value === pageSize;
+        }).pop();
+        return result ? result : pageSizes[0];
+    };
+    ngObibaMica.search.PaginationState.prototype.totalHitsChanged = function (hits) {
+        return null !== this.totalHits && this.totalHits !== hits;
+    };
+    ngObibaMica.search.PaginationState.prototype.updateMaxSize = function () {
+        this.maxSize = Math.min(3, Math.ceil(this.totalHits / this.selected.value));
+    };
+    ngObibaMica.search.PaginationState.prototype.data = function () {
+        return {
+            target: this.target,
+            initialPageSize: this.initialPageSize,
+            currentPage: this.currentPage,
+            from: this.from,
+            to: this.to,
+            selected: this.selected,
+            totalHits: this.totalHits,
+            maxSize: this.maxSize,
+            pageSizes: pageSizes
+        };
+    };
+})();
+//# sourceMappingURL=pagination-state.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+(function () {
     /**
      * Parses each metaTaxonomies taxonomy and returns a list of :
      * [
@@ -2929,7 +3005,7 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         }
     }
     ngObibaMica.search
-        .controller('SearchController', [
+        .controller('SearchController', ['$timeout',
         '$scope',
         '$rootScope',
         '$location',
@@ -2951,7 +3027,8 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
         'EntitySuggestionRqlUtilityService',
         'SearchControllerFacetHelperService',
         'options',
-        function ($scope, $rootScope, $location, $translate, $filter, $cookies, ngObibaMicaSearchTemplateUrl, ObibaServerConfigResource, JoinQuerySearchResource, JoinQueryCoverageResource, AlertService, ServerErrorUtils, LocalizedValues, RqlQueryService, RqlQueryUtils, SearchContext, CoverageGroupByService, VocabularyService, EntitySuggestionRqlUtilityService, SearchControllerFacetHelperService, options) {
+        'PaginationService',
+        function ($timeout, $scope, $rootScope, $location, $translate, $filter, $cookies, ngObibaMicaSearchTemplateUrl, ObibaServerConfigResource, JoinQuerySearchResource, JoinQueryCoverageResource, AlertService, ServerErrorUtils, LocalizedValues, RqlQueryService, RqlQueryUtils, SearchContext, CoverageGroupByService, VocabularyService, EntitySuggestionRqlUtilityService, SearchControllerFacetHelperService, options, PaginationService) {
             $scope.options = options;
             manageSearchHelpText($scope, $translate, $cookies);
             $scope.taxonomyTypeMap = {
@@ -3132,7 +3209,7 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
                     }
                     return sort;
                 }
-                var localizedQuery = RqlQueryService.prepareSearchQueryAndSerialize($scope.search.display, $scope.search.type, $scope.search.rqlQuery, $scope.search.pagination, $scope.lang, updateSortByType());
+                var localizedQuery = RqlQueryService.prepareSearchQueryAndSerialize($scope.search.display, $scope.search.type, $scope.search.rqlQuery, $scope.lang, updateSortByType());
                 function getCountResultFromJoinQuerySearchResponse(response) {
                     return {
                         studyTotalCount: {
@@ -3161,6 +3238,10 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
                             $scope.search.result.list = response;
                             $scope.search.loading = false;
                             $scope.search.countResult = getCountResultFromJoinQuerySearchResponse(response);
+                            $timeout(function () {
+                                var pagination = RqlQueryService.getQueryPaginations($scope.search.rqlQuery);
+                                PaginationService.update(pagination, $scope.search.countResult);
+                            });
                         }, onError);
                         break;
                     case DISPLAY_TYPES.COVERAGE:
@@ -3306,6 +3387,20 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
                 $location.search(search);
             };
             /**
+             * Updates the URL location without triggering a query execution
+             */
+            var replaceQuery = function () {
+                var query = new RqlQuery().serializeArgs($scope.search.rqlQuery.args);
+                var search = $location.search();
+                if ('' === query) {
+                    delete search.query;
+                }
+                else {
+                    search.query = query;
+                }
+                $location.search(search).replace();
+            };
+            /**
              * Removes the item from the criteria tree
              * @param item
              */
@@ -3367,9 +3462,27 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
                     $location.search(search);
                 }
             };
-            var onPaginate = function (target, from, size) {
-                $scope.search.pagination[target] = { from: from, size: size };
-                executeSearchQuery();
+            function onLocationChange(event, newLocation, oldLocation) {
+                if (newLocation !== oldLocation) {
+                    try {
+                        validateBucket($location.search().bucket);
+                        executeSearchQuery();
+                    }
+                    catch (error) {
+                        var defaultBucket = CoverageGroupByService.defaultBucket();
+                        $location.search('bucket', defaultBucket).replace();
+                    }
+                }
+            }
+            var onPaginate = function (target, from, size, replace) {
+                $scope.search.rqlQuery = $scope.search.rqlQuery || new RqlQueryUtils(RQL_NODE.AND);
+                RqlQueryService.prepareQueryPagination($scope.search.rqlQuery, target, from, size);
+                if (replace) {
+                    replaceQuery();
+                }
+                else {
+                    refreshQuery();
+                }
             };
             var onDisplayChanged = function (display) {
                 if (display) {
@@ -3524,7 +3637,6 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
             $scope.BUCKET_TYPES = BUCKET_TYPES;
             $scope.search = {
                 layout: 'layout2',
-                pagination: {},
                 query: null,
                 advanced: false,
                 rqlQuery: new RqlQuery(),
@@ -3572,23 +3684,12 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
                     (micaConfig.isNetworkEnabled && !micaConfig.isSingleNetworkEnabled) ||
                     micaConfig.isCollectedDatasetEnabled || micaConfig.isHarmonizedDatasetEnabled;
             });
-            $scope.$on('$locationChangeSuccess', function (event, newLocation, oldLocation) {
-                if (newLocation !== oldLocation) {
-                    try {
-                        validateBucket($location.search().bucket);
-                        executeSearchQuery();
-                    }
-                    catch (error) {
-                        var defaultBucket = CoverageGroupByService.defaultBucket();
-                        $location.search('bucket', defaultBucket).replace();
-                    }
-                }
-            });
+            $scope.unbindLocationChange = $scope.$on('$locationChangeSuccess', onLocationChange);
             $rootScope.$on('ngObibaMicaSearch.fullscreenChange', function (obj, isEnabled) {
                 $scope.isFullscreen = isEnabled;
             });
             $rootScope.$on('ngObibaMicaSearch.sortChange', function (obj, sort) {
-                $scope.search.rqlQuery = RqlQueryService.prepareSearchQueryNoFields($scope.search.display, $scope.search.type, $scope.search.rqlQuery, {}, $scope.lang, sort);
+                $scope.search.rqlQuery = RqlQueryService.prepareSearchQueryNoFields($scope.search.display, $scope.search.type, $scope.search.rqlQuery, $scope.lang, sort);
                 refreshQuery();
             });
             $rootScope.$on('ngObibaMicaSearch.searchSuggestion', function (event, suggestion, target, withSpecificFields) {
@@ -3608,8 +3709,7 @@ RepeatableCriteriaItem.prototype.getTarget = function () {
                 executeSearchQuery();
             }
             init();
-        }
-    ])
+        }])
         .controller('ResultTabsOrderCountController', [function () {
         }]);
 })();
@@ -4140,7 +4240,58 @@ ngObibaMica.search.service("CoverageGroupByService", ["ngObibaMicaSearch", Cover
     }
     ngObibaMica.search.service('PageUrlService', ['ngObibaMicaUrl', 'StringUtils', 'urlEncode', PageUrlService]);
 })();
-//# sourceMappingURL=page-service-service.js.map
+//# sourceMappingURL=page-url-service.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+(function () {
+    function PaginationService(ngObibaMicaSearch) {
+        var listeners = {};
+        var states = Object.keys(QUERY_TARGETS).reduce(function (acc, key) {
+            if (null === /TAXONOMY/.exec(key)) {
+                var target = QUERY_TARGETS[key];
+                acc[target] = new ngObibaMica.search.PaginationState(target, ngObibaMicaSearch.getDefaultListPageSize(target));
+            }
+            return acc;
+        }, {});
+        function update(pagination, results) {
+            var preventPaginationEvent = false;
+            var target;
+            for (target in states) {
+                var state = states[target];
+                var hits = results[target + 'TotalCount'].hits || 0;
+                var targetPagination = pagination[target];
+                var totalHitsChanged = state.totalHitsChanged(hits);
+                preventPaginationEvent = preventPaginationEvent || totalHitsChanged;
+                state.update(targetPagination, hits);
+            }
+            for (target in states) {
+                if (listeners[target]) {
+                    listeners[target].onUpdate(states[target].data(), preventPaginationEvent);
+                }
+            }
+        }
+        function registerListener(target, listener) {
+            if (listener) {
+                if (!listener.hasOwnProperty('onUpdate')) {
+                    throw new Error('PaginationService::registerListener() - listener must implement onUpdate()');
+                }
+                listeners[target] = listener;
+            }
+        }
+        this.registerListener = registerListener;
+        this.update = update;
+    }
+    ngObibaMica.search.service('PaginationService', ['ngObibaMicaSearch', PaginationService]);
+})();
+//# sourceMappingURL=pagination-service.js.map
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
  *
@@ -4362,18 +4513,22 @@ function typeToTarget(type) {
             }
             return null;
         }
-        this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
-        this.findCriteriaItemFromTree = findCriteriaItemFromTree;
-        this.findTargetCriteria = findTargetCriteria;
-        this.findTargetQuery = findTargetQuery;
-        this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
-        this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
         function isOperator(name) {
             switch (name) {
                 case RQL_NODE.AND:
                 case RQL_NODE.NAND:
                 case RQL_NODE.OR:
                 case RQL_NODE.NOR:
+                    return true;
+            }
+            return false;
+        }
+        function isTarget(name) {
+            switch (name) {
+                case RQL_NODE.VARIABLE:
+                case RQL_NODE.DATASET:
+                case RQL_NODE.NETWORK:
+                case RQL_NODE.STUDY:
                     return true;
             }
             return false;
@@ -4735,7 +4890,7 @@ function typeToTarget(type) {
             }
             return sort;
         };
-        function prepareSearchQueryInternal(context, type, query, pagination, lang, sort, addFieldsQuery) {
+        function prepareSearchQueryInternal(context, type, query, lang, sort, addFieldsQuery) {
             var rqlQuery = angular.copy(query);
             var target = typeToTarget(type);
             RqlQueryUtils.addLocaleQuery(rqlQuery, lang);
@@ -4744,8 +4899,10 @@ function typeToTarget(type) {
                 targetQuery = new RqlQuery(target);
                 rqlQuery.args.push(targetQuery);
             }
-            var limit = pagination[target] || { from: 0, size: ngObibaMicaSearch.getDefaultListPageSize(target) };
-            RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(limit.from, limit.size));
+            var limitQuery = RqlQueryUtils.getLimitQuery(targetQuery);
+            if (!limitQuery) {
+                RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, ngObibaMicaSearch.getDefaultListPageSize(target)));
+            }
             if (addFieldsQuery) {
                 var fieldsQuery = getSourceFields(context, target);
                 if (fieldsQuery) {
@@ -4757,14 +4914,46 @@ function typeToTarget(type) {
             }
             return rqlQuery;
         }
-        this.prepareSearchQuery = function (context, type, query, pagination, lang, sort) {
-            return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, true);
+        function prepareQueryPagination(rqlQuery, target, from, size) {
+            var targetQuery = findTargetQuery(target, rqlQuery);
+            if (!targetQuery) {
+                targetQuery = new RqlQuery(target);
+                rqlQuery.args.push(targetQuery);
+            }
+            RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(from, size));
+        }
+        function getQueryPaginations(rqlQuery) {
+            if (!rqlQuery || rqlQuery.args.length === 0) {
+                return {};
+            }
+            return rqlQuery.args.reduce(function (acc, query) {
+                if (isTarget(query.name)) {
+                    var limitQuery = RqlQueryUtils.getLimitQuery(query);
+                    if (limitQuery) {
+                        acc[query.name] = { from: limitQuery.args[0], size: limitQuery.args[1] };
+                    }
+                }
+                return acc;
+            }, {});
+        }
+        this.isOperator = isOperator;
+        this.isLeaf = isLeaf;
+        this.getQueryPaginations = getQueryPaginations;
+        this.prepareQueryPagination = prepareQueryPagination;
+        this.findCriteriaItemFromTreeById = findCriteriaItemFromTreeById;
+        this.findCriteriaItemFromTree = findCriteriaItemFromTree;
+        this.findTargetCriteria = findTargetCriteria;
+        this.findTargetQuery = findTargetQuery;
+        this.findQueryInTargetByVocabulary = findQueryInTargetByVocabulary;
+        this.findQueryInTargetByTaxonomyVocabulary = findQueryInTargetByTaxonomyVocabulary;
+        this.prepareSearchQuery = function (context, type, query, lang, sort) {
+            return prepareSearchQueryInternal(context, type, query, lang, sort, true);
         };
-        this.prepareSearchQueryNoFields = function (context, type, query, pagination, lang, sort) {
-            return prepareSearchQueryInternal(context, type, query, pagination, lang, sort, false);
+        this.prepareSearchQueryNoFields = function (context, type, query, lang, sort) {
+            return prepareSearchQueryInternal(context, type, query, lang, sort, false);
         };
-        this.prepareSearchQueryAndSerialize = function (context, type, query, pagination, lang, sort) {
-            return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, pagination, lang, sort).args);
+        this.prepareSearchQueryAndSerialize = function (context, type, query, lang, sort) {
+            return new RqlQuery().serializeArgs(self.prepareSearchQuery(context, type, query, lang, sort).args);
         };
         /**
          * Append the aggregate and bucket operations to the variable.
@@ -5352,11 +5541,17 @@ function typeToTarget(type) {
                 }
             }
         }
-        function addLimit(targetQuery, limitQuery) {
+        function getLimitQuery(targetQuery) {
             if (targetQuery && targetQuery.args) {
-                var found = targetQuery.args.filter(function (arg) {
+                return targetQuery.args.filter(function (arg) {
                     return arg.name === RQL_NODE.LIMIT;
                 }).pop();
+            }
+            return null;
+        }
+        function addLimit(targetQuery, limitQuery) {
+            if (targetQuery && targetQuery.args) {
+                var found = getLimitQuery(targetQuery);
                 if (found) {
                     found.args = limitQuery.args;
                 }
@@ -5416,6 +5611,7 @@ function typeToTarget(type) {
         this.updateQuery = updateQuery;
         this.addLocaleQuery = addLocaleQuery;
         this.addFields = addFields;
+        this.getLimitQuery = getLimitQuery;
         this.addLimit = addLimit;
         this.addSort = addSort;
         this.criteriaId = criteriaId;
@@ -5514,10 +5710,19 @@ function typeToTarget(type) {
                     parsedQuery.args.push(study);
                 }
                 if (study.args.length > 0) {
-                    var andStudyClassName = new RqlQuery(RQL_NODE.AND);
-                    study.args.forEach(function (arg) { andStudyClassName.args.push(arg); });
-                    andStudyClassName.args.push(studyClassNameQuery);
-                    study.args = [andStudyClassName];
+                    var replace = study.args.filter(function (arg) {
+                        return RqlQueryService.isLeaf(arg.name) || RqlQueryService.isOperator(arg.name);
+                    }).pop();
+                    if (replace) {
+                        // replaceable args are operators or leaf nodes
+                        var andStudyClassName = new RqlQuery(RQL_NODE.AND);
+                        var index = study.args.indexOf(replace);
+                        andStudyClassName.args.push(studyClassNameQuery, replace);
+                        study.args[index] = andStudyClassName;
+                    }
+                    else {
+                        study.args.push(studyClassNameQuery);
+                    }
                 }
                 else {
                     study.args = [studyClassNameQuery];
@@ -8540,68 +8745,54 @@ ngObibaMica.search
     ]);
 })();
 //# sourceMappingURL=component.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 'use strict';
-ngObibaMica.search
-    .controller('SearchResultPaginationController', ['$scope', 'ngObibaMicaSearch', function ($scope, ngObibaMicaSearch) {
-        function updateMaxSize() {
-            $scope.maxSize = Math.min(3, Math.ceil($scope.totalHits / $scope.pagination.selected.value));
-        }
-        function calculateRange() {
-            var pageSize = $scope.pagination.selected.value;
-            var current = $scope.pagination.currentPage;
-            $scope.pagination.from = pageSize * (current - 1) + 1;
-            $scope.pagination.to = Math.min($scope.totalHits, pageSize * current);
-        }
+(function () {
+    function SearchResultPaginationController($scope, ngObibaMicaSearch, PaginationService) {
         function canShow() {
             return angular.isUndefined($scope.showTotal) || true === $scope.showTotal;
         }
+        function onUpdate(state, preventPageChangeEvent) {
+            $scope.preventPageChangeEvent = preventPageChangeEvent;
+            $scope.pagination = state;
+        }
         var pageChanged = function () {
-            calculateRange();
             if ($scope.onChange) {
-                $scope.onChange($scope.target, ($scope.pagination.currentPage - 1) * $scope.pagination.selected.value, $scope.pagination.selected.value);
+                $scope.onChange($scope.target, ($scope.pagination.currentPage - 1) * $scope.pagination.selected.value, $scope.pagination.selected.value, true === $scope.preventPageChangeEvent);
+                $scope.preventPageChangeEvent = false;
             }
         };
         var pageSizeChanged = function () {
-            updateMaxSize();
-            $scope.pagination.currentPage = 1;
             pageChanged();
         };
         $scope.canShow = canShow;
         $scope.pageChanged = pageChanged;
         $scope.pageSizeChanged = pageSizeChanged;
-        $scope.pageSizes = [
-            { label: '10', value: 10 },
-            { label: '20', value: 20 },
-            { label: '50', value: 50 },
-            { label: '100', value: 100 }
-        ];
-        var listPageSize = ngObibaMicaSearch.getDefaultListPageSize($scope.target);
-        var initialTargetPageSize = $scope.pageSizes.filter(function (p) {
-            return p.value === listPageSize;
-        });
-        $scope.pagination = {
-            selected: initialTargetPageSize.length > 0 ? initialTargetPageSize[0] : $scope.pageSizes[0],
-            currentPage: 1
-        };
-        $scope.$watch('totalHits', function () {
-            updateMaxSize();
-            calculateRange();
-        });
-    }])
-    .directive('searchResultPagination', [function () {
-        return {
-            restrict: 'EA',
-            replace: true,
-            scope: {
-                showTotal: '=',
-                target: '=',
-                totalHits: '=',
-                onChange: '='
-            },
-            controller: 'SearchResultPaginationController',
-            templateUrl: 'search/components/result/pagination/component.html'
-        };
-    }]);
+        this.onUpdate = onUpdate;
+        PaginationService.registerListener($scope.target, this);
+    }
+    ngObibaMica.search.directive('searchResultPagination', [function () {
+            return {
+                restrict: 'EA',
+                replace: true,
+                scope: {
+                    showTotal: '<',
+                    target: '<',
+                    onChange: '='
+                },
+                controller: ['$scope', 'ngObibaMicaSearch', 'PaginationService', SearchResultPaginationController],
+                templateUrl: 'search/components/result/pagination/component.html'
+            };
+        }]);
+})();
 //# sourceMappingURL=component.js.map
 'use strict';
 /* global DISPLAY_TYPES */
@@ -8625,10 +8816,10 @@ ngObibaMica.search
         $scope.QUERY_TYPES = QUERY_TYPES;
         $scope.options = ngObibaMicaSearch.getOptions();
         $scope.activeTarget = {};
-        $scope.activeTarget[QUERY_TYPES.VARIABLES] = { active: false, name: QUERY_TARGETS.VARIABLE, totalHits: 0 };
-        $scope.activeTarget[QUERY_TYPES.DATASETS] = { active: false, name: QUERY_TARGETS.DATASET, totalHits: 0 };
-        $scope.activeTarget[QUERY_TYPES.STUDIES] = { active: false, name: QUERY_TARGETS.STUDY, totalHits: 0 };
-        $scope.activeTarget[QUERY_TYPES.NETWORKS] = { active: false, name: QUERY_TARGETS.NETWORK, totalHits: 0 };
+        $scope.activeTarget[QUERY_TYPES.VARIABLES] = { active: false, name: QUERY_TARGETS.VARIABLE };
+        $scope.activeTarget[QUERY_TYPES.DATASETS] = { active: false, name: QUERY_TARGETS.DATASET };
+        $scope.activeTarget[QUERY_TYPES.STUDIES] = { active: false, name: QUERY_TARGETS.STUDY };
+        $scope.activeTarget[QUERY_TYPES.NETWORKS] = { active: false, name: QUERY_TARGETS.NETWORK };
         $scope.getUrlTemplate = function (tab) {
             switch (tab) {
                 case 'list':
@@ -8703,6 +8894,7 @@ ngObibaMica.search
                 result: '=',
                 lang: '=',
                 loading: '=',
+                pagination: '<',
                 searchTabsOrder: '=',
                 resultTabsOrder: '=',
                 onTypeChanged: '=',
@@ -12508,8 +12700,10 @@ angular.module("lists/views/search-result-list-template.html", []).run(["$templa
     "      </div>\n" +
     "      <div class=\"pull-right hoffset1\">\n" +
     "        <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"inline\" test-ref=\"pager\">\n" +
-    "          <span search-result-pagination show-total=\"false\" target=\"activeTarget[targetTypeMap[res]].name\" total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
-    "            on-change=\"onPaginate\">\n" +
+    "          <span search-result-pagination\n" +
+    "                show-total=\"false\"\n" +
+    "                target=\"activeTarget[targetTypeMap[res]].name\"\n" +
+    "                on-change=\"onPaginate\">\n" +
     "          </span>\n" +
     "        </div>\n" +
     "      </div>\n" +
@@ -13897,17 +14091,29 @@ angular.module("search/components/result/networks-result-table/component.html", 
 
 angular.module("search/components/result/pagination/component.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/components/result/pagination/component.html",
-    "<div ng-show=\"totalHits > 10\">\n" +
+    "<div ng-show=\"pagination.totalHits > 10\">\n" +
     "  <div class=\"pull-left\">\n" +
-    "    <select class=\"form-control input-sm form-select\" ng-model=\"pagination.selected\" ng-options=\"size.label for size in pageSizes\"\n" +
-    "      ng-change=\"pageSizeChanged()\"></select>\n" +
+    "    <select class=\"form-control input-sm form-select\"\n" +
+    "            ng-model=\"pagination.selected\"\n" +
+    "            ng-options=\"size.label for size in pagination.pageSizes\"\n" +
+    "            ng-change=\"pageSizeChanged()\"></select>\n" +
     "  </div>\n" +
     "  <div class=\"pull-right\" style=\"margin-left: 5px\">\n" +
     "\n" +
-    "    <span ng-show=\"maxSize > 1\" uib-pagination total-items=\"totalHits\" max-size=\"maxSize\" ng-model=\"pagination.currentPage\" boundary-links=\"true\"\n" +
-    "      force-ellipses=\"true\" items-per-page=\"pagination.selected.value\" previous-text=\"&lsaquo;\" next-text=\"&rsaquo;\" first-text=\"&laquo;\"\n" +
-    "      last-text=\"&raquo;\" template-url=\"search/views/list/pagination-template.html\" ng-change=\"pageChanged()\">\n" +
-    "    </span>\n" +
+    "    <span ng-show=\"pagination.maxSize > 1\"\n" +
+    "          uib-pagination\n" +
+    "          total-items=\"pagination.totalHits\"\n" +
+    "          max-size=\"pagination.maxSize\"\n" +
+    "          ng-model=\"pagination.currentPage\"\n" +
+    "          boundary-links=\"true\"\n" +
+    "          force-ellipses=\"true\"\n" +
+    "          items-per-page=\"pagination.selected.value\"\n" +
+    "          previous-text=\"&lsaquo;\"\n" +
+    "          next-text=\"&rsaquo;\"\n" +
+    "          first-text=\"&laquo;\"\n" +
+    "          last-text=\"&raquo;\"\n" +
+    "          template-url=\"search/views/list/pagination-template.html\"\n" +
+    "          ng-change=\"pageChanged()\"></span>\n" +
     "  </div>\n" +
     "</div>");
 }]);
@@ -13988,13 +14194,14 @@ angular.module("search/components/result/search-result/list.html", []).run(["$te
     "    </a>\n" +
     "  </div>\n" +
     "\n" +
-    "  <div class=\"clearfix\" ng-if=\"options.studies.showSearchTab\" />\n" +
+    "  <div class=\"clearfix\" ng-if=\"options.studies.showSearchTab\"></div>\n" +
     "\n" +
     "  <div class=\"tab-content\">\n" +
     "    <div class=\"pull-left\" study-filter-shortcut ng-if=\"options.studies.showSearchTab && options.studies.studiesColumn.showStudiesTypeColumn\"></div>\n" +
     "    <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"pull-right voffset2\" test-ref=\"pager\">\n" +
-    "      <span search-result-pagination target=\"activeTarget[targetTypeMap[res]].name\" total-hits=\"activeTarget[targetTypeMap[res]].totalHits\"\n" +
-    "        on-change=\"onPaginate\"></span>\n" +
+    "      <span search-result-pagination\n" +
+    "            target=\"activeTarget[targetTypeMap[res]].name\"\n" +
+    "            on-change=\"onPaginate\"></span>\n" +
     "    </div>\n" +
     "    <div class=\"clearfix\" />\n" +
     "    <ng-include include-replace ng-repeat=\"res in resultTabsOrder\" src=\"'search/views/search-result-list-' + res + '-template.html'\"></ng-include>\n" +
@@ -14821,6 +15028,7 @@ angular.module("search/views/search.html", []).run(["$templateCache", function($
     "                      query=\"search.executedQuery\"\n" +
     "                      result=\"search.result\"\n" +
     "                      loading=\"search.loading\"\n" +
+    "                      pagination=\"search.pagination\"\n" +
     "                      on-update-criteria=\"onUpdateCriteria\"\n" +
     "                      on-remove-criteria=\"onRemoveCriteria\"\n" +
     "                      on-type-changed=\"onTypeChanged\"\n" +
@@ -14909,6 +15117,7 @@ angular.module("search/views/search2.html", []).run(["$templateCache", function(
     "                        query=\"search.executedQuery\"\n" +
     "                        result=\"search.result\"\n" +
     "                        loading=\"search.loading\"\n" +
+    "                        pagination=\"search.pagination\"\n" +
     "                        on-update-criteria=\"onUpdateCriteria\"\n" +
     "                        on-remove-criteria=\"onRemoveCriteria\"\n" +
     "                        on-type-changed=\"onTypeChanged\"\n" +
