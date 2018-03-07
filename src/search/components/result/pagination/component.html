@@ -21,7 +21,7 @@
           last-text="&raquo;"
           template-url="search/views/list/pagination-template.html"
           ng-change="$ctrl.pageChanged()"></span>
-    <ul class="pagination pagination-sm" ng-show="$ctrl.showPaginationTotal && $ctrl.pagination.totalHits > 1">
+    <ul class="pagination pagination-sm" ng-show="$ctrl.showPaginationTotal">
       <li>
         <a href class="pagination-total">{{$ctrl.pagination.from}} - {{$ctrl.pagination.to}} {{'of' | translate}} {{$ctrl.pagination.totalHits}}</a>
       </li>

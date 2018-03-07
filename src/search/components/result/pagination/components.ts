@@ -26,6 +26,7 @@ class SearchResultPaginationController implements ng.IComponentController {
   public onUpdate(state: any, preventPageChangeEvent: boolean): void {
     this.preventPageChangeEvent = preventPageChangeEvent;
     this.pagination = state;
+    this.showPaginationTotal = this.showTotal === true && this.pagination.pageCount > 1;
   }
 
   public pageChanged(): void {
@@ -42,7 +43,6 @@ class SearchResultPaginationController implements ng.IComponentController {
   }
 
   public $onInit(): void {
-    this.showPaginationTotal = this.showTotal === true;
     this.PaginationService.registerListener(this.target, this);
   }
 }

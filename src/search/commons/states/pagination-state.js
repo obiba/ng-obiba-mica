@@ -26,10 +26,11 @@
     this.to = 0;
     this.selected = this.findPageSize(defaultPageSize);
     this.totalHits = null;
+    this.pageCount = 0;
     this.maxSize = 3;
   };
 
-  ngObibaMica.search.PaginationState.prototype.calculateRange = function() {
+  ngObibaMica.search.PaginationState.prototype.updateRange = function() {
     var pageSize = this.selected.value;
     var current = this.currentPage;
     this.from = pageSize * (current - 1) + 1;
@@ -50,7 +51,8 @@
   ngObibaMica.search.PaginationState.prototype.update = function(pagination, hits) {
     this.totalHits = hits || null;
     this.initializeCurrentPage(pagination);
-    this.calculateRange();
+    this.updateRange();
+    this.updatePageCount();
     this.updateMaxSize();
   };
 
@@ -66,8 +68,12 @@
     return null !== this.totalHits && this.totalHits !== hits;
   };
 
+  ngObibaMica.search.PaginationState.prototype.updatePageCount = function() {
+    this.pageCount = Math.ceil (this.totalHits / this.selected.value);
+  };
+
   ngObibaMica.search.PaginationState.prototype.updateMaxSize = function() {
-    this.maxSize = Math.min (3, Math.ceil (this.totalHits / this.selected.value));
+    this.maxSize = Math.min (3, this.pageCount);
   };
 
   ngObibaMica.search.PaginationState.prototype.data = function() {
@@ -80,6 +86,7 @@
       selected: this.selected,
       totalHits: this.totalHits,
       maxSize: this.maxSize,
+      pageCount: this.pageCount,
       pageSizes: pageSizes
     };
   };
