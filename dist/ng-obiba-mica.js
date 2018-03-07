@@ -4280,7 +4280,7 @@ ngObibaMica.search.service("CoverageGroupByService", ["ngObibaMicaSearch", Cover
         }
         function registerListener(target, listener) {
             if (listener) {
-                if (!listener.hasOwnProperty('onUpdate')) {
+                if (!listener.onUpdate) {
                     throw new Error('PaginationService::registerListener() - listener must implement onUpdate()');
                 }
                 listeners[target] = listener;
@@ -8754,46 +8754,51 @@ ngObibaMica.search
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-'use strict';
-(function () {
-    function SearchResultPaginationController($scope, ngObibaMicaSearch, PaginationService) {
-        function canShow() {
-            return angular.isUndefined($scope.showTotal) || true === $scope.showTotal;
-        }
-        function onUpdate(state, preventPageChangeEvent) {
-            $scope.preventPageChangeEvent = preventPageChangeEvent;
-            $scope.pagination = state;
-        }
-        var pageChanged = function () {
-            if ($scope.onChange) {
-                $scope.onChange($scope.target, ($scope.pagination.currentPage - 1) * $scope.pagination.selected.value, $scope.pagination.selected.value, true === $scope.preventPageChangeEvent);
-                $scope.preventPageChangeEvent = false;
-            }
-        };
-        var pageSizeChanged = function () {
-            pageChanged();
-        };
-        $scope.canShow = canShow;
-        $scope.pageChanged = pageChanged;
-        $scope.pageSizeChanged = pageSizeChanged;
-        this.onUpdate = onUpdate;
-        PaginationService.registerListener($scope.target, this);
+"use strict";
+var SearchResultPaginationController = /** @class */ (function () {
+    function SearchResultPaginationController(PaginationService) {
+        this.PaginationService = PaginationService;
+        this.preventPageChangeEvent = false;
     }
-    ngObibaMica.search.directive('searchResultPagination', [function () {
-            return {
-                restrict: 'EA',
-                replace: true,
-                scope: {
-                    showTotal: '<',
-                    target: '<',
-                    onChange: '='
-                },
-                controller: ['$scope', 'ngObibaMicaSearch', 'PaginationService', SearchResultPaginationController],
-                templateUrl: 'search/components/result/pagination/component.html'
-            };
-        }]);
-})();
-//# sourceMappingURL=component.js.map
+    SearchResultPaginationController.prototype.onUpdate = function (state, preventPageChangeEvent) {
+        this.preventPageChangeEvent = preventPageChangeEvent;
+        this.pagination = state;
+    };
+    SearchResultPaginationController.prototype.pageChanged = function () {
+        this.onChange({
+            from: (this.pagination.currentPage - 1) * this.pagination.selected.value,
+            replace: true === this.preventPageChangeEvent,
+            size: this.pagination.selected.value,
+            target: this.target,
+        });
+    };
+    SearchResultPaginationController.prototype.pageSizeChanged = function () {
+        this.pageChanged();
+    };
+    SearchResultPaginationController.prototype.$onInit = function () {
+        this.showPaginationTotal = this.showTotal === true;
+        this.PaginationService.registerListener(this.target, this);
+    };
+    SearchResultPaginationController.$inject = ["PaginationService"];
+    return SearchResultPaginationController;
+}());
+var SearchResultPaginationComponent = /** @class */ (function () {
+    function SearchResultPaginationComponent() {
+        this.templateUrl = "search/components/result/pagination/component.html";
+        this.transclude = false;
+        this.transclude = true;
+        this.bindings = {
+            onChange: "&",
+            showTotal: "<",
+            target: "<",
+        };
+        this.controller = SearchResultPaginationController;
+        this.controllerAs = "$ctrl";
+    }
+    return SearchResultPaginationComponent;
+}());
+ngObibaMica.search.component("searchResultPagination", new SearchResultPaginationComponent());
+//# sourceMappingURL=components.js.map
 'use strict';
 /* global DISPLAY_TYPES */
 /* global QUERY_TYPES */
@@ -12700,11 +12705,11 @@ angular.module("lists/views/search-result-list-template.html", []).run(["$templa
     "      </div>\n" +
     "      <div class=\"pull-right hoffset1\">\n" +
     "        <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"inline\" test-ref=\"pager\">\n" +
-    "          <span search-result-pagination\n" +
+    "          <search-result-pagination\n" +
     "                show-total=\"false\"\n" +
     "                target=\"activeTarget[targetTypeMap[res]].name\"\n" +
-    "                on-change=\"onPaginate\">\n" +
-    "          </span>\n" +
+    "                on-change=\"onPaginate(target, from, size, replace)\">\n" +
+    "          </search-result-pagination>\n" +
     "        </div>\n" +
     "      </div>\n" +
     "      <span ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active && activeTarget[targetTypeMap[res]].totalHits > 0 && options.obibaListOptions.searchForm\">\n" +
@@ -14091,29 +14096,34 @@ angular.module("search/components/result/networks-result-table/component.html", 
 
 angular.module("search/components/result/pagination/component.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("search/components/result/pagination/component.html",
-    "<div ng-show=\"pagination.totalHits > 10\">\n" +
+    "<div ng-show=\"$ctrl.pagination.totalHits > 10\">\n" +
     "  <div class=\"pull-left\">\n" +
     "    <select class=\"form-control input-sm form-select\"\n" +
-    "            ng-model=\"pagination.selected\"\n" +
-    "            ng-options=\"size.label for size in pagination.pageSizes\"\n" +
-    "            ng-change=\"pageSizeChanged()\"></select>\n" +
+    "            ng-model=\"$ctrl.pagination.selected\"\n" +
+    "            ng-options=\"size.label for size in $ctrl.pagination.pageSizes\"\n" +
+    "            ng-change=\"$ctrl.pageSizeChanged()\"></select>\n" +
     "  </div>\n" +
     "  <div class=\"pull-right\" style=\"margin-left: 5px\">\n" +
     "\n" +
-    "    <span ng-show=\"pagination.maxSize > 1\"\n" +
+    "    <span ng-show=\"$ctrl.pagination.maxSize > 1\"\n" +
     "          uib-pagination\n" +
-    "          total-items=\"pagination.totalHits\"\n" +
-    "          max-size=\"pagination.maxSize\"\n" +
-    "          ng-model=\"pagination.currentPage\"\n" +
-    "          boundary-links=\"true\"\n" +
+    "          total-items=\"$ctrl.pagination.totalHits\"\n" +
+    "          max-size=\"$ctrl.pagination.maxSize\"\n" +
+    "          ng-model=\"$ctrl.pagination.currentPage\"\n" +
+    " z         boundary-links=\"true\"\n" +
     "          force-ellipses=\"true\"\n" +
-    "          items-per-page=\"pagination.selected.value\"\n" +
+    "          items-per-page=\"$ctrl.pagination.selected.value\"\n" +
     "          previous-text=\"&lsaquo;\"\n" +
     "          next-text=\"&rsaquo;\"\n" +
     "          first-text=\"&laquo;\"\n" +
     "          last-text=\"&raquo;\"\n" +
     "          template-url=\"search/views/list/pagination-template.html\"\n" +
-    "          ng-change=\"pageChanged()\"></span>\n" +
+    "          ng-change=\"$ctrl.pageChanged()\"></span>\n" +
+    "    <ul class=\"pagination pagination-sm\" ng-show=\"$ctrl.showPaginationTotal && $ctrl.pagination.totalHits > 1\">\n" +
+    "      <li>\n" +
+    "        <a href class=\"pagination-total\">{{$ctrl.pagination.from}} - {{$ctrl.pagination.to}} {{'of' | translate}} {{$ctrl.pagination.totalHits}}</a>\n" +
+    "      </li>\n" +
+    "    </ul>\n" +
     "  </div>\n" +
     "</div>");
 }]);
@@ -14199,9 +14209,10 @@ angular.module("search/components/result/search-result/list.html", []).run(["$te
     "  <div class=\"tab-content\">\n" +
     "    <div class=\"pull-left\" study-filter-shortcut ng-if=\"options.studies.showSearchTab && options.studies.studiesColumn.showStudiesTypeColumn\"></div>\n" +
     "    <div ng-repeat=\"res in resultTabsOrder\" ng-show=\"activeTarget[targetTypeMap[res]].active\" class=\"pull-right voffset2\" test-ref=\"pager\">\n" +
-    "      <span search-result-pagination\n" +
+    "      <search-result-pagination\n" +
+    "            show-total=\"true\"\n" +
     "            target=\"activeTarget[targetTypeMap[res]].name\"\n" +
-    "            on-change=\"onPaginate\"></span>\n" +
+    "            on-change=\"onPaginate(target, from, size, replace)\"></search-result-pagination>\n" +
     "    </div>\n" +
     "    <div class=\"clearfix\" />\n" +
     "    <ng-include include-replace ng-repeat=\"res in resultTabsOrder\" src=\"'search/views/search-result-list-' + res + '-template.html'\"></ng-include>\n" +
@@ -14835,11 +14846,6 @@ angular.module("search/views/list/pagination-template.html", []).run(["$template
     "    </li>\n" +
     "    <li ng-if=\"::boundaryLinks\" ng-class=\"{disabled: noNext()||ngDisabled}\" class=\"pagination-last\">\n" +
     "      <a href ng-click=\"selectPage(totalPages, $event)\">{{::getText('last')}}</a>\n" +
-    "    </li>\n" +
-    "  </ul>\n" +
-    "  <ul class=\"pagination pagination-sm\" ng-show=\"1 < totalPages\">\n" +
-    "    <li>\n" +
-    "      <a href ng-show=\"$parent.canShow() && 1 < totalPages\" class=\"pagination-total\">{{$parent.pagination.from}} - {{$parent.pagination.to}} {{'of' | translate}} {{totalItems}}</a>\n" +
     "    </li>\n" +
     "  </ul>\n" +
     "</span>");
