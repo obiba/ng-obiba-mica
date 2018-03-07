@@ -28,11 +28,11 @@
       </div>
       <div class="pull-right hoffset1">
         <div ng-repeat="res in resultTabsOrder" ng-show="activeTarget[targetTypeMap[res]].active" class="inline" test-ref="pager">
-          <span search-result-pagination
+          <search-result-pagination
                 show-total="false"
                 target="activeTarget[targetTypeMap[res]].name"
-                on-change="onPaginate">
-          </span>
+                on-change="onPaginate(target, from, size, replace)">
+          </search-result-pagination>
         </div>
       </div>
       <span ng-repeat="res in resultTabsOrder" ng-show="activeTarget[targetTypeMap[res]].active && activeTarget[targetTypeMap[res]].totalHits > 0 && options.obibaListOptions.searchForm">

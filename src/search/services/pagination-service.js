@@ -45,7 +45,7 @@
 
     function registerListener(target, listener) {
       if (listener) {
-       if (!listener.hasOwnProperty('onUpdate')) {
+       if (!listener.onUpdate) {
          throw new Error('PaginationService::registerListener() - listener must implement onUpdate()');
        }
 

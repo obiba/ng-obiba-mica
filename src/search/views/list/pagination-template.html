@@ -27,9 +27,4 @@
       <a href ng-click="selectPage(totalPages, $event)">{{::getText('last')}}</a>
     </li>
   </ul>
-  <ul class="pagination pagination-sm" ng-show="1 < totalPages">
-    <li>
-      <a href ng-show="$parent.canShow() && 1 < totalPages" class="pagination-total">{{$parent.pagination.from}} - {{$parent.pagination.to}} {{'of' | translate}} {{totalItems}}</a>
-    </li>
-  </ul>
 </span>

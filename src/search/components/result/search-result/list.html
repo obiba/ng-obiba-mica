@@ -27,9 +27,10 @@
   <div class="tab-content">
     <div class="pull-left" study-filter-shortcut ng-if="options.studies.showSearchTab && options.studies.studiesColumn.showStudiesTypeColumn"></div>
     <div ng-repeat="res in resultTabsOrder" ng-show="activeTarget[targetTypeMap[res]].active" class="pull-right voffset2" test-ref="pager">
-      <span search-result-pagination
+      <search-result-pagination
+            show-total="true"
             target="activeTarget[targetTypeMap[res]].name"
-            on-change="onPaginate"></span>
+            on-change="onPaginate(target, from, size, replace)"></search-result-pagination>
     </div>
     <div class="clearfix" />
     <ng-include include-replace ng-repeat="res in resultTabsOrder" src="'search/views/search-result-list-' + res + '-template.html'"></ng-include>
