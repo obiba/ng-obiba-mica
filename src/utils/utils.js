@@ -11,7 +11,7 @@
 'use strict';
 (function () {
 
-ngObibaMica.utils = angular.module('obiba.mica.utils', ['schemaForm']);
+ngObibaMica.utils = angular.module('obiba.mica.utils', ['schemaForm', 'LocalStorageModule']);
 
 ngObibaMica.utils
   .factory('urlEncode', function() {
@@ -277,5 +277,12 @@ ngObibaMica.utils
         });
         return form;
       });
-    }]);
+    }])
+  
+  .config(['localStorageServiceProvider', 
+    function (localStorageServiceProvider) {
+      localStorageServiceProvider
+        .setPrefix('mica')
+        .setStorageType('localStorage');
+   }]);
 })();

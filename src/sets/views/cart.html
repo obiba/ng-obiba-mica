@@ -1,0 +1,13 @@
+<div>
+  <div ng-if="cartHeaderTemplateUrl" ng-include="cartHeaderTemplateUrl"></div>
+
+  <h3 translate>variables</h3>
+  <div>
+      <span ng-if="loading" class="voffset2 loading"></span>
+  </div>
+  <cart-documents-table 
+    type="'variables'" 
+    documents="variables"
+    on-page-change="onPaginate"></cart-documents-table>
+  <p ng-hide="loading || variables && variables.total>0" translate>sets.cart.no-variables</p>
+</div>

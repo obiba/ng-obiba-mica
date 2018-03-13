@@ -40,6 +40,14 @@
       return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('JoinQueryCoverageDownloadResource'), { ':query': query });
     };
 
+    this.entitiesCountPage = function (query) {
+      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('EntitiesCountPage'), { ':query': urlEncode(query) });
+    };
+
+    this.searchPage = function (query) {
+      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('SearchPage'), { ':query': urlEncode(query) });
+    };
+
     return this;
   }
 
