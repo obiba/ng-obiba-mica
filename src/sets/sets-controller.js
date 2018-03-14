@@ -42,5 +42,27 @@
       $scope.onPaginate = function(type, from) {
         SetService.getCartDocuments(type, from, limit).then(onDocuments);
       };
-    }]); 
+    }])
+  .controller('AddVariableToCartController', [
+    '$scope',
+    'SetService',
+    'AlertService',
+    function($scope, SetService, AlertService) {
+      
+      $scope.onAdd = function(id) {
+        var beforeCart = SetService.getCartSet('variables');
+        SetService.addDocumentToCart('variables', id).then(function(set) {
+          var addedCount = set.count - (beforeCart ? beforeCart.count : 0);
+          var msgKey = addedCount === 0 ? 'sets.cart.no-variable-added' : 'sets.cart.variable-added';
+          AlertService.growl({
+            id: 'AddVariableToCartControllerGrowl',
+            type: 'info',
+            msgKey: msgKey,
+            msgArgs: [],
+            delay: 3000
+          });
+        });
+      };
+
+    }]);
 })();

@@ -100,7 +100,7 @@ ngObibaMica.search
           var msgKey = 'sets.cart.variables-added';
           var msgArgs = [addedCount];
           if (addedCount === 0) {
-            msgKey = 'sets.cart.no-variables-added';
+            msgKey = 'sets.cart.no-variable-added';
             msgArgs = [];
           }
           AlertService.growl({
