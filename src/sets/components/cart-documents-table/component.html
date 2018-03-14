@@ -43,16 +43,16 @@
       <thead>
         <th translate>taxonomy.target.variable</th>
         <th translate>search.variable.label</th>
-        <th translate>type</th>
-        <th translate>taxonomy.target.study</th>
+        <th ng-if="$ctrl.showVariableType()" translate>type</th>
+        <th ng-if="$ctrl.showStudies()" translate>taxonomy.target.study</th>
         <th translate>taxonomy.target.dataset</th>
       </thead>
       <tbody>
         <tr ng-repeat="row in $ctrl.table.rows">
           <td><a href="{{row[0].link}}">{{row[0].value}}</a></td>
           <td>{{row[1].value}}</td>
-          <td>{{'search.variable.' + row[2].value.toLowerCase() | translate}}</td>
-          <td><a href="{{row[3].link}}">{{row[3].value}}</a></td>
+          <td ng-if="$ctrl.showVariableType()">{{'search.variable.' + row[2].value.toLowerCase() | translate}}</td>
+          <td ng-if="$ctrl.showStudies()"><a href="{{row[3].link}}">{{row[3].value}}</a></td>
           <td><a href="{{row[4].link}}">{{row[4].value}}</a></td>
         </tr>
       </tbody>

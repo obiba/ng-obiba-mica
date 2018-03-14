@@ -48,6 +48,14 @@ class CartDocumentsTableController implements ng.IComponentController {
       };
   }
 
+  public showStudies(): boolean {
+    return !this.SetService.isSingleStudy();
+  }
+
+  public showVariableType(): boolean {
+    return this.SetService.hasHarmonizedDatasets();
+  }
+
   public entitiesCount(): void {
     if (this.pagination.totalHits) {
       this.SetService.gotoSetEntitiesCount();

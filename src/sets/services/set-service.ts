@@ -13,6 +13,8 @@
 declare var ngObibaMica: any;
 
 interface ISetService {
+  isSingleStudy(): boolean;
+  hasHarmonizedDatasets(): boolean;
   addDocumentToCart(documentType: string, documentId: string | string[]): any;
   addDocumentQueryToCart(documentType: string, query: string): any;
   getCartDocuments(documentType: string, fromIdx: number, limitIdx: number): any;
@@ -25,7 +27,11 @@ interface ISetService {
 class SetService implements ISetService {
 
   private static $inject = ["$location", "$window", "$log", "localStorageService", "PageUrlService", "AlertService",
-    "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource"];
+    "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource",
+    "ObibaServerConfigResource"];
+
+  private hasMultipleStudies: boolean;
+  private hasHarmonization: boolean;
 
   constructor(
     private $location: any,
@@ -38,7 +44,21 @@ class SetService implements ISetService {
     private SetResource: any,
     private SetDocumentsResource: any,
     private SetClearResource: any,
-    private SetImportResource: any) {
+    private SetImportResource: any,
+    private ObibaServerConfigResource: any) {
+      const that = this;
+      ObibaServerConfigResource.get((micaConfig) => {
+        that.hasMultipleStudies = !micaConfig.isSingleStudyEnabled || micaConfig.isHarmonizedDatasetEnabled;
+        that.hasHarmonization = micaConfig.isHarmonizedDatasetEnabled;
+      });
+  }
+
+  public isSingleStudy(): boolean {
+    return !this.hasMultipleStudies;
+  }
+
+  public hasHarmonizedDatasets(): boolean {
+    return this.hasHarmonization;
   }
 
   /**
@@ -201,4 +221,5 @@ class SetService implements ISetService {
 
 ngObibaMica.sets.service("SetService", ["$location", "$window", "$log", "localStorageService",
   "PageUrlService", "AlertService",
-  "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource", SetService]);
+  "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource",
+  "ObibaServerConfigResource", SetService]);
