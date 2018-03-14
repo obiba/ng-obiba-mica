@@ -11,17 +11,31 @@ ngObibaMica.search
     'RqlQueryService',
     'RqlQueryUtils',
     'ngObibaMicaSearchTemplateUrl',
+    'AlertService',
+    'SetService',
     function ($scope,
       ngObibaMicaSearch,
       ngObibaMicaUrl,
       RqlQueryService,
       RqlQueryUtils,
-      ngObibaMicaSearchTemplateUrl) {
+      ngObibaMicaSearchTemplateUrl,
+      AlertService,
+      SetService) {
 
       function updateType(type) {
         Object.keys($scope.activeTarget).forEach(function (key) {
           $scope.activeTarget[key].active = type === key;
         });
+      }
+
+      function rewriteQueryWithLimit(limit) {
+        var parsedQuery = RqlQueryService.parseQuery($scope.query);
+        var target = typeToTarget($scope.type);
+        var targetQuery = parsedQuery.args.filter(function (query) {
+          return query.name === target;
+        }).pop();
+        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, limit));
+        return new RqlQuery().serializeArgs(parsedQuery.args);
       }
 
       $scope.targetTypeMap = $scope.$parent.taxonomyTypeMap;
@@ -59,20 +73,44 @@ ngObibaMica.search
       };
 
       $scope.getReportUrl = function () {
-
         if ($scope.query === null) {
           return $scope.query;
         }
+        var queryWithLimit = rewriteQueryWithLimit(100000);
+        return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithLimit));
+      };
 
-        var parsedQuery = RqlQueryService.parseQuery($scope.query);
-        var target = typeToTarget($scope.type);
-        var targetQuery = parsedQuery.args.filter(function (query) {
-          return query.name === target;
-        }).pop();
-        RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, 100000));
-        var queryWithoutLimit = new RqlQuery().serializeArgs(parsedQuery.args);
+      $scope.addToCart = function() {
+        if ($scope.query === null) {
+          return $scope.query;
+        }
+        var beforeCart = SetService.getCartSet('variables');
+        //var queryWithLimit = rewriteQueryWithLimit(1000);
+        //SetService.addDocumentQueryToCart('variables', queryWithLimit);
 
-        return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithoutLimit));
+        var ids = $scope.result.list.variableResultDto['obiba.mica.DatasetVariableResultDto.result'].summaries
+          .filter(function(variable) {
+            return variable.variableType === 'Collected';
+          })
+          .map(function(variable) {
+            return variable.id;
+          });
+        SetService.addDocumentToCart('variables', ids).then(function(set) {
+          var addedCount = set.count - (beforeCart ? beforeCart.count : 0);
+          var msgKey = 'sets.cart.variables-added';
+          var msgArgs = [addedCount];
+          if (addedCount === 0) {
+            msgKey = 'sets.cart.no-variables-added';
+            msgArgs = [];
+          }
+          AlertService.growl({
+            id: 'SearchControllerGrowl',
+            type: 'info',
+            msgKey: msgKey,
+            msgArgs: msgArgs,
+            delay: 3000
+          });
+        });
       };
 
       $scope.getStudySpecificReportUrl = function () {

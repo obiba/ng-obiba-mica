@@ -13,7 +13,8 @@
 declare var ngObibaMica: any;
 
 interface ISetService {
-  addDocumentToCart(documentType: string, documentId: string): void;
+  addDocumentToCart(documentType: string, documentId: string | string[]): any;
+  addDocumentQueryToCart(documentType: string, query: string): any;
   getCartDocuments(documentType: string, fromIdx: number, limitIdx: number): any;
   clearCart(documentType: string): any;
   gotoSetEntitiesCount(documentType: string, setId: string): void;
@@ -23,8 +24,8 @@ interface ISetService {
 
 class SetService implements ISetService {
 
-  private static $inject = ["$location", "$window", "$log", "localStorageService", "PageUrlService",
-    "SetsImportResource", "SetResource", "SetDocumentsResource", "SetImportResource"];
+  private static $inject = ["$location", "$window", "$log", "localStorageService", "PageUrlService", "AlertService",
+    "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource"];
 
   constructor(
     private $location: any,
@@ -32,9 +33,11 @@ class SetService implements ISetService {
     private $log: any,
     private localStorageService: any,
     private PageUrlService: any,
+    private AlertService: any,
     private SetsImportResource: any,
     private SetResource: any,
     private SetDocumentsResource: any,
+    private SetClearResource: any,
     private SetImportResource: any) {
   }
 
@@ -57,18 +60,29 @@ class SetService implements ISetService {
   }
 
   /**
-   * Add a document to the cart's set.
+   * Add one or more documents to the cart's set.
    * Return a promise on the cart's set.
    * @param documentType the document type
-   * @param documentId the document ID
+   * @param documentId the document ID or an array of document IDs
    */
-  public addDocumentToCart(documentType: string, documentId: string): any {
+  public addDocumentToCart(documentType: string, documentId: string | string[]): any {
+    const did = Array.isArray(documentId) ? documentId.join("\n") : documentId;
     return this.getOrCreateCart(documentType).then((set) => {
-      return this.SetImportResource.save({type: documentType, id: set.id}, documentId).$promise;
+      return this.SetImportResource.save({type: documentType, id: set.id}, did).$promise;
     }).then((set) => {
       this.localStorageService.set(this.getCartKey(documentType), set);
       return set;
     });
+  }
+
+  /**
+   * Add documents matching the query to the cart's set.
+   * Return a promise on the cart's set.
+   * @param documentType the document type
+   * @param query the documents join query
+   */
+  public addDocumentQueryToCart(documentType: string, query: string): any {
+    this.$log.info("query=" + query);
   }
 
   /**
@@ -77,7 +91,9 @@ class SetService implements ISetService {
    */
   public clearCart(documentType: string): any {
     return this.getOrCreateCart(documentType).then((set) => {
-      return this.SetDocumentsResource.clear({type: documentType, id: set.id}).$promise;
+      return this.SetClearResource.clear({type: documentType, id: set.id}).$promise;
+    }).then(() => {
+      return this.getOrCreateCart(documentType);
     });
   }
 
@@ -109,12 +125,7 @@ class SetService implements ISetService {
       const queryStr = ids.map((id) => {
         return "all(" + id + ")";
       }).join(",");
-      const href = this.PageUrlService.entitiesCountPage(queryStr);
-      if (href.startsWith("http")) {
-        this.$window.location.href = href;
-      } else {
-        this.$location.url(href);
-      }
+      this.$window.location.href = this.PageUrlService.entitiesCountPage(queryStr);
     }
   }
 
@@ -133,15 +144,14 @@ class SetService implements ISetService {
     }
     if (id) {
       const queryStr = "variable(in(Mica_variable.sets," + id + "))";
-      const href = this.PageUrlService.searchPage(queryStr);
-      if (href.startsWith("http")) {
-        this.$window.location.href = href;
-      } else {
-        this.$location.url(href);
-      }
+      this.$window.location.href = this.PageUrlService.searchPage(queryStr);
     }
   }
 
+  /**
+   * Get the cart set if it exists.
+   * @param documentType the document type
+   */
   private getCartSet(documentType: string) {
     return this.localStorageService.get(this.getCartKey(documentType));
   }
@@ -155,6 +165,10 @@ class SetService implements ISetService {
     const cartSet = this.localStorageService.get(this.getCartKey(documentType));
     if (cartSet) {
       return this.SetResource.get({type: documentType, id: cartSet.id}).$promise
+        .then((set) => {
+          this.localStorageService.set(this.getCartKey(documentType), set);
+          return set;
+        })
         .catch(() => {
           return this.createCart(documentType, "");
         });
@@ -185,5 +199,6 @@ class SetService implements ISetService {
   }
 }
 
-ngObibaMica.sets.service("SetService", ["$location", "$window", "$log", "localStorageService", "PageUrlService",
-  "SetsImportResource", "SetResource", "SetDocumentsResource", "SetImportResource", SetService]);
+ngObibaMica.sets.service("SetService", ["$location", "$window", "$log", "localStorageService",
+  "PageUrlService", "AlertService",
+  "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource", SetService]);

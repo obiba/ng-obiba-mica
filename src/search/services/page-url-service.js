@@ -41,11 +41,19 @@
     };
 
     this.entitiesCountPage = function (query) {
-      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('EntitiesCountPage'), { ':query': urlEncode(query) });
+      var url = ngObibaMicaUrl.getUrl('BaseUrl') + ngObibaMicaUrl.getUrl('EntitiesCountBaseUrl');
+      if (query) {
+        url = url + '?query=' + urlEncode(query);
+      }
+      return url;
     };
 
     this.searchPage = function (query) {
-      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('SearchPage'), { ':query': urlEncode(query) });
+      var url = ngObibaMicaUrl.getUrl('BaseUrl') + ngObibaMicaUrl.getUrl('SearchBaseUrl');
+      if (query) {
+        url = url + '?query=' + urlEncode(query);
+      }
+      return url;
     };
 
     return this;

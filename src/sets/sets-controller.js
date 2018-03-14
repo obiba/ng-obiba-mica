@@ -16,10 +16,8 @@
     '$scope',
     '$location',
     'SetService',
-    'AlertService',
-    'ServerErrorUtils',
     'ngObibaMicaSetsTemplateUrl',
-    function($scope, $location, SetService, AlertService, ServerErrorUtils, ngObibaMicaSetsTemplateUrl) {
+    function($scope, $location, SetService, ngObibaMicaSetsTemplateUrl) {
       $scope.cartHeaderTemplateUrl = ngObibaMicaSetsTemplateUrl.getHeaderUrl('cart');
       $scope.loading = true;
       var limit = 100;

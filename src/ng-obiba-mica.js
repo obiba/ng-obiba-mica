@@ -148,6 +148,7 @@ function NgObibaMicaTemplateUrlFactory() {
         'SetsResource': 'ws/:type/sets',
         'SetsImportResource': 'ws/:type/sets/_import',
         'SetResource': 'ws/:type/set/:id',
+        'SetClearResource': 'ws/:type/set/:id/documents',
         'SetDocumentsResource': 'ws/:type/set/:id/documents?from=:from&limit=:limit',
         'SetImportResource': 'ws/:type/set/:id/documents/_import',
         'JoinQuerySearchResource': 'ws/:type/_rql',
@@ -166,10 +167,9 @@ function NgObibaMicaTemplateUrlFactory() {
         'FileBrowserSearchResource': 'ws/files-search/:path',
         'FileBrowserDownloadUrl': 'ws/draft/file-dl/:path?inline=:inline',
         'SearchBaseUrl': '#/search',
-        'SearchPage': '/search?query=:query',
         'DocumentSuggestion': 'ws/:documentType/_suggest',
         'EntitiesCountResource': 'ws/datasets/entities/_count?query=:query',
-        'EntitiesCountPage': '/entities-count?query=:query'
+        'EntitiesCountBaseUrl': '#/entities-count'
       };
 
       function UrlProvider(registry) {

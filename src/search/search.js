@@ -21,7 +21,8 @@ ngObibaMica.search = angular.module('obiba.mica.search', [
   'obiba.alert',
   'ui.bootstrap',
   'pascalprecht.translate',
-  'templates-ngObibaMica'
+  'templates-ngObibaMica',
+  'obiba.mica.sets'
 ]);
 
 (function () {

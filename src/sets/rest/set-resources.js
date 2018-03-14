@@ -32,7 +32,14 @@
             method: 'GET',
             params: {type: '@type', id: '@id', from: '@from', limit: '@limit'},
             errorHandler: true
-          },
+          }
+        });
+      }])
+
+    .factory('SetClearResource', ['$resource', 'ngObibaMicaUrl',
+      function ($resource, ngObibaMicaUrl) {
+        const url = ngObibaMicaUrl.getUrl('SetClearResource');
+        return $resource(url, {}, {
           'clear': {
             method: 'DELETE',
             params: {type: '@type', id: '@id'},
