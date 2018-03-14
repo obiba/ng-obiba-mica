@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2018-03-12
+ * Date: 2018-03-14
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -130,6 +130,12 @@ function NgObibaMicaTemplateUrlFactory() {
             'VocabularyResource': 'ws/taxonomy/:taxonomy/vocabulary/:vocabulary/_filter',
             'VariableResource': 'ws/variable/:id',
             'VariableSummaryResource': 'ws/variable/:id/summary',
+            'SetsResource': 'ws/:type/sets',
+            'SetsImportResource': 'ws/:type/sets/_import',
+            'SetResource': 'ws/:type/set/:id',
+            'SetClearResource': 'ws/:type/set/:id/documents',
+            'SetDocumentsResource': 'ws/:type/set/:id/documents?from=:from&limit=:limit',
+            'SetImportResource': 'ws/:type/set/:id/documents/_import',
             'JoinQuerySearchResource': 'ws/:type/_rql',
             'JoinQuerySearchCsvResource': 'ws/:type/_rql_csv?query=:query',
             'JoinQuerySearchCsvReportResource': 'ws/:type/_report?query=:query',
@@ -147,7 +153,8 @@ function NgObibaMicaTemplateUrlFactory() {
             'FileBrowserDownloadUrl': 'ws/draft/file-dl/:path?inline=:inline',
             'SearchBaseUrl': '#/search',
             'DocumentSuggestion': 'ws/:documentType/_suggest',
-            'EntitiesCountResource': 'ws/datasets/entities/_count?query=:query'
+            'EntitiesCountResource': 'ws/datasets/entities/_count?query=:query',
+            'EntitiesCountBaseUrl': '#/entities-count'
         };
         function UrlProvider(registry) {
             var urlRegistry = registry;
@@ -194,7 +201,7 @@ function NgObibaMicaTemplateUrlFactory() {
  */
 'use strict';
 (function () {
-    ngObibaMica.utils = angular.module('obiba.mica.utils', ['schemaForm']);
+    ngObibaMica.utils = angular.module('obiba.mica.utils', ['schemaForm', 'LocalStorageModule']);
     ngObibaMica.utils
         .factory('urlEncode', function () {
         return function (input) {
@@ -421,6 +428,12 @@ function NgObibaMicaTemplateUrlFactory() {
                 });
                 return form;
             });
+        }])
+        .config(['localStorageServiceProvider',
+        function (localStorageServiceProvider) {
+            localStorageServiceProvider
+                .setPrefix('mica')
+                .setStorageType('localStorage');
         }]);
 })();
 //# sourceMappingURL=utils.js.map
@@ -1593,6 +1606,556 @@ ngObibaMica.access
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 'use strict';
+ngObibaMica.sets = angular.module('obiba.mica.sets', [
+    'obiba.alert',
+    'ui.bootstrap',
+    'pascalprecht.translate',
+    'templates-ngObibaMica',
+    'LocalStorageModule'
+]);
+//# sourceMappingURL=sets.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+/* global NgObibaMicaTemplateUrlFactory */
+(function () {
+    ngObibaMica.sets
+        .config(['$provide', function ($provide) {
+            $provide.provider('ngObibaMicaSetsTemplateUrl', new NgObibaMicaTemplateUrlFactory().create({
+                cart: { header: null, footer: null }
+            }));
+        }]);
+})();
+//# sourceMappingURL=sets-template-url-provider.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+(function () {
+    ngObibaMica.sets
+        .factory('SetResource', ['$resource', 'ngObibaMicaUrl',
+        function ($resource, ngObibaMicaUrl) {
+            var url = ngObibaMicaUrl.getUrl('SetResource');
+            return $resource(url, {}, {
+                'get': {
+                    method: 'GET',
+                    params: { type: '@type', id: '@id' },
+                    errorHandler: true
+                }
+            });
+        }])
+        .factory('SetDocumentsResource', ['$resource', 'ngObibaMicaUrl',
+        function ($resource, ngObibaMicaUrl) {
+            var url = ngObibaMicaUrl.getUrl('SetDocumentsResource');
+            return $resource(url, {}, {
+                'get': {
+                    method: 'GET',
+                    params: { type: '@type', id: '@id', from: '@from', limit: '@limit' },
+                    errorHandler: true
+                }
+            });
+        }])
+        .factory('SetClearResource', ['$resource', 'ngObibaMicaUrl',
+        function ($resource, ngObibaMicaUrl) {
+            var url = ngObibaMicaUrl.getUrl('SetClearResource');
+            return $resource(url, {}, {
+                'clear': {
+                    method: 'DELETE',
+                    params: { type: '@type', id: '@id' },
+                    errorHandler: true
+                }
+            });
+        }])
+        .factory('SetImportResource', ['$resource', 'ngObibaMicaUrl',
+        function ($resource, ngObibaMicaUrl) {
+            var url = ngObibaMicaUrl.getUrl('SetImportResource');
+            return $resource(url, {}, {
+                'save': {
+                    method: 'POST',
+                    params: { type: '@type', id: '@id' },
+                    headers: { 'Content-Type': 'text/plain' },
+                    errorHandler: true
+                }
+            });
+        }]);
+})();
+//# sourceMappingURL=set-resources.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+(function () {
+    ngObibaMica.sets
+        .factory('SetsResource', ['$resource', 'ngObibaMicaUrl',
+        function ($resource, ngObibaMicaUrl) {
+            return $resource(ngObibaMicaUrl.getUrl('SetsResource'), {}, {
+                'save': {
+                    method: 'POST',
+                    params: { type: '@type' },
+                    errorHandler: true
+                }
+            });
+        }])
+        .factory('SetsImportResource', ['$resource', 'ngObibaMicaUrl',
+        function ($resource, ngObibaMicaUrl) {
+            return $resource(ngObibaMicaUrl.getUrl('SetsImportResource'), {}, {
+                'save': {
+                    method: 'POST',
+                    params: { type: '@type' },
+                    headers: { 'Content-Type': 'text/plain' },
+                    errorHandler: true
+                }
+            });
+        }]);
+})();
+//# sourceMappingURL=sets-resources.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+"use strict";
+var SetService = /** @class */ (function () {
+    function SetService($location, $window, $log, localStorageService, PageUrlService, AlertService, SetsImportResource, SetResource, SetDocumentsResource, SetClearResource, SetImportResource, ObibaServerConfigResource) {
+        this.$location = $location;
+        this.$window = $window;
+        this.$log = $log;
+        this.localStorageService = localStorageService;
+        this.PageUrlService = PageUrlService;
+        this.AlertService = AlertService;
+        this.SetsImportResource = SetsImportResource;
+        this.SetResource = SetResource;
+        this.SetDocumentsResource = SetDocumentsResource;
+        this.SetClearResource = SetClearResource;
+        this.SetImportResource = SetImportResource;
+        this.ObibaServerConfigResource = ObibaServerConfigResource;
+        var that = this;
+        ObibaServerConfigResource.get(function (micaConfig) {
+            that.hasMultipleStudies = !micaConfig.isSingleStudyEnabled || micaConfig.isHarmonizedDatasetEnabled;
+            that.hasHarmonization = micaConfig.isHarmonizedDatasetEnabled;
+        });
+    }
+    SetService.prototype.isSingleStudy = function () {
+        return !this.hasMultipleStudies;
+    };
+    SetService.prototype.hasHarmonizedDatasets = function () {
+        return this.hasHarmonization;
+    };
+    /**
+     * Get the documents in the cart. Create the cart's set if missing.
+     * Return a promise on the documents.
+     * @param documentType the document type
+     * @param fromIdx from position
+     * @param limitIdx maximum number of documents taht are fetched
+     */
+    SetService.prototype.getCartDocuments = function (documentType, fromIdx, limitIdx) {
+        var _this = this;
+        return this.getOrCreateCart(documentType).then(function (set) {
+            return _this.SetDocumentsResource.get({
+                from: fromIdx,
+                id: set.id,
+                limit: limitIdx,
+                type: documentType,
+            }).$promise;
+        });
+    };
+    /**
+     * Add one or more documents to the cart's set.
+     * Return a promise on the cart's set.
+     * @param documentType the document type
+     * @param documentId the document ID or an array of document IDs
+     */
+    SetService.prototype.addDocumentToCart = function (documentType, documentId) {
+        var _this = this;
+        var did = Array.isArray(documentId) ? documentId.join("\n") : documentId;
+        return this.getOrCreateCart(documentType).then(function (set) {
+            return _this.SetImportResource.save({ type: documentType, id: set.id }, did).$promise;
+        }).then(function (set) {
+            _this.localStorageService.set(_this.getCartKey(documentType), set);
+            return set;
+        });
+    };
+    /**
+     * Add documents matching the query to the cart's set.
+     * Return a promise on the cart's set.
+     * @param documentType the document type
+     * @param query the documents join query
+     */
+    SetService.prototype.addDocumentQueryToCart = function (documentType, query) {
+        this.$log.info("query=" + query);
+    };
+    /**
+     * Clear the documents list of the cart.
+     * @param documentType the document type
+     */
+    SetService.prototype.clearCart = function (documentType) {
+        var _this = this;
+        return this.getOrCreateCart(documentType).then(function (set) {
+            return _this.SetClearResource.clear({ type: documentType, id: set.id }).$promise;
+        }).then(function () {
+            return _this.getOrCreateCart(documentType);
+        });
+    };
+    /**
+     * Go to the entities count page for the variables belonging to the provided set.
+     * @param setId the set ID, if undefined, the cart set ID is used
+     */
+    SetService.prototype.gotoSetEntitiesCount = function (setId) {
+        var _this = this;
+        var sid = setId;
+        if (!sid) {
+            var cartSet = this.getCartSet("variables");
+            if (cartSet) {
+                sid = cartSet.id;
+            }
+        }
+        // TODO make a search query instead to force variable type to Collected
+        this.SetDocumentsResource.get({ type: "variables", id: sid, from: 0, limit: 20 }).$promise
+            .then(function (documents) {
+            _this.gotoEntitiesCount(documents.variables.map(function (doc) { return doc.id; }));
+        });
+    };
+    /**
+     * Go to the entities count page with the provided identifiers.
+     * @param ids the selected identifiers
+     */
+    SetService.prototype.gotoEntitiesCount = function (ids) {
+        if (ids) {
+            var queryStr = ids.map(function (id) {
+                return "all(" + id + ")";
+            }).join(",");
+            this.$window.location.href = this.PageUrlService.entitiesCountPage(queryStr);
+        }
+    };
+    /**
+     * Go to search page with documents filtered by the set they belong to.
+     * @param documentType the document type
+     * @param setId the set ID, if undefined, the cart set ID is used
+     */
+    SetService.prototype.gotoSearch = function (documentType, setId) {
+        var id = setId;
+        if (!id) {
+            var cartSet = this.getCartSet(documentType);
+            if (cartSet) {
+                id = cartSet.id;
+            }
+        }
+        if (id) {
+            var queryStr = "variable(in(Mica_variable.sets," + id + "))";
+            this.$window.location.href = this.PageUrlService.searchPage(queryStr);
+        }
+    };
+    /**
+     * Get the cart set if it exists.
+     * @param documentType the document type
+     */
+    SetService.prototype.getCartSet = function (documentType) {
+        return this.localStorageService.get(this.getCartKey(documentType));
+    };
+    /**
+     * Always get the cart set in case of the set was deleted from the server. If unknown or not found, create it.
+     * Return a promise on the cart's set.
+     * @param documentType the document type
+     */
+    SetService.prototype.getOrCreateCart = function (documentType) {
+        var _this = this;
+        var cartSet = this.localStorageService.get(this.getCartKey(documentType));
+        if (cartSet) {
+            return this.SetResource.get({ type: documentType, id: cartSet.id }).$promise
+                .then(function (set) {
+                _this.localStorageService.set(_this.getCartKey(documentType), set);
+                return set;
+            })
+                .catch(function () {
+                return _this.createCart(documentType, "");
+            });
+        }
+        else {
+            return this.createCart(documentType, "");
+        }
+    };
+    /**
+     * Create a cart and returns a promise on the created set.
+     * @param documentType the document type
+     * @param documentId the document ID to be added to the cart (can be empty)
+     */
+    SetService.prototype.createCart = function (documentType, documentId) {
+        var _this = this;
+        return this.SetsImportResource.save({ type: documentType }, documentId).$promise
+            .then(function (set) {
+            _this.localStorageService.set(_this.getCartKey(documentType), set);
+            return set;
+        });
+    };
+    /**
+     * Get the local storage key for the cart.
+     * @param documentType the document type
+     */
+    SetService.prototype.getCartKey = function (documentType) {
+        return "cart." + documentType;
+    };
+    SetService.$inject = ["$location", "$window", "$log", "localStorageService", "PageUrlService", "AlertService",
+        "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource",
+        "ObibaServerConfigResource"];
+    return SetService;
+}());
+ngObibaMica.sets.service("SetService", ["$location", "$window", "$log", "localStorageService",
+    "PageUrlService", "AlertService",
+    "SetsImportResource", "SetResource", "SetDocumentsResource", "SetClearResource", "SetImportResource",
+    "ObibaServerConfigResource", SetService]);
+//# sourceMappingURL=set-service.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+"use strict";
+var CartDocumentsTableController = /** @class */ (function () {
+    function CartDocumentsTableController(PageUrlService, LocalizedValues, SetService, $translate, $log, $scope, $location, $window) {
+        this.PageUrlService = PageUrlService;
+        this.LocalizedValues = LocalizedValues;
+        this.SetService = SetService;
+        this.$translate = $translate;
+        this.$log = $log;
+        this.$scope = $scope;
+        this.$location = $location;
+        this.$window = $window;
+        this.documents = {
+            from: 0,
+            limit: 0,
+            total: 0,
+        };
+        this.pagination = {
+            currentPage: 1,
+            from: 0,
+            itemsPerPage: 10,
+            maxSize: 10,
+            to: 0,
+            totalHits: 0,
+        };
+    }
+    CartDocumentsTableController.prototype.showStudies = function () {
+        return !this.SetService.isSingleStudy();
+    };
+    CartDocumentsTableController.prototype.showVariableType = function () {
+        return this.SetService.hasHarmonizedDatasets();
+    };
+    CartDocumentsTableController.prototype.entitiesCount = function () {
+        if (this.pagination.totalHits) {
+            this.SetService.gotoSetEntitiesCount();
+        }
+    };
+    CartDocumentsTableController.prototype.search = function () {
+        this.SetService.gotoSearch(this.type);
+    };
+    CartDocumentsTableController.prototype.clearSet = function () {
+        var _this = this;
+        this.SetService.clearCart(this.type)
+            .then(function () { return _this.$scope.$emit("cart-cleared", _this.type); });
+    };
+    CartDocumentsTableController.prototype.pageChanged = function () {
+        var from = (this.pagination.currentPage - 1) * this.documents.limit;
+        this.onPageChange(this.type, from);
+    };
+    CartDocumentsTableController.prototype.$onInit = function () {
+        this.table = {
+            rows: new Array(),
+        };
+    };
+    CartDocumentsTableController.prototype.$onChanges = function () {
+        this.table = this.asTable();
+        this.localizedTotal = this.LocalizedValues
+            .formatNumber((this.documents && this.documents.total) ? this.documents.total : 0);
+    };
+    CartDocumentsTableController.prototype.localize = function (values) {
+        return this.LocalizedValues.forLang(values, this.$translate.use());
+    };
+    CartDocumentsTableController.prototype.asTable = function () {
+        var _this = this;
+        var table = {
+            rows: new Array(),
+        };
+        this.pagination.totalHits = this.documents ? this.documents.total : 0;
+        this.pagination.currentPage = this.documents ? this.documents.from / this.documents.limit + 1 : 0;
+        this.pagination.itemsPerPage = this.documents ? this.documents.limit : 0;
+        this.pagination.from = this.documents ? this.documents.from + 1 : 0;
+        var documentCounts = this.documents && this.documents[this.type] ? this.documents[this.type].length : 0;
+        this.pagination.to = this.documents ? this.documents.from + documentCounts : 0;
+        if (documentCounts) {
+            this.documents[this.type].forEach(function (doc) {
+                var studyAcronym = _this.localize(doc.studySummary.acronym);
+                var studyName = _this.localize(doc.studySummary.name);
+                var studyType = doc.variableType === "Dataschema" ? "harmonization" : "individual";
+                var studyLink = _this.PageUrlService.studyPage(doc.studyId, studyType);
+                var datasetName = _this.localize(doc.datasetName);
+                var datasetLink = _this.PageUrlService.datasetPage(doc.datasetId, doc.variableType);
+                var variableLink = _this.PageUrlService.variablePage(doc.id);
+                var attrLabel = doc.attributes.filter(function (attr) { return attr.name === "label"; });
+                var variableLabel = attrLabel && attrLabel.length > 0 ? _this.localize(attrLabel[0].values) : "";
+                var row = new Array({
+                    link: variableLink ? variableLink : datasetLink,
+                    value: doc.name,
+                }, {
+                    link: undefined,
+                    value: variableLabel,
+                }, {
+                    link: undefined,
+                    value: doc.variableType,
+                }, {
+                    link: studyLink,
+                    value: studyAcronym,
+                }, {
+                    link: datasetLink,
+                    value: datasetName,
+                });
+                table.rows.push(row);
+            });
+        }
+        return table;
+    };
+    CartDocumentsTableController.$inject = ["PageUrlService", "LocalizedValues", "SetService",
+        "$translate", "$log", "$scope", "$location", "$window"];
+    return CartDocumentsTableController;
+}());
+var CartDocumentsTableComponent = /** @class */ (function () {
+    function CartDocumentsTableComponent() {
+        this.transclude = true;
+        this.bindings = {
+            documents: "<",
+            onPageChange: "<",
+            type: "<",
+        };
+        this.controller = CartDocumentsTableController;
+        this.controllerAs = "$ctrl";
+        this.templateUrl = "sets/components/cart-documents-table/component.html";
+    }
+    return CartDocumentsTableComponent;
+}());
+ngObibaMica.sets
+    .component("cartDocumentsTable", new CartDocumentsTableComponent());
+//# sourceMappingURL=component.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+(function () {
+    ngObibaMica.sets
+        .controller('CartController', [
+        '$scope',
+        '$location',
+        'SetService',
+        'ngObibaMicaSetsTemplateUrl',
+        function ($scope, $location, SetService, ngObibaMicaSetsTemplateUrl) {
+            $scope.cartHeaderTemplateUrl = ngObibaMicaSetsTemplateUrl.getHeaderUrl('cart');
+            $scope.loading = true;
+            var limit = 100;
+            var onDocuments = function (variables) {
+                $scope.loading = false;
+                $scope.variables = variables;
+            };
+            var promisedDocs = SetService.getCartDocuments('variables', 0, limit);
+            if (promisedDocs) {
+                promisedDocs.then(onDocuments);
+            }
+            else {
+                $scope.variables = { total: 0 };
+            }
+            $scope.$on('cart-cleared', function (event, type) {
+                $scope.loading = true;
+                SetService.getCartDocuments(type, 0, limit).then(onDocuments);
+            });
+            $scope.onPaginate = function (type, from) {
+                SetService.getCartDocuments(type, from, limit).then(onDocuments);
+            };
+        }
+    ])
+        .controller('AddVariableToCartController', [
+        '$scope',
+        'SetService',
+        'AlertService',
+        function ($scope, SetService, AlertService) {
+            $scope.onAdd = function (id) {
+                var beforeCart = SetService.getCartSet('variables');
+                SetService.addDocumentToCart('variables', id).then(function (set) {
+                    var addedCount = set.count - (beforeCart ? beforeCart.count : 0);
+                    var msgKey = addedCount === 0 ? 'sets.cart.no-variable-added' : 'sets.cart.variable-added';
+                    AlertService.growl({
+                        id: 'AddVariableToCartControllerGrowl',
+                        type: 'info',
+                        msgKey: msgKey,
+                        msgArgs: [],
+                        delay: 3000
+                    });
+                });
+            };
+        }
+    ]);
+})();
+//# sourceMappingURL=sets-controller.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
+ngObibaMica.sets
+    .config(['$routeProvider',
+    function ($routeProvider) {
+        $routeProvider
+            .when('/cart', {
+            templateUrl: 'sets/views/cart.html',
+            controller: 'CartController',
+            reloadOnSearch: false
+        });
+    }]);
+//# sourceMappingURL=sets-router.js.map
+/*
+ * Copyright (c) 2018 OBiBa. All rights reserved.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the GNU Public License v3.0.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+'use strict';
 /* exported DISPLAY_TYPES */
 var DISPLAY_TYPES = {
     LIST: 'list',
@@ -1603,7 +2166,8 @@ ngObibaMica.search = angular.module('obiba.mica.search', [
     'obiba.alert',
     'ui.bootstrap',
     'pascalprecht.translate',
-    'templates-ngObibaMica'
+    'templates-ngObibaMica',
+    'obiba.mica.sets'
 ]);
 (function () {
     ngObibaMica.search
@@ -4251,6 +4815,20 @@ ngObibaMica.search.service("CoverageGroupByService", ["ngObibaMicaSearch", Cover
         };
         this.downloadCoverage = function (query) {
             return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('JoinQueryCoverageDownloadResource'), { ':query': query });
+        };
+        this.entitiesCountPage = function (query) {
+            var url = ngObibaMicaUrl.getUrl('BaseUrl') + ngObibaMicaUrl.getUrl('EntitiesCountBaseUrl');
+            if (query) {
+                url = url + '?query=' + urlEncode(query);
+            }
+            return url;
+        };
+        this.searchPage = function (query) {
+            var url = ngObibaMicaUrl.getUrl('BaseUrl') + ngObibaMicaUrl.getUrl('SearchBaseUrl');
+            if (query) {
+                url = url + '?query=' + urlEncode(query);
+            }
+            return url;
         };
         return this;
     }
@@ -8826,11 +9404,22 @@ ngObibaMica.search
     'RqlQueryService',
     'RqlQueryUtils',
     'ngObibaMicaSearchTemplateUrl',
-    function ($scope, ngObibaMicaSearch, ngObibaMicaUrl, RqlQueryService, RqlQueryUtils, ngObibaMicaSearchTemplateUrl) {
+    'AlertService',
+    'SetService',
+    function ($scope, ngObibaMicaSearch, ngObibaMicaUrl, RqlQueryService, RqlQueryUtils, ngObibaMicaSearchTemplateUrl, AlertService, SetService) {
         function updateType(type) {
             Object.keys($scope.activeTarget).forEach(function (key) {
                 $scope.activeTarget[key].active = type === key;
             });
+        }
+        function rewriteQueryWithLimit(limit) {
+            var parsedQuery = RqlQueryService.parseQuery($scope.query);
+            var target = typeToTarget($scope.type);
+            var targetQuery = parsedQuery.args.filter(function (query) {
+                return query.name === target;
+            }).pop();
+            RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, limit));
+            return new RqlQuery().serializeArgs(parsedQuery.args);
         }
         $scope.targetTypeMap = $scope.$parent.taxonomyTypeMap;
         $scope.QUERY_TARGETS = QUERY_TARGETS;
@@ -8866,14 +9455,39 @@ ngObibaMica.search
             if ($scope.query === null) {
                 return $scope.query;
             }
-            var parsedQuery = RqlQueryService.parseQuery($scope.query);
-            var target = typeToTarget($scope.type);
-            var targetQuery = parsedQuery.args.filter(function (query) {
-                return query.name === target;
-            }).pop();
-            RqlQueryUtils.addLimit(targetQuery, RqlQueryUtils.limit(0, 100000));
-            var queryWithoutLimit = new RqlQuery().serializeArgs(parsedQuery.args);
-            return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithoutLimit));
+            var queryWithLimit = rewriteQueryWithLimit(100000);
+            return ngObibaMicaUrl.getUrl('JoinQuerySearchCsvResource').replace(':type', $scope.type).replace(':query', encodeURI(queryWithLimit));
+        };
+        $scope.addToCart = function () {
+            if ($scope.query === null) {
+                return $scope.query;
+            }
+            var beforeCart = SetService.getCartSet('variables');
+            //var queryWithLimit = rewriteQueryWithLimit(1000);
+            //SetService.addDocumentQueryToCart('variables', queryWithLimit);
+            var ids = $scope.result.list.variableResultDto['obiba.mica.DatasetVariableResultDto.result'].summaries
+                .filter(function (variable) {
+                return variable.variableType === 'Collected';
+            })
+                .map(function (variable) {
+                return variable.id;
+            });
+            SetService.addDocumentToCart('variables', ids).then(function (set) {
+                var addedCount = set.count - (beforeCart ? beforeCart.count : 0);
+                var msgKey = 'sets.cart.variables-added';
+                var msgArgs = [addedCount];
+                if (addedCount === 0) {
+                    msgKey = 'sets.cart.no-variable-added';
+                    msgArgs = [];
+                }
+                AlertService.growl({
+                    id: 'SearchControllerGrowl',
+                    type: 'info',
+                    msgKey: msgKey,
+                    msgArgs: msgArgs,
+                    delay: 3000
+                });
+            });
         };
         $scope.getStudySpecificReportUrl = function () {
             if ($scope.query === null) {
@@ -9912,6 +10526,7 @@ ngObibaMica.analysis = angular.module('obiba.mica.analysis', [
                     });
                 }
                 else {
+                    $scope.result = {};
                 }
             }
             refresh();
@@ -9979,7 +10594,12 @@ var EntitiesCountService = /** @class */ (function () {
         var search = this.$location.search();
         search.query = search.query.split(originalQuery).join("").replace(/,,/, ",").replace(/^,/, "").replace(/,$/, "");
         if (newQuery && newQuery.length !== 0) {
-            search.query = search.query + "," + newQuery;
+            if (search.query && search.query.length > 0) {
+                search.query = search.query + "," + newQuery;
+            }
+            else {
+                search.query = newQuery;
+            }
         }
         this.$location.search(search);
     };
@@ -12300,7 +12920,7 @@ ngObibaMica.fileBrowser
         };
     }]);
 //# sourceMappingURL=file-browser-service.js.map
-angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'analysis/components/entities-count-result-table/component.html', 'analysis/components/variable-criteria/component.html', 'analysis/views/analysis-entities-count.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/search-result-list-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/criteria-root/component.html', 'search/components/criteria/criteria-target/component.html', 'search/components/criteria/item-region/dropdown/component.html', 'search/components/criteria/item-region/item-node/component.html', 'search/components/criteria/item-region/match/component.html', 'search/components/criteria/item-region/numeric/component.html', 'search/components/criteria/item-region/region/component.html', 'search/components/criteria/item-region/string-terms/component.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/facets/taxonomy/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/panel/classification/component.html', 'search/components/panel/taxonomies-panel/component.html', 'search/components/panel/taxonomy-panel/component.html', 'search/components/panel/term-panel/component.html', 'search/components/panel/vocabulary-panel/component.html', 'search/components/result/coverage-result/component.html', 'search/components/result/datasets-result-table/component.html', 'search/components/result/graphics-result/component.html', 'search/components/result/networks-result-table/component.html', 'search/components/result/pagination/component.html', 'search/components/result/search-result/component.html', 'search/components/result/search-result/coverage.html', 'search/components/result/search-result/graphics.html', 'search/components/result/search-result/list.html', 'search/components/result/studies-result-table/component.html', 'search/components/result/tabs-order-count/component.html', 'search/components/result/variables-result-table/component.html', 'search/components/search-box-region/component.html', 'search/components/study-filter-shortcut/component.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/target-template.html', 'search/views/list/pagination-template.html', 'search/views/search-layout.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search.html', 'search/views/search2.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
+angular.module('templates-ngObibaMica', ['access/views/data-access-request-documents-view.html', 'access/views/data-access-request-form.html', 'access/views/data-access-request-history-view.html', 'access/views/data-access-request-list.html', 'access/views/data-access-request-print-preview.html', 'access/views/data-access-request-profile-user-modal.html', 'access/views/data-access-request-submitted-modal.html', 'access/views/data-access-request-validation-modal.html', 'access/views/data-access-request-view.html', 'analysis/components/entities-count-result-table/component.html', 'analysis/components/variable-criteria/component.html', 'analysis/views/analysis-entities-count.html', 'attachment/attachment-input-template.html', 'attachment/attachment-list-template.html', 'file-browser/views/document-detail-template.html', 'file-browser/views/documents-table-template.html', 'file-browser/views/file-browser-template.html', 'file-browser/views/toolbar-template.html', 'graphics/views/charts-directive.html', 'graphics/views/tables-directive.html', 'lists/views/input-search-widget/input-search-widget-template.html', 'lists/views/list/datasets-search-result-table-template.html', 'lists/views/list/networks-search-result-table-template.html', 'lists/views/list/studies-search-result-table-template.html', 'lists/views/region-criteria/criterion-dropdown-template.html', 'lists/views/region-criteria/search-criteria-region-template.html', 'lists/views/search-result-list-template.html', 'lists/views/sort-widget/sort-widget-template.html', 'localized/localized-input-group-template.html', 'localized/localized-input-template.html', 'localized/localized-template.html', 'localized/localized-textarea-template.html', 'search/components/criteria/criteria-root/component.html', 'search/components/criteria/criteria-target/component.html', 'search/components/criteria/item-region/dropdown/component.html', 'search/components/criteria/item-region/item-node/component.html', 'search/components/criteria/item-region/match/component.html', 'search/components/criteria/item-region/numeric/component.html', 'search/components/criteria/item-region/region/component.html', 'search/components/criteria/item-region/string-terms/component.html', 'search/components/criteria/match-vocabulary-filter-detail/component.html', 'search/components/criteria/numeric-vocabulary-filter-detail/component.html', 'search/components/criteria/terms-vocabulary-filter-detail/component.html', 'search/components/entity-counts/component.html', 'search/components/entity-search-typeahead/component.html', 'search/components/facets/taxonomy/component.html', 'search/components/input-search-filter/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-list/component.html', 'search/components/meta-taxonomy/meta-taxonomy-filter-panel/component.html', 'search/components/panel/classification/component.html', 'search/components/panel/taxonomies-panel/component.html', 'search/components/panel/taxonomy-panel/component.html', 'search/components/panel/term-panel/component.html', 'search/components/panel/vocabulary-panel/component.html', 'search/components/result/coverage-result/component.html', 'search/components/result/datasets-result-table/component.html', 'search/components/result/graphics-result/component.html', 'search/components/result/networks-result-table/component.html', 'search/components/result/pagination/component.html', 'search/components/result/search-result/component.html', 'search/components/result/search-result/coverage.html', 'search/components/result/search-result/graphics.html', 'search/components/result/search-result/list.html', 'search/components/result/studies-result-table/component.html', 'search/components/result/tabs-order-count/component.html', 'search/components/result/variables-result-table/component.html', 'search/components/search-box-region/component.html', 'search/components/study-filter-shortcut/component.html', 'search/components/taxonomy/taxonomy-filter-detail/component.html', 'search/components/taxonomy/taxonomy-filter-panel/component.html', 'search/components/vocabulary-filter-detail-heading/component.html', 'search/components/vocabulary/vocabulary-filter-detail/component.html', 'search/views/classifications.html', 'search/views/classifications/taxonomy-accordion-group.html', 'search/views/classifications/taxonomy-template.html', 'search/views/classifications/vocabulary-accordion-group.html', 'search/views/criteria/criterion-header-template.html', 'search/views/criteria/target-template.html', 'search/views/list/pagination-template.html', 'search/views/search-layout.html', 'search/views/search-result-graphics-template.html', 'search/views/search-result-list-dataset-template.html', 'search/views/search-result-list-network-template.html', 'search/views/search-result-list-study-template.html', 'search/views/search-result-list-variable-template.html', 'search/views/search.html', 'search/views/search2.html', 'sets/components/cart-documents-table/component.html', 'sets/views/cart.html', 'utils/views/unsaved-modal.html', 'views/pagination-template.html']);
 
 angular.module("access/views/data-access-request-documents-view.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("access/views/data-access-request-documents-view.html",
@@ -12872,8 +13492,8 @@ angular.module("access/views/data-access-request-view.html", []).run(["$template
 angular.module("analysis/components/entities-count-result-table/component.html", []).run(["$templateCache", function($templateCache) {
   $templateCache.put("analysis/components/entities-count-result-table/component.html",
     "<div>\n" +
-    "  <p class=\"help-block\" ng-if=\"$ctrl.result && $ctrl.result.total === 0\" translate>search.no-results</p>\n" +
-    "  <table class=\"table table-bordered table-striped\" ng-if=\"$ctrl.result && $ctrl.result.total>0\">\n" +
+    "  <p class=\"help-block\" ng-if=\"$ctrl.result && $ctrl.result.query && (!$ctrl.result.counts || $ctrl.result.counts.length === 0)\" translate>search.no-results</p>\n" +
+    "  <table class=\"table table-bordered table-striped\" ng-if=\"$ctrl.result && $ctrl.result.counts && $ctrl.result.counts.length>0\">\n" +
     "    <thead>\n" +
     "      <th ng-if=\"$ctrl.showStudyColumn()\" translate>taxonomy.target.study</th>\n" +
     "      <th translate>taxonomy.target.variable</th>\n" +
@@ -15326,7 +15946,7 @@ angular.module("search/components/result/pagination/component.html", []).run(["$
     "          total-items=\"$ctrl.pagination.totalHits\"\n" +
     "          max-size=\"$ctrl.pagination.maxSize\"\n" +
     "          ng-model=\"$ctrl.pagination.currentPage\"\n" +
-    " z         boundary-links=\"true\"\n" +
+    "          boundary-links=\"true\"\n" +
     "          force-ellipses=\"true\"\n" +
     "          items-per-page=\"$ctrl.pagination.selected.value\"\n" +
     "          previous-text=\"&lsaquo;\"\n" +
@@ -15411,6 +16031,9 @@ angular.module("search/components/result/search-result/list.html", []).run(["$te
     "  </result-tabs-order-count>\n" +
     "  \n" +
     "  <div class=\"voffset2\" ng-class=\"{'pull-right': options.studies.showSearchTab, 'pull-left': !options.studies.showSearchTab, 'hoffset2': !options.studies.showSearchTab}\">\n" +
+    "    <a ng-if=\"type=='variables'\" ng-click=\"addToCart()\" class=\"btn btn-success\" href>\n" +
+    "      <i class=\"fa fa-cart-plus\"></i>\n" +
+    "    </a>\n" +
     "    <a obiba-file-download url=\"getStudySpecificReportUrl()\" target=\"_self\" ng-if=\"type=='studies'\" download class=\"btn btn-info\"\n" +
     "      href>\n" +
     "      <i class=\"fa fa-download\"></i> {{'report-group.study.button-name' | translate}}\n" +
@@ -16354,6 +16977,88 @@ angular.module("search/views/search2.html", []).run(["$templateCache", function(
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
+    "</div>");
+}]);
+
+angular.module("sets/components/cart-documents-table/component.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("sets/components/cart-documents-table/component.html",
+    "<div>\n" +
+    "  <div class=\"pull-left\" ng-show=\"$ctrl.documents.total>0\">\n" +
+    "      <div class=\"btn-group\" uib-dropdown is-open=\"$ctrl.analysis.isopen\">\n" +
+    "          <button id=\"single-button\" type=\"button\" class=\"btn btn-primary\" uib-dropdown-toggle ng-disabled=\"disabled\">\n" +
+    "              <i class=\"fa fa-cog\"></i> {{'analysis.action' | translate}} <span class=\"caret\"></span>\n" +
+    "          </button>\n" +
+    "          <ul class=\"dropdown-menu\" uib-dropdown-menu role=\"menu\" aria-labelledby=\"single-button\">\n" +
+    "            <li role=\"menuitem\">\n" +
+    "              <a href=\"\" ng-click=\"$ctrl.entitiesCount()\">\n" +
+    "                {{'analysis.entities-count.action' | translate}}</a>\n" +
+    "            </li>\n" +
+    "          </ul>\n" +
+    "        </div>\n" +
+    "    <a href=\"\" ng-click=\"$ctrl.search()\" class=\"action btn btn-info btn-responsive\">\n" +
+    "      <i class=\"fa fa-search\"></i></a>\n" +
+    "    <a href=\"\" ng-click=\"$ctrl.clearSet()\" class=\"action btn btn-danger btn-responsive\">\n" +
+    "      <i class=\"fa fa-trash-o\"></i></a>\n" +
+    "  </div>\n" +
+    "  <div ng-show=\"$ctrl.pagination.totalHits > 0\" class=\"pull-right\">\n" +
+    "    <span\n" +
+    "          uib-pagination\n" +
+    "          total-items=\"$ctrl.pagination.totalHits\"\n" +
+    "          max-size=\"$ctrl.pagination.maxSize\"\n" +
+    "          ng-model=\"$ctrl.pagination.currentPage\"\n" +
+    "          boundary-links=\"true\"\n" +
+    "          force-ellipses=\"true\"\n" +
+    "          items-per-page=\"$ctrl.pagination.itemsPerPage\"\n" +
+    "          previous-text=\"&lsaquo;\"\n" +
+    "          next-text=\"&rsaquo;\"\n" +
+    "          first-text=\"&laquo;\"\n" +
+    "          last-text=\"&raquo;\"\n" +
+    "          template-url=\"search/views/list/pagination-template.html\"\n" +
+    "          ng-change=\"$ctrl.pageChanged()\"></span>\n" +
+    "    <ul class=\"pagination pagination-sm\">\n" +
+    "      <li>\n" +
+    "        <a href class=\"pagination-total\">{{$ctrl.pagination.from}} - {{$ctrl.pagination.to}} {{'of' | translate}} {{$ctrl.pagination.totalHits}}</a>\n" +
+    "      </li>\n" +
+    "    </ul>\n" +
+    "  </div>\n" +
+    "  <div class=\"clearfix\"></div>\n" +
+    "  <div class=\"table-responsive\">\n" +
+    "    <table class=\"table table-bordered table-striped\" ng-if=\"$ctrl.documents.total>0\">\n" +
+    "      <thead>\n" +
+    "        <th translate>taxonomy.target.variable</th>\n" +
+    "        <th translate>search.variable.label</th>\n" +
+    "        <th ng-if=\"$ctrl.showVariableType()\" translate>type</th>\n" +
+    "        <th ng-if=\"$ctrl.showStudies()\" translate>taxonomy.target.study</th>\n" +
+    "        <th translate>taxonomy.target.dataset</th>\n" +
+    "      </thead>\n" +
+    "      <tbody>\n" +
+    "        <tr ng-repeat=\"row in $ctrl.table.rows\">\n" +
+    "          <td><a href=\"{{row[0].link}}\">{{row[0].value}}</a></td>\n" +
+    "          <td>{{row[1].value}}</td>\n" +
+    "          <td ng-if=\"$ctrl.showVariableType()\">{{'search.variable.' + row[2].value.toLowerCase() | translate}}</td>\n" +
+    "          <td ng-if=\"$ctrl.showStudies()\"><a href=\"{{row[3].link}}\">{{row[3].value}}</a></td>\n" +
+    "          <td><a href=\"{{row[4].link}}\">{{row[4].value}}</a></td>\n" +
+    "        </tr>\n" +
+    "      </tbody>\n" +
+    "    </table>\n" +
+    "  </div>\n" +
+    "</div>");
+}]);
+
+angular.module("sets/views/cart.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("sets/views/cart.html",
+    "<div>\n" +
+    "  <div ng-if=\"cartHeaderTemplateUrl\" ng-include=\"cartHeaderTemplateUrl\"></div>\n" +
+    "\n" +
+    "  <h3 translate>variables</h3>\n" +
+    "  <div>\n" +
+    "      <span ng-if=\"loading\" class=\"voffset2 loading\"></span>\n" +
+    "  </div>\n" +
+    "  <cart-documents-table \n" +
+    "    type=\"'variables'\" \n" +
+    "    documents=\"variables\"\n" +
+    "    on-page-change=\"onPaginate\"></cart-documents-table>\n" +
+    "  <p ng-hide=\"loading || variables && variables.total>0\" translate>sets.cart.no-variables</p>\n" +
     "</div>");
 }]);
 
