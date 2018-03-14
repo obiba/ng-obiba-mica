@@ -49,7 +49,11 @@ class EntitiesCountService implements IEntitiesCountService {
     const search = this.$location.search();
     search.query = search.query.split(originalQuery).join("").replace(/,,/, ",").replace(/^,/, "").replace(/,$/, "");
     if (newQuery && newQuery.length !== 0) {
+      if (search.query && search.query.length > 0) {
         search.query = search.query + "," + newQuery;
+      } else {
+        search.query = newQuery;
+      }
     }
     this.$location.search(search);
   }

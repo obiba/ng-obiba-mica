@@ -45,7 +45,7 @@
               });
             });
         } else {
-          
+          $scope.result = {};
         }
       }
   

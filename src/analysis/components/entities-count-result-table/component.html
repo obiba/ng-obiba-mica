@@ -1,6 +1,6 @@
 <div>
-  <p class="help-block" ng-if="$ctrl.result && $ctrl.result.total === 0" translate>search.no-results</p>
-  <table class="table table-bordered table-striped" ng-if="$ctrl.result && $ctrl.result.total>0">
+  <p class="help-block" ng-if="$ctrl.result && $ctrl.result.query && (!$ctrl.result.counts || $ctrl.result.counts.length === 0)" translate>search.no-results</p>
+  <table class="table table-bordered table-striped" ng-if="$ctrl.result && $ctrl.result.counts && $ctrl.result.counts.length>0">
     <thead>
       <th ng-if="$ctrl.showStudyColumn()" translate>taxonomy.target.study</th>
       <th translate>taxonomy.target.variable</th>
