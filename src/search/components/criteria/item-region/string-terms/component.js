@@ -61,11 +61,27 @@ ngObibaMica.search
         JoinQuerySearchResource[targetToType(target)]({ query: joinQuery }).$promise.then(function (joinQueryResponse) {
           $scope.state.loading = false;
           $scope.terms = RqlQueryService.getTargetAggregations(joinQueryResponse, $scope.criterion, $scope.lang);
+          console.log($scope.criterion);
+          console.log($scope.terms);
+          
           if ($scope.terms) {
+            if ($scope.criterion.taxonomy.name.startsWith('Mica_') && $scope.criterion.vocabulary.name === 'sets') {
+              var vocTerms = $scope.criterion.vocabulary.terms;
+              // ensure terms are local sets + titles from server are not correct
+              $scope.terms = $scope.terms.filter(function(term) {
+                var filteredVocTerms = vocTerms.filter(function(vocTerm) {
+                  if (vocTerm.name === term.key) {
+                    term.title = $scope.localize(vocTerm.title);
+                    return true;
+                  }
+                  return false;
+                });
+                return filteredVocTerms.length>0;
+              });
+            }
             $scope.terms.forEach(function (term) {
               $scope.checkboxTerms[term.key] = $scope.isSelectedTerm(term);
             });
-
             $scope.terms = $filter('orderBySelection')($scope.terms, $scope.checkboxTerms);
           }
         });

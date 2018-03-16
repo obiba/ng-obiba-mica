@@ -2713,15 +2713,16 @@ ngObibaMica.search = angular.module('obiba.mica.search', [
  * @param taxonomies
  * @param LocalizedValues
  * @param lang
+ * @param SetService
  * @constructor
  */
-function CriteriaBuilder(rootRql, rootItem, taxonomies, LocalizedValues, lang) {
+function CriteriaBuilder(rootRql, rootItem, taxonomies, LocalizedValues, lang, SetService) {
     /**
      * Helper to get a builder
      * @returns {CriteriaItemBuilder}
      */
     this.newCriteriaItemBuilder = function () {
-        return new CriteriaItemBuilder(LocalizedValues, lang);
+        return new CriteriaItemBuilder(LocalizedValues, lang, SetService);
     };
     this.initialize = function (target) {
         this.leafItemMap = {};
@@ -2730,6 +2731,7 @@ function CriteriaBuilder(rootRql, rootItem, taxonomies, LocalizedValues, lang) {
         this.taxonomies = taxonomies;
         this.LocalizedValues = LocalizedValues;
         this.lang = lang;
+        this.SetService = SetService;
         this.rootItem = this.newCriteriaItemBuilder()
             .parent(rootItem)
             .type(this.target)
@@ -2746,7 +2748,7 @@ function CriteriaBuilder(rootRql, rootItem, taxonomies, LocalizedValues, lang) {
      */
     this.buildLeafItem = function (targetTaxonomy, targetVocabulary, targetTerms, node, parentItem) {
         var self = this;
-        var builder = new CriteriaItemBuilder(self.LocalizedValues, self.lang)
+        var builder = new CriteriaItemBuilder(self.LocalizedValues, self.lang, self.SetService)
             .type(node.name)
             .target(self.target)
             .taxonomy(targetTaxonomy)
@@ -2931,7 +2933,7 @@ CriteriaIdGenerator.generate = function (taxonomy, vocabulary, term) {
 /* global CriteriaIdGenerator */
 /* global CriteriaItem */
 /* exported CriteriaItemBuilder */
-function CriteriaItemBuilder(LocalizedValues, useLang) {
+function CriteriaItemBuilder(LocalizedValues, useLang, SetService) {
     var criteria = {
         type: null,
         rqlQuery: null,
@@ -2961,6 +2963,23 @@ function CriteriaItemBuilder(LocalizedValues, useLang) {
     };
     this.vocabulary = function (value) {
         criteria.vocabulary = value;
+        // decorate 'sets' vocabulary with local sets info
+        if (criteria.vocabulary.name === 'sets') {
+            switch (criteria.taxonomy.name) {
+                case 'Mica_variable':
+                    appendSetTerms(criteria, 'variables');
+                    break;
+                case 'Mica_dataset':
+                    appendSetTerms(criteria, 'datasets');
+                    break;
+                case 'Mica_study':
+                    appendSetTerms(criteria, 'studies');
+                    break;
+                case 'Mica_network':
+                    appendSetTerms(criteria, 'networks');
+                    break;
+            }
+        }
         return this;
     };
     this.term = function (value) {
@@ -3025,6 +3044,41 @@ function CriteriaItemBuilder(LocalizedValues, useLang) {
             }
         }
         criteria.id = CriteriaIdGenerator.generate(criteria.taxonomy, criteria.vocabulary, criteria.term);
+    }
+    /**
+     * Decorate the 'sets' vocabulary with the sets that are living in the browser local storage.
+     * @param criteria the criteria that holds the 'sets' vocabulary
+     * @param documentType the document type
+     */
+    function appendSetTerms(criteria, documentType) {
+        // note: for now there is only a cart set
+        var cartSet = SetService.getCartSet(documentType);
+        if (cartSet) {
+            var cartTerm;
+            if (criteria.vocabulary.terms) {
+                // look for a placeholder to get alternate translations
+                var cTerm = criteria.vocabulary.terms.filter(function (term) {
+                    return term.name === 'cart';
+                });
+                if (cTerm.length > 0) {
+                    cartTerm = cTerm[0];
+                }
+            }
+            if (!cartTerm) {
+                // create default title, if not found reference term was not found
+                cartTerm = {
+                    title: [
+                        { locale: 'en', text: 'Cart' },
+                        { locale: 'fr', text: 'Panier' }
+                    ]
+                };
+            }
+            cartTerm.name = cartSet.id;
+            criteria.vocabulary.terms = [cartTerm];
+        }
+        else {
+            criteria.vocabulary.terms = [];
+        }
     }
     this.build = function () {
         if (criteria.taxonomy && criteria.vocabulary) {
@@ -5167,7 +5221,7 @@ function typeToTarget(type) {
     throw new Error('Invalid type: ' + type);
 }
 (function () {
-    function RqlQueryService($q, $log, TaxonomiesResource, TaxonomyResource, LocalizedValues, VocabularyService, RqlQueryUtils, ngObibaMicaSearch) {
+    function RqlQueryService($q, $log, TaxonomiesResource, TaxonomyResource, LocalizedValues, VocabularyService, RqlQueryUtils, ngObibaMicaSearch, SetService) {
         var taxonomiesCache = {
             variable: null,
             dataset: null,
@@ -5441,7 +5495,7 @@ function typeToTarget(type) {
          */
         this.createCriteriaItem = function (target, taxonomy, vocabulary, term, lang) {
             function createBuilder(taxonomy, vocabulary, term) {
-                return new CriteriaItemBuilder(LocalizedValues, lang)
+                return new CriteriaItemBuilder(LocalizedValues, lang, SetService)
                     .target(target)
                     .taxonomy(taxonomy)
                     .vocabulary(vocabulary)
@@ -5545,7 +5599,7 @@ function typeToTarget(type) {
         this.builders = function (target, rootRql, rootItem, lang) {
             var deferred = $q.defer();
             function build(rootRql, rootItem) {
-                var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang);
+                var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang, SetService);
                 builder.initialize(target);
                 builder.build();
                 deferred.resolve({ root: builder.getRootItem(), map: builder.getLeafItemMap() });
@@ -5938,6 +5992,7 @@ function typeToTarget(type) {
         'VocabularyService',
         'RqlQueryUtils',
         'ngObibaMicaSearch',
+        'SetService',
         RqlQueryService]);
 })();
 //# sourceMappingURL=rql-query-service.js.map
@@ -7323,7 +7378,23 @@ ngObibaMica.search
             JoinQuerySearchResource[targetToType(target)]({ query: joinQuery }).$promise.then(function (joinQueryResponse) {
                 $scope.state.loading = false;
                 $scope.terms = RqlQueryService.getTargetAggregations(joinQueryResponse, $scope.criterion, $scope.lang);
+                console.log($scope.criterion);
+                console.log($scope.terms);
                 if ($scope.terms) {
+                    if ($scope.criterion.taxonomy.name.startsWith('Mica_') && $scope.criterion.vocabulary.name === 'sets') {
+                        var vocTerms = $scope.criterion.vocabulary.terms;
+                        // ensure terms are local sets + titles from server are not correct
+                        $scope.terms = $scope.terms.filter(function (term) {
+                            var filteredVocTerms = vocTerms.filter(function (vocTerm) {
+                                if (vocTerm.name === term.key) {
+                                    term.title = $scope.localize(vocTerm.title);
+                                    return true;
+                                }
+                                return false;
+                            });
+                            return filteredVocTerms.length > 0;
+                        });
+                    }
                     $scope.terms.forEach(function (term) {
                         $scope.checkboxTerms[term.key] = $scope.isSelectedTerm(term);
                     });

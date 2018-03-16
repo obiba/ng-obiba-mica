@@ -145,7 +145,8 @@ function typeToTarget(type) {
     LocalizedValues,
     VocabularyService,
     RqlQueryUtils,
-    ngObibaMicaSearch) {
+    ngObibaMicaSearch,
+    SetService) {
 
     var taxonomiesCache = {
       variable: null,
@@ -475,7 +476,7 @@ function typeToTarget(type) {
      */
     this.createCriteriaItem = function (target, taxonomy, vocabulary, term, lang) {
       function createBuilder(taxonomy, vocabulary, term) {
-        return new CriteriaItemBuilder(LocalizedValues, lang)
+        return new CriteriaItemBuilder(LocalizedValues, lang, SetService)
           .target(target)
           .taxonomy(taxonomy)
           .vocabulary(vocabulary)
@@ -590,7 +591,7 @@ function typeToTarget(type) {
       var deferred = $q.defer();
 
       function build(rootRql, rootItem) {
-        var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang);
+        var builder = new CriteriaBuilder(rootRql, rootItem, taxonomiesCache[target], LocalizedValues, lang, SetService);
         builder.initialize(target);
         builder.build();
         deferred.resolve({ root: builder.getRootItem(), map: builder.getLeafItemMap() });
@@ -1044,5 +1045,6 @@ function typeToTarget(type) {
       'VocabularyService',
       'RqlQueryUtils',
       'ngObibaMicaSearch',
+      'SetService',
       RqlQueryService]);
 })();
