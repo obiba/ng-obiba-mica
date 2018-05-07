@@ -34,7 +34,7 @@
       DataAccessEntityResource.get($scope.entityUrl, $routeParams.id) :
       {
         'obiba.mica.DataAccessAmendmentDto.amendment': { parentId: $routeParams.parentId },
-        $promise: new Promise(function (resolve) { setTimeout(resolve, 0, {}); }),
+        $promise: DataAccessEntityResource.get(DataAccessEntityUrls.getDataAccessRequestBaseUrl(), $routeParams.parentId).$promise,
         status: DataAccessEntityService.status.OPENED     
       };
     var model = amendment.$promise.then(getDataContent);
