@@ -58,6 +58,10 @@
       });
     }
 
+    var onError = function () {
+      ctrl.loading = false;
+    };
+
     function onChanges (changed) {
       if (changed.parentId && changed.parentId.currentValue !== undefined) {
         if (changed.parentId.currentValue === null) {
@@ -87,10 +91,6 @@
       ctrl.requests = reqs;
       ctrl.loading = false;
     }
-
-    var onError = function () {
-      ctrl.loading = false;
-    };
 
     function deleteRequest (request) {
       ctrl.requestToDelete = request.id;

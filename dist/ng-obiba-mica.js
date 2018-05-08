@@ -839,6 +839,9 @@ ngObibaMica.access
                 ctrl.REQUEST_STATUS = translated;
             });
         }
+        var onError = function () {
+            ctrl.loading = false;
+        };
         function onChanges(changed) {
             if (changed.parentId && changed.parentId.currentValue !== undefined) {
                 if (changed.parentId.currentValue === null) {
@@ -867,9 +870,6 @@ ngObibaMica.access
             ctrl.requests = reqs;
             ctrl.loading = false;
         }
-        var onError = function () {
-            ctrl.loading = false;
-        };
         function deleteRequest(request) {
             ctrl.requestToDelete = request.id;
             $rootScope.$broadcast(NOTIFICATION_EVENTS.showConfirmDialog, {
@@ -1934,6 +1934,7 @@ ngObibaMica.access
                     }]
             });
         };
+        $scope.newAmendment = $routeParams.id ? false : true;
         $scope.toggleFormDrawnStatus = function (value) {
             $scope.formDrawn = value;
         };
@@ -15039,7 +15040,8 @@ angular.module("access/views/data-access-amendment-view.html", []).run(["$templa
     "\n" +
     "    <obiba-alert id=\"DataAccessAmendmentViewController\"></obiba-alert>\n" +
     "\n" +
-    "    <p class=\"help-block pull-left\" ng-if=\"requestEntity.applicant\">\n" +
+    "    <span ng-if=\"read\">\n" +
+    "      <span translate>amendment</span>\n" +
     "      <span translate>created-by</span>\n" +
     "      <span ng-if=\"!actions.canViewProfile('mica-data-access-officer')\">\n" +
     "        {{getFullName(requestEntity.profile) || requestEntity.applicant}},\n" +
@@ -15050,7 +15052,8 @@ angular.module("access/views/data-access-amendment-view.html", []).run(["$templa
     "      </span>\n" +
     "      <span title=\"{{requestEntity.timestamps.created | amDateFormat: 'lll'}}\">{{requestEntity.timestamps.created | amCalendar}}</span>\n" +
     "      <span class=\"label label-success\">{{requestEntity.status | translate}}</span>\n" +
-    "    </p>\n" +
+    "    </span>\n" +
+    "\n" +
     "\n" +
     "    <div class=\"pull-right\" ng-if=\"read && formDrawn\">\n" +
     "      <a ng-click=\"submit()\" ng-if=\"actions.canEditStatus(requestEntity) && nextStatus.canSubmit(requestEntity)\" class=\"btn btn-info\"\n" +
