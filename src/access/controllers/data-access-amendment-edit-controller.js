@@ -110,6 +110,7 @@
       });
     };
 
+    $scope.newAmendment = $routeParams.id ? false : true;
     $scope.toggleFormDrawnStatus = function (value) {
       $scope.formDrawn = value;
     };
