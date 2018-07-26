@@ -3017,6 +3017,9 @@ var CartDocumentsTableController = /** @class */ (function () {
     };
     CartDocumentsTableController.prototype.clearSet = function () {
         var _this = this;
+        if (!this.hasSelections()) {
+            return;
+        }
         var sels = this.getSelectedDocumentIds();
         if (sels && sels.length > 0) {
             this.SetService.removeDocumentFromCart(this.type, sels)

@@ -119,6 +119,9 @@ class CartDocumentsTableController implements ng.IComponentController {
   }
 
   public clearSet(): void {
+    if (!this.hasSelections()) {
+      return;
+    }
     const sels = this.getSelectedDocumentIds();
     if (sels && sels.length > 0) {
       this.SetService.removeDocumentFromCart(this.type, sels)
