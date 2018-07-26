@@ -2960,7 +2960,7 @@ var CartDocumentsTableController = /** @class */ (function () {
         };
     }
     CartDocumentsTableController.prototype.hasSelections = function () {
-        return this.allSelected || Object.keys(this.selections).length > 0;
+        return this.allSelected || this.getSelectedDocumentIds().length > 0;
     };
     CartDocumentsTableController.prototype.updateAllSelected = function () {
         this.$log.info("ALL=" + this.allSelected);

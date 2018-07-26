@@ -56,7 +56,7 @@ class CartDocumentsTableController implements ng.IComponentController {
   }
 
   public hasSelections() {
-    return this.allSelected || Object.keys(this.selections).length > 0;
+    return this.allSelected || this.getSelectedDocumentIds().length > 0;
   }
 
   public updateAllSelected() {
