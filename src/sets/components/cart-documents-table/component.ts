@@ -87,6 +87,7 @@ class CartDocumentsTableController implements ng.IComponentController {
   public updateSelection(documentId: any): void {
     if (!this.selections[documentId]) {
       this.allPageSelected[this.pagination.currentPage] = false;
+      this.allSelected = false;
     }
   }
 

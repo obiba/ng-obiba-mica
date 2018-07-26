@@ -2991,6 +2991,7 @@ var CartDocumentsTableController = /** @class */ (function () {
     CartDocumentsTableController.prototype.updateSelection = function (documentId) {
         if (!this.selections[documentId]) {
             this.allPageSelected[this.pagination.currentPage] = false;
+            this.allSelected = false;
         }
     };
     CartDocumentsTableController.prototype.showAnalysis = function () {
