@@ -20001,10 +20001,18 @@ angular.module("sets/components/cart-documents-table/component.html", []).run(["
     "  <div class=\"table-responsive\">\n" +
     "    <div class=\"alert alert-warning actions-select\" ng-show=\"$ctrl.allPageSelected[$ctrl.pagination.currentPage]\">\n" +
     "      <span ng-hide=\"$ctrl.allSelected\">\n" +
-    "        <span translate>sets.cart.all-cart-page-selected</span> <b><a href ng-click=\"$ctrl.updateAllSelected()\" translate>sets.cart.select-all-cart</a></b>\n" +
+    "        <span translate>sets.cart.all-cart-page-selected</span> \n" +
+    "        <a href ng-click=\"$ctrl.updateAllSelected()\" class=\"hoffset2\">\n" +
+    "          <i class=\"fa fa-square-o\"></i>\n" +
+    "          <b><span translate>sets.cart.select-all-cart</span></b>\n" +
+    "        </a>\n" +
     "      </span>\n" +
     "      <span ng-show=\"$ctrl.allSelected\">\n" +
-    "        <span translate>sets.cart.all-cart-selected</span> <b><a href ng-click=\"$ctrl.updateAllSelected()\" translate>sets.cart.unselect-all-cart</a></b>\n" +
+    "        <span translate>sets.cart.all-cart-selected</span>\n" +
+    "        <a href ng-click=\"$ctrl.updateAllSelected()\" class=\"hoffset2\">\n" +
+    "          <i class=\"fa fa-check-square-o\"></i>\n" +
+    "          <b><span translate>sets.cart.unselect-all-cart</span></b>\n" +
+    "        </a>\n" +
     "      </span>\n" +
     "    </div>\n" +
     "    <table class=\"table table-bordered table-striped\" ng-if=\"$ctrl.documents.total>0\">\n" +

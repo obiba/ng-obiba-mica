@@ -43,10 +43,18 @@
   <div class="table-responsive">
     <div class="alert alert-warning actions-select" ng-show="$ctrl.allPageSelected[$ctrl.pagination.currentPage]">
       <span ng-hide="$ctrl.allSelected">
-        <span translate>sets.cart.all-cart-page-selected</span> <b><a href ng-click="$ctrl.updateAllSelected()" translate>sets.cart.select-all-cart</a></b>
+        <span translate>sets.cart.all-cart-page-selected</span> 
+        <a href ng-click="$ctrl.updateAllSelected()" class="hoffset2">
+          <i class="fa fa-square-o"></i>
+          <b><span translate>sets.cart.select-all-cart</span></b>
+        </a>
       </span>
       <span ng-show="$ctrl.allSelected">
-        <span translate>sets.cart.all-cart-selected</span> <b><a href ng-click="$ctrl.updateAllSelected()" translate>sets.cart.unselect-all-cart</a></b>
+        <span translate>sets.cart.all-cart-selected</span>
+        <a href ng-click="$ctrl.updateAllSelected()" class="hoffset2">
+          <i class="fa fa-check-square-o"></i>
+          <b><span translate>sets.cart.unselect-all-cart</span></b>
+        </a>
       </span>
     </div>
     <table class="table table-bordered table-striped" ng-if="$ctrl.documents.total>0">
