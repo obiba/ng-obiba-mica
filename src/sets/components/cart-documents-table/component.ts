@@ -24,6 +24,7 @@ class CartDocumentsTableController implements ng.IComponentController {
   public table: any;
   public localizedTotal: string;
   private allSelected: boolean;
+  private allPageSelected: any;
   private selections: any;
 
   constructor(
@@ -37,6 +38,7 @@ class CartDocumentsTableController implements ng.IComponentController {
     private $location: any,
     private $window: any) {
       this.allSelected = false;
+      this.allPageSelected = {};
       this.selections = {};
       this.documents = {
         from: 0,
@@ -53,22 +55,38 @@ class CartDocumentsTableController implements ng.IComponentController {
       };
   }
 
+  public hasSelections() {
+    return this.allSelected || Object.keys(this.selections).length > 0;
+  }
+
   public updateAllSelected() {
     this.$log.info("ALL=" + this.allSelected);
+    this.allSelected = !this.allSelected;
     if (this.allSelected) {
-      if (this.documents && this.documents[this.type]) {
-        this.documents[this.type].forEach((doc) => {
-          this.selections[doc.id] = true;
-        });
-      }
+      this.allPageSelected[this.pagination.currentPage] = true;
+      this.updateAllCurrentPageSelected();
     } else {
+      this.allPageSelected = {};
       this.selections = {};
+    }
+  }
+
+  public updateAllCurrentPageSelected() {
+    this.$log.info("ALLPAGE=" + JSON.stringify(this.allPageSelected));
+    if (this.allSelected && !this.allPageSelected[this.pagination.currentPage]) {
+      this.allSelected = false;
+      this.allPageSelected = {};
+      this.selections = {};
+    } else if (this.documents && this.documents[this.type]) {
+      this.documents[this.type].forEach((doc) => {
+        this.selections[doc.id] = this.allPageSelected[this.pagination.currentPage];
+      });
     }
   }
 
   public updateSelection(documentId: any): void {
     if (!this.selections[documentId]) {
-      this.allSelected = false;
+      this.allPageSelected[this.pagination.currentPage] = false;
     }
   }
 
@@ -105,6 +123,7 @@ class CartDocumentsTableController implements ng.IComponentController {
       this.SetService.removeDocumentFromCart(this.type, sels)
         .then(() => {
           this.allSelected = false;
+          this.allPageSelected = {};
           this.selections = {};
           this.$scope.$emit("cart-cleared", this.type);
         });
@@ -112,6 +131,7 @@ class CartDocumentsTableController implements ng.IComponentController {
       this.SetService.clearCart(this.type)
         .then(() => {
           this.allSelected = false;
+          this.allPageSelected = {};
           this.selections = {};
           this.$scope.$emit("cart-cleared", this.type);
         });
@@ -136,6 +156,9 @@ class CartDocumentsTableController implements ng.IComponentController {
   }
 
   private getSelectedDocumentIds(): string[] {
+    if (this.allSelected) {
+      return [];
+    }
     return Object.keys(this.selections).filter((id) => this.selections[id]);
   }
 
@@ -154,6 +177,9 @@ class CartDocumentsTableController implements ng.IComponentController {
     const documentCounts = this.documents && this.documents[this.type] ? this.documents[this.type].length : 0;
     this.pagination.to = this.documents ? this.documents.from + documentCounts : 0;
     if (documentCounts) {
+      if (this.allSelected) {
+        this.allPageSelected[this.pagination.currentPage] = true;
+      }
       this.documents[this.type].forEach((doc) => {
         if (this.allSelected) {
           this.selections[doc.id] = true;

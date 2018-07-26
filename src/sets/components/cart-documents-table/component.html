@@ -15,7 +15,7 @@
       <i class="fa fa-download"></i></a>
     <a href="" ng-click="$ctrl.search()" class="action btn btn-info btn-responsive">
       <i class="fa fa-search"></i></a>
-    <a href="" ng-click="$ctrl.clearSet()" class="action btn btn-danger btn-responsive">
+    <a href="" ng-click="$ctrl.clearSet()" ng-disabled="!$ctrl.hasSelections()" class="action btn btn-danger btn-responsive">
       <i class="fa fa-trash-o"></i></a>
   </div>
   <div ng-show="$ctrl.pagination.totalHits > 0" class="pull-right">
@@ -41,13 +41,21 @@
   </div>
   <div class="clearfix"></div>
   <div class="table-responsive">
+    <div class="alert alert-warning actions-select" ng-show="$ctrl.allPageSelected[$ctrl.pagination.currentPage]">
+      <span ng-hide="$ctrl.allSelected">
+        <span translate>sets.cart.all-cart-page-selected</span> <b><a href ng-click="$ctrl.updateAllSelected()" translate>sets.cart.select-all-cart</a></b>
+      </span>
+      <span ng-show="$ctrl.allSelected">
+        <span translate>sets.cart.all-cart-selected</span> <b><a href ng-click="$ctrl.updateAllSelected()" translate>sets.cart.unselect-all-cart</a></b>
+      </span>
+    </div>
     <table class="table table-bordered table-striped" ng-if="$ctrl.documents.total>0">
       <thead>
         <th style="width: 50px">
             <input 
-            ng-model="$ctrl.allSelected"
+            ng-model="$ctrl.allPageSelected[$ctrl.pagination.currentPage]"
             type="checkbox"
-            ng-click="$ctrl.updateAllSelected()"/>
+            ng-click="$ctrl.updateAllCurrentPageSelected()"/>
         </th>
         <th translate>taxonomy.target.variable</th>
         <th translate>search.variable.label</th>

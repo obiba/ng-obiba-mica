@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2018-07-16
+ * Date: 2018-07-26
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -2943,6 +2943,7 @@ var CartDocumentsTableController = /** @class */ (function () {
         this.$location = $location;
         this.$window = $window;
         this.allSelected = false;
+        this.allPageSelected = {};
         this.selections = {};
         this.documents = {
             from: 0,
@@ -2958,23 +2959,38 @@ var CartDocumentsTableController = /** @class */ (function () {
             totalHits: 0,
         };
     }
+    CartDocumentsTableController.prototype.hasSelections = function () {
+        return this.allSelected || Object.keys(this.selections).length > 0;
+    };
     CartDocumentsTableController.prototype.updateAllSelected = function () {
-        var _this = this;
         this.$log.info("ALL=" + this.allSelected);
+        this.allSelected = !this.allSelected;
         if (this.allSelected) {
-            if (this.documents && this.documents[this.type]) {
-                this.documents[this.type].forEach(function (doc) {
-                    _this.selections[doc.id] = true;
-                });
-            }
+            this.allPageSelected[this.pagination.currentPage] = true;
+            this.updateAllCurrentPageSelected();
         }
         else {
+            this.allPageSelected = {};
             this.selections = {};
+        }
+    };
+    CartDocumentsTableController.prototype.updateAllCurrentPageSelected = function () {
+        var _this = this;
+        this.$log.info("ALLPAGE=" + JSON.stringify(this.allPageSelected));
+        if (this.allSelected && !this.allPageSelected[this.pagination.currentPage]) {
+            this.allSelected = false;
+            this.allPageSelected = {};
+            this.selections = {};
+        }
+        else if (this.documents && this.documents[this.type]) {
+            this.documents[this.type].forEach(function (doc) {
+                _this.selections[doc.id] = _this.allPageSelected[_this.pagination.currentPage];
+            });
         }
     };
     CartDocumentsTableController.prototype.updateSelection = function (documentId) {
         if (!this.selections[documentId]) {
-            this.allSelected = false;
+            this.allPageSelected[this.pagination.currentPage] = false;
         }
     };
     CartDocumentsTableController.prototype.showAnalysis = function () {
@@ -3005,6 +3021,7 @@ var CartDocumentsTableController = /** @class */ (function () {
             this.SetService.removeDocumentFromCart(this.type, sels)
                 .then(function () {
                 _this.allSelected = false;
+                _this.allPageSelected = {};
                 _this.selections = {};
                 _this.$scope.$emit("cart-cleared", _this.type);
             });
@@ -3013,6 +3030,7 @@ var CartDocumentsTableController = /** @class */ (function () {
             this.SetService.clearCart(this.type)
                 .then(function () {
                 _this.allSelected = false;
+                _this.allPageSelected = {};
                 _this.selections = {};
                 _this.$scope.$emit("cart-cleared", _this.type);
             });
@@ -3034,6 +3052,9 @@ var CartDocumentsTableController = /** @class */ (function () {
     };
     CartDocumentsTableController.prototype.getSelectedDocumentIds = function () {
         var _this = this;
+        if (this.allSelected) {
+            return [];
+        }
         return Object.keys(this.selections).filter(function (id) { return _this.selections[id]; });
     };
     CartDocumentsTableController.prototype.localize = function (values) {
@@ -3051,6 +3072,9 @@ var CartDocumentsTableController = /** @class */ (function () {
         var documentCounts = this.documents && this.documents[this.type] ? this.documents[this.type].length : 0;
         this.pagination.to = this.documents ? this.documents.from + documentCounts : 0;
         if (documentCounts) {
+            if (this.allSelected) {
+                this.allPageSelected[this.pagination.currentPage] = true;
+            }
             this.documents[this.type].forEach(function (doc) {
                 if (_this.allSelected) {
                     _this.selections[doc.id] = true;
@@ -19735,6 +19759,7 @@ angular.module("search/views/search-result-list-study-template.html", []).run(["
     "  ~ You should have received a copy of the GNU General Public License\n" +
     "  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.\n" +
     "  -->\n" +
+    "\n" +
     "<div class=\"tab-pane\" ng-show=\"options.studies.showSearchTab\" ng-class=\"{'active': activeTarget.studies.active}\">\n" +
     "  <studies-result-table lang=\"lang\" loading=\"loading\" on-update-criteria=\"onUpdateCriteria\"\n" +
     "      summaries=\"result.list.studyResultDto['obiba.mica.StudyResultDto.result'].summaries\"></studies-result-table>\n" +
@@ -19948,7 +19973,7 @@ angular.module("sets/components/cart-documents-table/component.html", []).run(["
     "      <i class=\"fa fa-download\"></i></a>\n" +
     "    <a href=\"\" ng-click=\"$ctrl.search()\" class=\"action btn btn-info btn-responsive\">\n" +
     "      <i class=\"fa fa-search\"></i></a>\n" +
-    "    <a href=\"\" ng-click=\"$ctrl.clearSet()\" class=\"action btn btn-danger btn-responsive\">\n" +
+    "    <a href=\"\" ng-click=\"$ctrl.clearSet()\" ng-disabled=\"!$ctrl.hasSelections()\" class=\"action btn btn-danger btn-responsive\">\n" +
     "      <i class=\"fa fa-trash-o\"></i></a>\n" +
     "  </div>\n" +
     "  <div ng-show=\"$ctrl.pagination.totalHits > 0\" class=\"pull-right\">\n" +
@@ -19974,13 +19999,21 @@ angular.module("sets/components/cart-documents-table/component.html", []).run(["
     "  </div>\n" +
     "  <div class=\"clearfix\"></div>\n" +
     "  <div class=\"table-responsive\">\n" +
+    "    <div class=\"alert alert-warning actions-select\" ng-show=\"$ctrl.allPageSelected[$ctrl.pagination.currentPage]\">\n" +
+    "      <span ng-hide=\"$ctrl.allSelected\">\n" +
+    "        <span translate>sets.cart.all-cart-page-selected</span> <b><a href ng-click=\"$ctrl.updateAllSelected()\" translate>sets.cart.select-all-cart</a></b>\n" +
+    "      </span>\n" +
+    "      <span ng-show=\"$ctrl.allSelected\">\n" +
+    "        <span translate>sets.cart.all-cart-selected</span> <b><a href ng-click=\"$ctrl.updateAllSelected()\" translate>sets.cart.unselect-all-cart</a></b>\n" +
+    "      </span>\n" +
+    "    </div>\n" +
     "    <table class=\"table table-bordered table-striped\" ng-if=\"$ctrl.documents.total>0\">\n" +
     "      <thead>\n" +
     "        <th style=\"width: 50px\">\n" +
     "            <input \n" +
-    "            ng-model=\"$ctrl.allSelected\"\n" +
+    "            ng-model=\"$ctrl.allPageSelected[$ctrl.pagination.currentPage]\"\n" +
     "            type=\"checkbox\"\n" +
-    "            ng-click=\"$ctrl.updateAllSelected()\"/>\n" +
+    "            ng-click=\"$ctrl.updateAllCurrentPageSelected()\"/>\n" +
     "        </th>\n" +
     "        <th translate>taxonomy.target.variable</th>\n" +
     "        <th translate>search.variable.label</th>\n" +
