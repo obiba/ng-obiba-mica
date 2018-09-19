@@ -73,6 +73,8 @@
             <th data-column-name="timestamps.lastUpdate">{{"data-access-request.lastUpdate" | translate}}</th>
             <th data-column-name="submissionDate">{{"data-access-request.submissionDate" | translate}}</th>
             <th data-column-name="status">{{"data-access-request.status" | translate}}</th>
+            <th ng-if="!$ctrl.parentId">{{"data-access-request.pending-amendments" | translate}}</th>
+            <th ng-if="!$ctrl.parentId">{{"data-access-request.total-amendments" | translate}}</th>
             <th translate>actions</th>
           </tr>
         </thead>
@@ -109,6 +111,18 @@
             </td>
             <td>
               {{request.status | translate}}
+            </td>
+            <td ng-if="!$ctrl.parentId">
+              <span ng-if="request.amendmentsSummary">
+                {{request.amendmentsSummary.pending}}
+              </span>
+              <span ng-if="!request.amendmentsSummary"></span>
+            </td>
+            <td ng-if="!$ctrl.parentId">
+              <span ng-if="request.amendmentsSummary">
+                {{request.amendmentsSummary.total}}
+              </span>
+              <span ng-if="!request.amendmentsSummary"></span>
             </td>
             <td>
               <ul class="list-inline">

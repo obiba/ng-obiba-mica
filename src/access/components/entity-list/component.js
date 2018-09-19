@@ -74,9 +74,9 @@
       ctrl.loading = false;
     }
 
-    var onError = function () {
+    function onError() {
       ctrl.loading = false;
-    };
+    }
 
     function onChanges (changed) {
       if (changed.parentId && changed.parentId.currentValue !== undefined) {
