@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2018-09-07
+ * Date: 2018-09-19
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -1050,9 +1050,9 @@ ngObibaMica.access
             ctrl.requests = reqs;
             ctrl.loading = false;
         }
-        var onError = function () {
+        function onError() {
             ctrl.loading = false;
-        };
+        }
         function onChanges(changed) {
             if (changed.parentId && changed.parentId.currentValue !== undefined) {
                 if (changed.parentId.currentValue === null) {
@@ -2874,7 +2874,7 @@ var SetService = /** @class */ (function () {
         });
     };
     SetService.prototype.saveCart = function (documentType, set) {
-        if (set && set.id) {
+        if (set && set.id) { // sanity check
             this.localStorageService.set(this.getCartKey(documentType), set);
             this.notifyCartChanged(documentType);
             return set;
@@ -8225,6 +8225,9 @@ var CRITERIA_ITEM_EVENT = {
                 templateUrl: TEMPLATE_URL
             };
         }])
+        /**
+         * This directive creates a hierarchical structure matching that of a RqlQuery tree.
+         */
         .directive('criteriaLeaf', ['CriteriaNodeCompileService', function (CriteriaNodeCompileService) {
             return {
                 restrict: 'EA',
@@ -8265,6 +8268,9 @@ ngObibaMica.search
         };
     }
 ])
+    /**
+     * Directive specialized for vocabulary of type String
+     */
     .directive('matchCriterion', [function () {
         return {
             restrict: 'EA',
@@ -8471,6 +8477,9 @@ ngObibaMica.search
         $scope.updateSelection = updateSelection;
     }
 ])
+    /**
+     * Directive specialized for vocabulary of type String
+     */
     .directive('stringCriterionTerms', [function () {
         return {
             restrict: 'EA',
@@ -9254,7 +9263,7 @@ function BaseTaxonomiesController($rootScope, $scope, $translate, $location, Tax
     this.updateStateFromLocation = function () {
         var search = $location.search();
         var taxonomyName = search.taxonomy, vocabularyName = search.vocabulary, taxonomy = null, vocabulary = null;
-        if (!$scope.taxonomies.all) {
+        if (!$scope.taxonomies.all) { //page loading
             return;
         }
         $scope.taxonomies.all.forEach(function (t) {
@@ -14895,7 +14904,7 @@ ngObibaMica.fileBrowser
         };
         var searchKeyUp = function (event) {
             switch (event.keyCode) {
-                case 13:// ENTER
+                case 13: // ENTER
                     if ($scope.data.search.text) {
                         searchDocuments($scope.data.search.text);
                     }
@@ -14903,7 +14912,7 @@ ngObibaMica.fileBrowser
                         clearSearch();
                     }
                     break;
-                case 27:// ESC
+                case 27: // ESC
                     if ($scope.data.search.active) {
                         clearSearch();
                     }
@@ -15324,6 +15333,8 @@ angular.module("access/components/entity-list/component.html", []).run(["$templa
     "            <th data-column-name=\"timestamps.lastUpdate\">{{\"data-access-request.lastUpdate\" | translate}}</th>\n" +
     "            <th data-column-name=\"submissionDate\">{{\"data-access-request.submissionDate\" | translate}}</th>\n" +
     "            <th data-column-name=\"status\">{{\"data-access-request.status\" | translate}}</th>\n" +
+    "            <th ng-if=\"!$ctrl.parentId\">{{\"data-access-request.pending-amendments\" | translate}}</th>\n" +
+    "            <th ng-if=\"!$ctrl.parentId\">{{\"data-access-request.total-amendments\" | translate}}</th>\n" +
     "            <th translate>actions</th>\n" +
     "          </tr>\n" +
     "        </thead>\n" +
@@ -15360,6 +15371,18 @@ angular.module("access/components/entity-list/component.html", []).run(["$templa
     "            </td>\n" +
     "            <td>\n" +
     "              {{request.status | translate}}\n" +
+    "            </td>\n" +
+    "            <td ng-if=\"!$ctrl.parentId\">\n" +
+    "              <span ng-if=\"request.amendmentsSummary\">\n" +
+    "                {{request.amendmentsSummary.pending}}\n" +
+    "              </span>\n" +
+    "              <span ng-if=\"!request.amendmentsSummary\"></span>\n" +
+    "            </td>\n" +
+    "            <td ng-if=\"!$ctrl.parentId\">\n" +
+    "              <span ng-if=\"request.amendmentsSummary\">\n" +
+    "                {{request.amendmentsSummary.total}}\n" +
+    "              </span>\n" +
+    "              <span ng-if=\"!request.amendmentsSummary\"></span>\n" +
     "            </td>\n" +
     "            <td>\n" +
     "              <ul class=\"list-inline\">\n" +
