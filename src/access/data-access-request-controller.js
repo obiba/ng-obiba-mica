@@ -531,7 +531,7 @@ ngObibaMica.access
       };
 
       var save = function () {
-        $scope.dataAccessRequest.content = angular.toJson($scope.sfForm.model);
+        $scope.dataAccessRequest.content = angular.toJson($scope.sfForm.model || '{}');
 
         if ($scope.newRequest) {
           DataAccessRequestsResource.save($scope.dataAccessRequest, onSuccess, onError);

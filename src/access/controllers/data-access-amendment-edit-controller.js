@@ -85,7 +85,7 @@
     };
 
     $scope.save = function () {
-      $scope.requestEntity.content = angular.toJson($scope.model);
+      $scope.requestEntity.content = angular.toJson($scope.model || '{}');
       $scope.requestEntity.parentId = $routeParams.parentId;
 
       delete $scope.requestEntity.$promise;
