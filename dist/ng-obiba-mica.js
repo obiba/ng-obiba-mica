@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2018-10-29
+ * Date: 2018-11-05
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -1953,7 +1953,7 @@ ngObibaMica.access
             $location.path('/data-access-request' + ($routeParams.id ? '/' + $routeParams.id : 's')).replace();
         };
         var save = function () {
-            $scope.dataAccessRequest.content = angular.toJson($scope.sfForm.model);
+            $scope.dataAccessRequest.content = angular.toJson($scope.sfForm.model || '{}');
             if ($scope.newRequest) {
                 DataAccessRequestsResource.save($scope.dataAccessRequest, onSuccess, onError);
             }
@@ -2101,7 +2101,7 @@ ngObibaMica.access
             $location.path($scope.entityUrl).replace();
         };
         $scope.save = function () {
-            $scope.requestEntity.content = angular.toJson($scope.model);
+            $scope.requestEntity.content = angular.toJson($scope.model || '{}');
             $scope.requestEntity.parentId = $routeParams.parentId;
             delete $scope.requestEntity.$promise;
             if (!$scope.requestEntity.applicant) {
