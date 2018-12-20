@@ -537,7 +537,7 @@ ngObibaMica.access
             DataAccessRequestResource.get({ id: $routeParams.id }, function onSuccess(request) {
               request.attachments = request.attachments || [];
               return request;
-            }) : {
+            }).$promise : {
               applicant: SessionProxy.login(),
               status: DataAccessEntityService.status.OPENED,
               attachments: []
