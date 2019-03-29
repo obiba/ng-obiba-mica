@@ -471,17 +471,22 @@
 
       var ids = selections.slice(0, maximumLimit);
       var rootQuery = new RqlQuery(RQL_NODE.AND);
-      var targetQuery = new RqlQuery(target);
-      targetQuery.args.push(inQuery('id', ids));
+      if (Array.isArray(ids) && ids.length) {
+        var targetQuery = new RqlQuery(target);
+        targetQuery.args.push(inQuery('id', ids));
 
-      // steal required properties from current target query
-      currentTargetQuery.args.forEach(function (arg) {
-        if (['fields', 'limit', 'sort'].indexOf(arg.name) > -1) {
-          targetQuery.args.push(arg);
-        }
-      });
+        // steal required properties from current target query
+        currentTargetQuery.args.forEach(function (arg) {
+          if (['fields', 'limit', 'sort'].indexOf(arg.name) > -1) {
+            targetQuery.args.push(arg);
+          }
+        });
 
-      rootQuery.args.push(targetQuery);
+        rootQuery.args.push(targetQuery);
+      } else {
+        rootQuery.args.push(currentTargetQuery);
+      }
+
 
       if (localeQuery) {
         rootQuery.args.push(localeQuery);
