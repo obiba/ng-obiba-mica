@@ -1,9 +1,9 @@
 /*!
- * ng-obiba-mica - v3.5.0
+ * ng-obiba-mica - v3.5.1
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2019-03-27
+ * Date: 2019-04-09
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -8409,15 +8409,20 @@ function typeToTarget(type) {
             }
             var ids = selections.slice(0, maximumLimit);
             var rootQuery = new RqlQuery(RQL_NODE.AND);
-            var targetQuery = new RqlQuery(target);
-            targetQuery.args.push(inQuery('id', ids));
-            // steal required properties from current target query
-            currentTargetQuery.args.forEach(function (arg) {
-                if (['fields', 'limit', 'sort'].indexOf(arg.name) > -1) {
-                    targetQuery.args.push(arg);
-                }
-            });
-            rootQuery.args.push(targetQuery);
+            if (Array.isArray(ids) && ids.length) {
+                var targetQuery = new RqlQuery(target);
+                targetQuery.args.push(inQuery('id', ids));
+                // steal required properties from current target query
+                currentTargetQuery.args.forEach(function (arg) {
+                    if (['fields', 'limit', 'sort'].indexOf(arg.name) > -1) {
+                        targetQuery.args.push(arg);
+                    }
+                });
+                rootQuery.args.push(targetQuery);
+            }
+            else {
+                rootQuery.args.push(currentTargetQuery);
+            }
             if (localeQuery) {
                 rootQuery.args.push(localeQuery);
             }
