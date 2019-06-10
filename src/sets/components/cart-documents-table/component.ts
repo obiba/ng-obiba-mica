@@ -39,6 +39,7 @@ class CartDocumentsTableController extends DocumentsSetTableComponentController 
 
       this.micaConfigShowAnalysis = config.isSetsAnalysisEnabled;
       this.micaConfigShowSearch = config.isSetsSearchEnabled;
+      this.micaConfigShowOpalViews = config.downloadOpalViewsFromSetsAllowed;
     });
   }
 

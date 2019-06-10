@@ -169,6 +169,7 @@ function NgObibaMicaTemplateUrlFactory() {
         'SetImportResource': 'ws/:type/set/:id/documents/_import',
         'SetImportQueryResource': 'ws/:type/set/:id/documents/_rql',
         'SetRemoveResource': 'ws/:type/set/:id/documents/_delete',
+        'SetOpalExportResource': 'ws/:type/set/:id/documents/_opal',
         'JoinQuerySearchResource': 'ws/:type/_rql',
         'JoinQuerySearchCsvResource': 'ws/:type/_rql_csv?query=:query',
         'JoinQuerySearchCsvReportResource': 'ws/:type/_report?query=:query',

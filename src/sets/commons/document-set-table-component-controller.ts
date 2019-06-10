@@ -10,7 +10,9 @@ interface IDocumentsSetTableComponentController extends ng.IComponentController 
 
   clearSet(): void;
 
-  download(): void;
+  download(): string;
+
+  opalExport(): string;
 
   hasSelections(): boolean;
 
@@ -46,6 +48,7 @@ abstract class DocumentsSetTableComponentController implements IDocumentsSetTabl
 
   protected micaConfigShowAnalysis: boolean;
   protected micaConfigShowSearch: boolean;
+  protected micaConfigShowOpalViews: boolean;
 
   constructor(
     protected SetService: ISetService,
@@ -72,6 +75,7 @@ abstract class DocumentsSetTableComponentController implements IDocumentsSetTabl
     };
 
     this.micaConfigShowAnalysis = true;
+    this.micaConfigShowOpalViews = false;
   }
 
   public showAnalysis(): boolean {
@@ -125,6 +129,10 @@ abstract class DocumentsSetTableComponentController implements IDocumentsSetTabl
     return this.hasSelections()
       ? this.SetService.getDownloadUrlForIds(this.type, this.setId, this.getSelectedDocumentIds())
       : this.SetService.getDownloadUrl(this.type, this.setId);
+  }
+
+  public opalExport(): string {
+    return this.SetService.getOpalViewsDownloadUrl(this.type, this.setId);
   }
 
   public search(): void {

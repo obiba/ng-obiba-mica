@@ -15,12 +15,24 @@
         </li>
       </ul>
     </div>
+
     <a obiba-file-download get-url="$ctrl.download()" target="_self" download class="action btn btn-info btn-responsive">
-      <i class="fa fa-download"></i> {{'download' | translate}}</a>
+      <i class="fa fa-download"></i> {{'download' | translate}}
+    </a>
+
+    <span ng-if="$ctrl.micaConfigShowOpalViews">
+      <a obiba-file-download get-url="$ctrl.opalExport()" method="'get'" target="_self" class="action btn btn-primary btn-responsive" download title="{{'sets.opal-views-download-button-help' | translate}}">
+        <i class="fa fa-download"></i> {{'sets.opal-views-download-button-text' | translate}}
+      </a>
+    </span>
+
     <a ng-if="$ctrl.micaConfigShowSearch" href="" ng-click="$ctrl.search()" class="action btn btn-info btn-responsive">
-      <i class="fa fa-search"></i></a>
+      <i class="fa fa-search"></i>
+    </a>
+
     <a href="" ng-click="$ctrl.clearSet()" ng-disabled="!$ctrl.hasSelections()" class="action btn btn-danger btn-responsive">
-      <i class="fa fa-trash-o"></i></a>
+      <i class="fa fa-trash-o"></i>
+    </a>
   </div>
   <div ng-show="$ctrl.pagination.pageCount > 1" class="pull-right">
     <span

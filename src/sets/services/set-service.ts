@@ -41,6 +41,8 @@ interface ISetService {
   getCartSet(documentType: string): any;
   setSettingOption(newOptions: any): void;
   setGettingOption(): any;
+
+  getOpalViewsDownloadUrl(type: string, setId: string);
 }
 
 class SetService implements ISetService {
@@ -348,6 +350,10 @@ class SetService implements ISetService {
       this.$window.location.href = this.PageUrlService.entitiesCountPage(queryStr);
       this.$location.replace();
     }
+  }
+
+  public getOpalViewsDownloadUrl(type: string, setId: string) {
+    return this.PageUrlService.downloadOpalView(type, setId);
   }
 
   public getDownloadUrl(documentType: string, setId: string): string {

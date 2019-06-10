@@ -19,6 +19,7 @@ class VariablesSetTableComponentController extends DocumentsSetTableComponentCon
     SetService.serverConfig().then((config) => {
       this.micaConfigShowAnalysis = config.isSetsAnalysisEnabled;
       this.micaConfigShowSearch = config.isSetsSearchEnabled;
+      this.micaConfigShowOpalViews = config.downloadOpalViewsFromSetsAllowed;
     });
   }
 

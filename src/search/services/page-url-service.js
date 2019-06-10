@@ -55,6 +55,10 @@
       return url;
     };
 
+    this.downloadOpalView = function (type, setId) {
+      return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('SetOpalExportResource'), {':type': type, ':id': setId});
+    };
+
     this.searchPage = function (query) {
       var url = ngObibaMicaUrl.getUrl('BaseUrl') + ngObibaMicaUrl.getUrl('SearchBaseUrl');
       if (query) {
