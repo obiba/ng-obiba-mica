@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2019-06-05
+ * Date: 2019-06-11
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -155,6 +155,7 @@ function NgObibaMicaTemplateUrlFactory() {
             'SetImportResource': 'ws/:type/set/:id/documents/_import',
             'SetImportQueryResource': 'ws/:type/set/:id/documents/_rql',
             'SetRemoveResource': 'ws/:type/set/:id/documents/_delete',
+            'SetOpalExportResource': 'ws/:type/set/:id/documents/_opal',
             'JoinQuerySearchResource': 'ws/:type/_rql',
             'JoinQuerySearchCsvResource': 'ws/:type/_rql_csv?query=:query',
             'JoinQuerySearchCsvReportResource': 'ws/:type/_report?query=:query',
@@ -3051,6 +3052,9 @@ var SetService = /** @class */ (function () {
             this.$location.replace();
         }
     };
+    SetService.prototype.getOpalViewsDownloadUrl = function (type, setId) {
+        return this.PageUrlService.downloadOpalView(type, setId);
+    };
     SetService.prototype.getDownloadUrl = function (documentType, setId) {
         var id = setId;
         if (!id) {
@@ -3245,6 +3249,7 @@ var DocumentsSetTableComponentController = /** @class */ (function () {
             totalHits: 0,
         };
         this.micaConfigShowAnalysis = true;
+        this.micaConfigShowOpalViews = false;
     }
     DocumentsSetTableComponentController.prototype.showAnalysis = function () {
         return this.AnalysisConfigService.showAnalysis() && this.micaConfigShowAnalysis;
@@ -3294,6 +3299,9 @@ var DocumentsSetTableComponentController = /** @class */ (function () {
         return this.hasSelections()
             ? this.SetService.getDownloadUrlForIds(this.type, this.setId, this.getSelectedDocumentIds())
             : this.SetService.getDownloadUrl(this.type, this.setId);
+    };
+    DocumentsSetTableComponentController.prototype.opalExport = function () {
+        return this.SetService.getOpalViewsDownloadUrl(this.type, this.setId);
     };
     DocumentsSetTableComponentController.prototype.search = function () {
         this.SetService.gotoSearch(this.type, this.setId);
@@ -3595,6 +3603,7 @@ var CartDocumentsTableController = /** @class */ (function (_super) {
             _this.currentUserCanCreateSets = config.currentUserCanCreateSets;
             _this.micaConfigShowAnalysis = config.isSetsAnalysisEnabled;
             _this.micaConfigShowSearch = config.isSetsSearchEnabled;
+            _this.micaConfigShowOpalViews = config.downloadOpalViewsFromSetsAllowed;
         });
         return _this;
     }
@@ -3736,6 +3745,7 @@ var VariablesSetTableComponentController = /** @class */ (function (_super) {
         SetService.serverConfig().then(function (config) {
             _this.micaConfigShowAnalysis = config.isSetsAnalysisEnabled;
             _this.micaConfigShowSearch = config.isSetsSearchEnabled;
+            _this.micaConfigShowOpalViews = config.downloadOpalViewsFromSetsAllowed;
         });
         return _this;
     }
@@ -7045,6 +7055,9 @@ ngObibaMica.search.service("CoverageGroupByService", ["ngObibaMicaSearch", Cover
                 url = url + '?query=' + urlEncode(query);
             }
             return url;
+        };
+        this.downloadOpalView = function (type, setId) {
+            return StringUtils.replaceAll(ngObibaMicaUrl.getUrl('SetOpalExportResource'), { ':type': type, ':id': setId });
         };
         this.searchPage = function (query) {
             var url = ngObibaMicaUrl.getUrl('BaseUrl') + ngObibaMicaUrl.getUrl('SearchBaseUrl');
@@ -21351,12 +21364,24 @@ angular.module("sets/components/cart-documents-table/component.html", []).run(["
     "        </li>\n" +
     "      </ul>\n" +
     "    </div>\n" +
+    "\n" +
     "    <a obiba-file-download get-url=\"$ctrl.download()\" target=\"_self\" download class=\"action btn btn-info btn-responsive\">\n" +
-    "      <i class=\"fa fa-download\"></i> {{'download' | translate}}</a>\n" +
+    "      <i class=\"fa fa-download\"></i> {{'download' | translate}}\n" +
+    "    </a>\n" +
+    "\n" +
+    "    <span ng-if=\"$ctrl.micaConfigShowOpalViews\">\n" +
+    "      <a obiba-file-download get-url=\"$ctrl.opalExport()\" method=\"'get'\" target=\"_self\" class=\"action btn btn-primary btn-responsive\" download title=\"{{'sets.opal-views-download-button-help' | translate}}\">\n" +
+    "        <i class=\"fa fa-download\"></i> {{'sets.opal-views-download-button-text' | translate}}\n" +
+    "      </a>\n" +
+    "    </span>\n" +
+    "\n" +
     "    <a ng-if=\"$ctrl.micaConfigShowSearch\" href=\"\" ng-click=\"$ctrl.search()\" class=\"action btn btn-info btn-responsive\">\n" +
-    "      <i class=\"fa fa-search\"></i></a>\n" +
+    "      <i class=\"fa fa-search\"></i>\n" +
+    "    </a>\n" +
+    "\n" +
     "    <a href=\"\" ng-click=\"$ctrl.clearSet()\" ng-disabled=\"!$ctrl.hasSelections()\" class=\"action btn btn-danger btn-responsive\">\n" +
-    "      <i class=\"fa fa-trash-o\"></i></a>\n" +
+    "      <i class=\"fa fa-trash-o\"></i>\n" +
+    "    </a>\n" +
     "  </div>\n" +
     "  <div ng-show=\"$ctrl.pagination.pageCount > 1\" class=\"pull-right\">\n" +
     "    <span\n" +
@@ -21443,6 +21468,12 @@ angular.module("sets/components/set-variables-table/component.html", []).run(["$
     "    <a obiba-file-download get-url=\"$ctrl.download()\" target=\"_self\" download class=\"action btn btn-info btn-responsive\">\n" +
     "      <i class=\"fa fa-download\"></i> {{'download' | translate}}\n" +
     "    </a>\n" +
+    "\n" +
+    "    <span ng-if=\"$ctrl.micaConfigShowOpalViews\">\n" +
+    "      <a obiba-file-download get-url=\"$ctrl.opalExport()\" method=\"'get'\" target=\"_self\" class=\"action btn btn-primary btn-responsive\" download title=\"{{'sets.opal-views-download-button-help' | translate}}\">\n" +
+    "        <i class=\"fa fa-download\"></i> {{'sets.opal-views-download-button-text' | translate}}\n" +
+    "      </a>\n" +
+    "    </span>\n" +
     "\n" +
     "    <a ng-if=\"$ctrl.micaConfigShowSearch\" href=\"\" ng-click=\"$ctrl.search()\" class=\"action btn btn-info btn-responsive\">\n" +
     "      <i class=\"fa fa-search\"></i>\n" +
