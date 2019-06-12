@@ -353,6 +353,13 @@ class SetService implements ISetService {
   }
 
   public getOpalViewsDownloadUrl(type: string, setId: string) {
+    if (!setId) {
+      const cartSet = this.getCartSet("variables");
+      if (cartSet) {
+        setId = cartSet.id;
+      }
+    }
+
     return this.PageUrlService.downloadOpalView(type, setId);
   }
 
