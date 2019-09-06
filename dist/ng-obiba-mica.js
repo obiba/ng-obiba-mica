@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2019-08-28
+ * Date: 2019-09-06
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -20030,7 +20030,7 @@ angular.module("search/components/result/coverage-result/component.html", []).ru
     "        </tr>\n" +
     "        <tr>\n" +
     "          <th></th>\n" +
-    "          <th colspan=\"{{table.cols.colSpan}}\" translate>all</th>\n" +
+    "          <th colspan=\"{{table.cols.colSpan}}\"></th>\n" +
     "          <th ng-repeat=\"header in ::table.termHeaders\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
     "            <a href ng-click=\"updateCriteria(null, header, $index, 'variables')\">\n" +
     "              <localized-number value=\"header.hits\"></localized-number>\n" +
@@ -20074,17 +20074,6 @@ angular.module("search/components/result/coverage-result/component.html", []).ru
     "          </td>\n" +
     "        </tr>\n" +
     "      </tbody>\n" +
-    "      <tfoot>\n" +
-    "        <tr>\n" +
-    "          <th></th>\n" +
-    "          <th colspan=\"{{table.cols.colSpan}}\" translate>all</th>\n" +
-    "          <th ng-repeat=\"header in ::table.termHeaders\" title=\"{{header.entity.descriptions[0].value}}\">\n" +
-    "            <a href ng-click=\"updateCriteria(null, header, $index, 'variables')\">\n" +
-    "              <localized-number value=\"header.hits\"></localized-number>\n" +
-    "            </a>\n" +
-    "          </th>\n" +
-    "        </tr>\n" +
-    "      </tfoot>\n" +
     "    </table>\n" +
     "  </div>\n" +
     "</div>");
