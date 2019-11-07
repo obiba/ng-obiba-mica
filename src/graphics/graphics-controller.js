@@ -22,7 +22,9 @@ ngObibaMica.graphics
     'GraphicChartsData',
     'RqlQueryService',
     'ngObibaMicaUrl',
-    'D3GeoConfig', 'D3ChartConfig',  
+    'D3GeoConfig',
+    'D3ChartConfig',
+    'LocalizedValues',
     function ($rootScope,
               $scope,
               $filter,
@@ -32,7 +34,9 @@ ngObibaMica.graphics
               GraphicChartsData,
               RqlQueryService,
               ngObibaMicaUrl,
-              D3GeoConfig, D3ChartConfig) {
+              D3GeoConfig,
+              D3ChartConfig,
+              LocalizedValues) {
 
       function initializeChartData(StudiesData, chartAggregationName) {
         $scope.chartObject = {};
@@ -42,7 +46,7 @@ ngObibaMica.graphics
 
                 var data = entries.map(function(e) {
                   if(e.participantsNbr) {
-                    return [e.title, e.value, e.participantsNbr];
+                    return [e.title, e.value, e.participantsNbr, e.perc];
                   }
                   else{
                     return [e.title, e.value];
@@ -64,9 +68,21 @@ ngObibaMica.graphics
                       $scope.chartObject.header = {
                         title: $filter('translate')($scope.chartHeader[0]),
                         value: $filter('translate')($scope.chartHeader[1]),
-                        key: $filter('translate')($scope.chartHeader[2])
+                        key: $filter('translate')($scope.chartHeader[2]),
+                        perc: $filter('translate')($scope.chartHeader[3])
                       };
-                    }
+                      if(entries.length>1){
+                          entries.push(entries.reduce(function (a, b){
+                            return {
+                              title: $filter('translate')('total'),
+                              value: a.value + b.value,
+                              participantsNbr:  parseFloat(a.participantsNbr) + parseFloat(b.participantsNbr),
+                              key: '-',
+                              perc: (parseFloat(a.perc) + parseFloat(b.perc)).toFixed(2)
+                            };
+                          }));
+                        }
+                      }
                     $scope.chartObject.type = $scope.chartType;
                     $scope.chartObject.data = data;
                     $scope.chartObject.vocabulary = $scope.chartAggregationName;
@@ -108,6 +124,9 @@ ngObibaMica.graphics
                           }
                         }
                       };
+                    $scope.localizedNumber = function (number){
+                      return LocalizedValues.formatNumber(number);
+                    };
                   }
                   else {
                     if($scope.chartHeader.length<3){

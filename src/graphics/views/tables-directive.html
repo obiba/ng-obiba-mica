@@ -11,10 +11,12 @@
         </tr>
         </thead>
         <tbody>
-        <tr ng-repeat="row in chartObject.entries | orderBy:sort.sortingOrder:sort.reverse track by $index">
-            <td>{{row.title}}</td>
-            <td><a href ng-click="updateCriteria(row.key, chartObject.vocabulary)">{{row.value}}</a></td>
-            <td ng-if="row.participantsNbr">{{row.participantsNbr}}</td>
+        <tr ng-repeat="row in chartObject.entries | orderBy:sort.sortingOrder:sort.reverse track by $index" >
+            <td ng-if="row.title.toLowerCase()=='total'"><b>{{row.title}}</b></td>
+            <td ng-if="row.title.toLowerCase()!='total'">{{row.title}}</td>
+            <td><a href ng-click="updateCriteria(row.key, chartObject.vocabulary)">{{localizedNumber(row.value)}}</a></td>
+            <td ng-if="row.participantsNbr">{{localizedNumber(row.participantsNbr)}}</td>
+            <td ng-if="row.perc">{{row.perc}} %</td>
         </tr>
         </tbody>
     </table>

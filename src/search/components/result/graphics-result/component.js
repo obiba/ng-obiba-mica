@@ -129,7 +129,8 @@ ngObibaMica.search
             result.studyResultDto,
             [$filter('translate')(charOptions.studiesDesigns.header[0]),
             $filter('translate')(charOptions.studiesDesigns.header[1]),
-            $filter('translate')(charOptions.studiesDesigns.header[2])
+            $filter('translate')(charOptions.studiesDesigns.header[2]),
+            $filter('translate')(charOptions.studiesDesigns.header[3])
             ],
             charOptions.studiesDesigns.options, true).then(function (methodDesignStudies) {
               if (methodDesignStudies) {

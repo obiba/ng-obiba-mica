@@ -57,7 +57,7 @@ ngObibaMica.graphics
             }
           },
           studiesDesigns: {
-            header: ['graphics.study-design', 'graphics.nbr-studies', 'graphics.number-participants'],
+            header: ['graphics.study-design', 'graphics.nbr-studies', 'graphics.number-participants', 'graphics.percentage.studies'],
             title : 'graphics.study-design-chart-title',
             options: {
               bars: 'horizontal',
@@ -218,14 +218,15 @@ ngObibaMica.graphics
                           angular.forEach(term.aggs, function (aggBucket) {
                             if (aggBucket.aggregation === 'model-numberOfParticipants-participant-number') {
                               var aggregateBucket = aggBucket['obiba.mica.StatsAggregationResultDto.stats'];
-                              numberOfParticipant = LocalizedValues.formatNumber(aggregateBucket ? aggregateBucket.data.sum : 0);
+                              numberOfParticipant = aggregateBucket ? aggregateBucket.data.sum : 0;
                             }
                           });
                           arrayData[i] = {
                             title: LocalizedValues.forLocale(sortTerm.title, $translate.use()),
                             value: term.count,
                             participantsNbr: numberOfParticipant,
-                            key: term.key
+                            key: term.key,
+                            perc:  ((100* term.count)/entityDto.totalHits).toFixed(2)
                           };
                         } else {
                           arrayData[i] = {title: LocalizedValues.forLocale(sortTerm.title, $translate.use()), value: term.count, key: term.key};

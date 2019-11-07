@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2019-11-05
+ * Date: 2019-11-07
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -11955,7 +11955,8 @@ ngObibaMica.search
                 // Study design table.
                 setChartObject('model-methods-design', result.studyResultDto, [$filter('translate')(charOptions.studiesDesigns.header[0]),
                     $filter('translate')(charOptions.studiesDesigns.header[1]),
-                    $filter('translate')(charOptions.studiesDesigns.header[2])
+                    $filter('translate')(charOptions.studiesDesigns.header[2]),
+                    $filter('translate')(charOptions.studiesDesigns.header[3])
                 ], charOptions.studiesDesigns.options, true).then(function (methodDesignStudies) {
                     if (methodDesignStudies) {
                         var chartObject = {
@@ -15773,8 +15774,10 @@ ngObibaMica.graphics
     'GraphicChartsData',
     'RqlQueryService',
     'ngObibaMicaUrl',
-    'D3GeoConfig', 'D3ChartConfig',
-    function ($rootScope, $scope, $filter, $window, GraphicChartsConfig, GraphicChartsUtils, GraphicChartsData, RqlQueryService, ngObibaMicaUrl, D3GeoConfig, D3ChartConfig) {
+    'D3GeoConfig',
+    'D3ChartConfig',
+    'LocalizedValues',
+    function ($rootScope, $scope, $filter, $window, GraphicChartsConfig, GraphicChartsUtils, GraphicChartsData, RqlQueryService, ngObibaMicaUrl, D3GeoConfig, D3ChartConfig, LocalizedValues) {
         function initializeChartData(StudiesData, chartAggregationName) {
             $scope.chartObject = {};
             if ($scope.chartEntityDto) {
@@ -15782,7 +15785,7 @@ ngObibaMica.graphics
                     .then(function (entries) {
                     var data = entries.map(function (e) {
                         if (e.participantsNbr) {
-                            return [e.title, e.value, e.participantsNbr];
+                            return [e.title, e.value, e.participantsNbr, e.perc];
                         }
                         else {
                             return [e.title, e.value];
@@ -15803,8 +15806,20 @@ ngObibaMica.graphics
                                 $scope.chartObject.header = {
                                     title: $filter('translate')($scope.chartHeader[0]),
                                     value: $filter('translate')($scope.chartHeader[1]),
-                                    key: $filter('translate')($scope.chartHeader[2])
+                                    key: $filter('translate')($scope.chartHeader[2]),
+                                    perc: $filter('translate')($scope.chartHeader[3])
                                 };
+                                if (entries.length > 1) {
+                                    entries.push(entries.reduce(function (a, b) {
+                                        return {
+                                            title: $filter('translate')('total'),
+                                            value: a.value + b.value,
+                                            participantsNbr: parseFloat(a.participantsNbr) + parseFloat(b.participantsNbr),
+                                            key: '-',
+                                            perc: (parseFloat(a.perc) + parseFloat(b.perc)).toFixed(2)
+                                        };
+                                    }));
+                                }
                             }
                             $scope.chartObject.type = $scope.chartType;
                             $scope.chartObject.data = data;
@@ -15846,6 +15861,9 @@ ngObibaMica.graphics
                                         return 'fa fa-sort';
                                     }
                                 }
+                            };
+                            $scope.localizedNumber = function (number) {
+                                return LocalizedValues.formatNumber(number);
                             };
                         }
                         else {
@@ -15991,7 +16009,7 @@ ngObibaMica.graphics
                     }
                 },
                 studiesDesigns: {
-                    header: ['graphics.study-design', 'graphics.nbr-studies', 'graphics.number-participants'],
+                    header: ['graphics.study-design', 'graphics.nbr-studies', 'graphics.number-participants', 'graphics.percentage.studies'],
                     title: 'graphics.study-design-chart-title',
                     options: {
                         bars: 'horizontal',
@@ -16139,14 +16157,15 @@ ngObibaMica.graphics
                                                     angular.forEach(term.aggs, function (aggBucket) {
                                                         if (aggBucket.aggregation === 'model-numberOfParticipants-participant-number') {
                                                             var aggregateBucket = aggBucket['obiba.mica.StatsAggregationResultDto.stats'];
-                                                            numberOfParticipant = LocalizedValues.formatNumber(aggregateBucket ? aggregateBucket.data.sum : 0);
+                                                            numberOfParticipant = aggregateBucket ? aggregateBucket.data.sum : 0;
                                                         }
                                                     });
                                                     arrayData[i] = {
                                                         title: LocalizedValues.forLocale(sortTerm.title, $translate.use()),
                                                         value: term.count,
                                                         participantsNbr: numberOfParticipant,
-                                                        key: term.key
+                                                        key: term.key,
+                                                        perc: ((100 * term.count) / entityDto.totalHits).toFixed(2)
                                                     };
                                                 }
                                                 else {
@@ -18966,10 +18985,12 @@ angular.module("graphics/views/tables-directive.html", []).run(["$templateCache"
     "        </tr>\n" +
     "        </thead>\n" +
     "        <tbody>\n" +
-    "        <tr ng-repeat=\"row in chartObject.entries | orderBy:sort.sortingOrder:sort.reverse track by $index\">\n" +
-    "            <td>{{row.title}}</td>\n" +
-    "            <td><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{row.value}}</a></td>\n" +
-    "            <td ng-if=\"row.participantsNbr\">{{row.participantsNbr}}</td>\n" +
+    "        <tr ng-repeat=\"row in chartObject.entries | orderBy:sort.sortingOrder:sort.reverse track by $index\" >\n" +
+    "            <td ng-if=\"row.title.toLowerCase()=='total'\"><b>{{row.title}}</b></td>\n" +
+    "            <td ng-if=\"row.title.toLowerCase()!='total'\">{{row.title}}</td>\n" +
+    "            <td><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{localizedNumber(row.value)}}</a></td>\n" +
+    "            <td ng-if=\"row.participantsNbr\">{{localizedNumber(row.participantsNbr)}}</td>\n" +
+    "            <td ng-if=\"row.perc\">{{row.perc}} %</td>\n" +
     "        </tr>\n" +
     "        </tbody>\n" +
     "    </table>\n" +
