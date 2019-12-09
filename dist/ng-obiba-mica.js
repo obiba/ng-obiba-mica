@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2019-12-06
+ * Date: 2019-12-09
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -6086,7 +6086,7 @@ var TaxonomyCartFilter = /** @class */ (function () {
                         break;
                     case DISPLAY_TYPES.GRAPHICS:
                         $scope.search.loading = true;
-                        $scope.search.executedQuery = RqlQueryService.prepareGraphicsQuery(localizedQuery, ['Mica_study.populations-selectionCriteria-countriesIso', 'Mica_study.populations-dataCollectionEvents-bioSamples', 'Mica_study.numberOfParticipants-participant-number'], ['Mica_study.methods-design', 'Mica_study.start-range']);
+                        $scope.search.executedQuery = RqlQueryService.prepareGraphicsQuery(localizedQuery, ['Mica_study.populations-selectionCriteria-countriesIso', 'Mica_study.populations-dataCollectionEvents-bioSamples', 'Mica_study.numberOfParticipants-participant-number'], ['Mica_study.methods-design', 'Mica_study.start-range', 'Mica_study.numberOfParticipants-participant-number']);
                         JoinQuerySearchResource.studies({ query: $scope.search.executedQuery }, function onSuccess(response) {
                             $scope.search.result.graphics = response;
                             $scope.search.loading = false;
@@ -7879,7 +7879,7 @@ function typeToTarget(type) {
             variable.args.push(aggregate);
             return parsedQuery.serializeArgs(parsedQuery.args);
         };
-        this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs) {
+        this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs, ensureIndividualStudies) {
             var parsedQuery = this.parseQuery(query);
             // aggregate
             var aggregate = new RqlQuery(RQL_NODE.AGGREGATE);
@@ -7919,7 +7919,19 @@ function typeToTarget(type) {
                 study = new RqlQuery('study');
                 parsedQuery.args.push(study);
             }
-            if (!hasQuery) {
+            if (ensureIndividualStudies) {
+                // Make sure the graphics query is done on individual studies
+                var classNameQuery = findQueryInTargetByVocabulary(study, 'className');
+                if (!classNameQuery) {
+                    classNameQuery = new RqlQuery(RQL_NODE.IN);
+                    classNameQuery.args = ['Mica_study.className', 'Study'];
+                    RqlQueryUtils.addQuery(study, classNameQuery);
+                }
+                else {
+                    classNameQuery.args[1] = 'Study';
+                }
+            }
+            else if (!hasQuery) {
                 study.args.push(new RqlQuery(RQL_NODE.MATCH));
             }
             study.args.push(aggregate);
@@ -15636,11 +15648,9 @@ ngObibaMica.graphics
             }
             else {
                 $scope.sort = {
-                    sortingOrder: 'title',
+                    sortingOrder: false,
                     reverse: false
                 };
-                // always sort by default column 'title'
-                $scope.chartObject.entries = $filter('orderBy')($scope.chartObject.entries, 'title');
             }
         }
         $scope.changeSorting = function (column) {
@@ -15818,7 +15828,7 @@ ngObibaMica.graphics
                 },
                 numberParticipants: {
                     type: 'PieChart',
-                    header: ['graphics.number-participants', 'graphics.nbr-studies', 'graphics.percentage.studies'],
+                    header: ['graphics.number-participants', 'graphics.nbr-studies', 'graphics.number-participants', 'graphics.percentage.studies'],
                     title: 'graphics.number-participants-chart-title',
                     aggregationName: 'model-numberOfParticipants-participant-number-range',
                     optionsName: 'numberParticipants',
@@ -15955,6 +15965,9 @@ ngObibaMica.graphics
             }
             return deferred.promise;
         };
+        var percentageCalc = function (count, total) {
+            return MathFunction.round((100 * count) / total, 2) || '0';
+        };
         var participantBucket = function (term, sortTerm, entityDto) {
             var numberOfParticipant = 0;
             var arrayData;
@@ -15969,7 +15982,7 @@ ngObibaMica.graphics
                 value: term.count,
                 participantsNbr: numberOfParticipant,
                 key: term.key,
-                perc: MathFunction.round((100 * term.count) / entityDto.totalHits, 2)
+                perc: percentageCalc(term.count, entityDto.totalHits)
             };
             return arrayData;
         };
@@ -15991,18 +16004,31 @@ ngObibaMica.graphics
                                         if (aggregation.aggregation === aggregationName) {
                                             if (aggregation['obiba.mica.RangeAggregationResultDto.ranges']) {
                                                 if (sortTerm.name === term.key) {
-                                                    if (term.count) {
-                                                        if (aggregation.aggregation === 'model-startYear-range') {
-                                                            arrayData[i] = participantBucket(term, sortTerm, entityDto, arrayData);
-                                                        }
-                                                        else {
-                                                            arrayData[i] = {
-                                                                title: LocalizedValues.forLocale(sortTerm.title, $translate.use()),
-                                                                value: term.count,
-                                                                key: term.key, perc: MathFunction.round((100 * term.count) / entityDto.totalHits, 2)
-                                                            };
-                                                        }
+                                                    if (aggregation.aggregation === 'model-numberOfParticipants-participant-number-range') {
+                                                        arrayData[i] = participantBucket(term, sortTerm, entityDto, arrayData);
+                                                        // arrayData[i] = {
+                                                        //   title: LocalizedValues.forLocale(sortTerm.title, $translate.use()),
+                                                        //   value: term.count,
+                                                        //   key: term.key,
+                                                        //   perc: percentageCalc(term.count, entityDto.totalHits)
+                                                        // };
                                                         i++;
+                                                    }
+                                                    else {
+                                                        if (term.count) {
+                                                            if (aggregation.aggregation === 'model-startYear-range') {
+                                                                arrayData[i] = participantBucket(term, sortTerm, entityDto, arrayData);
+                                                            }
+                                                            else {
+                                                                arrayData[i] = {
+                                                                    title: LocalizedValues.forLocale(sortTerm.title, $translate.use()),
+                                                                    value: term.count,
+                                                                    key: term.key,
+                                                                    perc: percentageCalc(term.count, entityDto.totalHits)
+                                                                };
+                                                            }
+                                                            i++;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -16124,7 +16150,7 @@ ngObibaMica.graphics
                                             return {
                                                 title: $filter('translate')('total'),
                                                 value: a.value + b.value,
-                                                participantsNbr: parseFloat(a.participantsNbr) + parseFloat(b.participantsNbr.header),
+                                                participantsNbr: parseFloat(a.participantsNbr) + parseFloat(b.participantsNbr),
                                                 key: '-',
                                                 perc: MathFunction.round(parseFloat(a.perc) + parseFloat(b.perc), 2)
                                             };
@@ -16135,17 +16161,29 @@ ngObibaMica.graphics
                                     returnedScope.chartObject.header = {
                                         title: $filter('translate')(graphOptions.numberParticipants.header[0]),
                                         value: $filter('translate')(graphOptions.numberParticipants.header[1]),
-                                        perc: $filter('translate')(graphOptions.numberParticipants.header[2])
+                                        participantsNbr: $filter('translate')(graphOptions.numberParticipants.header[2]),
+                                        perc: $filter('translate')(graphOptions.numberParticipants.header[3])
                                     };
                                     returnedScope.chartObject.headerLength = Object.keys(graphOptions.numberParticipants.header).length;
                                     if (entries.length > 1) {
-                                        entries.push(entries.reduce(function (a, b) {
+                                        var total = 0;
+                                        var totalPerc = 0;
+                                        var totalEntries = entries.reduce(function (a, b) {
                                             return {
                                                 title: $filter('translate')('total'),
-                                                value: a.value + b.value,
-                                                perc: MathFunction.round(parseFloat(a.perc) + parseFloat(b.perc), 2)
+                                                value: total + (a.value + b.value),
+                                                participantsNbr: parseFloat(a.participantsNbr) + parseFloat(b.participantsNbr),
+                                                perc: MathFunction.round(totalPerc + (parseFloat(a.perc) + parseFloat(b.perc)), 2)
                                             };
-                                        }));
+                                        });
+                                        var untertermined = {
+                                            title: $filter('translate')('undetermined'),
+                                            value: StudiesData.totalHits - totalEntries.value,
+                                            participantsNbr: '-',
+                                            perc: MathFunction.round(100 - (parseFloat(totalEntries.perc)), 2)
+                                        };
+                                        entries.push(untertermined);
+                                        entries.push(totalEntries);
                                     }
                                     break;
                                 case 'model-startYear-range':
@@ -16245,7 +16283,7 @@ ngObibaMica.graphics
             return RqlQueryService.prepareGraphicsQuery(localizedQuery, ['Mica_study.populations-selectionCriteria-countriesIso',
                 'Mica_study.populations-dataCollectionEvents-bioSamples',
                 'Mica_study.numberOfParticipants-participant-number',
-            ], ['Mica_study.methods-design', 'Mica_study.start-range']);
+            ], ['Mica_study.methods-design', 'Mica_study.start-range', 'Mica_study.numberOfParticipants-participant-number'], true);
         };
     }]);
 //# sourceMappingURL=graphics-service.js.map
@@ -19033,10 +19071,11 @@ angular.module("graphics/views/tables-directive.html", []).run(["$templateCache"
     "        </tr>\n" +
     "        </thead>\n" +
     "        <tbody>\n" +
-    "        <tr ng-repeat=\"row in chartObject.entries | orderBy:sort.sortingOrder:sort.reverse track by $index\" >\n" +
+    "        <tr ng-repeat=\"row in (sort.sortingOrder?(chartObject.entries | orderBy:sort.sortingOrder:sort.reverse):(chartObject.entries)) track by $index\" >\n" +
     "            <td ng-if=\"row.title.toLowerCase()!='total'\">{{row.title}}</td>\n" +
     "            <td ng-if=\"row.title.toLowerCase()=='total'\"><b>{{row.title}}</b></td>\n" +
-    "            <td><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{localizedNumber(row.value)}}</a></td>\n" +
+    "            <td ng-if=\"row.value=='0'\">{{localizedNumber(row.value)}}</td>\n" +
+    "            <td ng-if=\"row.value!='0'\" ><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{localizedNumber(row.value)}}</a></td>\n" +
     "            <td ng-if=\"row.participantsNbr\">{{localizedNumber(row.participantsNbr)}}</td>\n" +
     "            <td ng-if=\"row.participantsNbr==0\">-</td>\n" +
     "            <td ng-if=\"row.perc\">{{row.perc}} %</td>\n" +

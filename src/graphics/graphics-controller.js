@@ -56,11 +56,9 @@ ngObibaMica.graphics
         }
         else{
           $scope.sort = {
-            sortingOrder : 'title',
+            sortingOrder : false,
             reverse : false
           };
-          // always sort by default column 'title'
-          $scope.chartObject.entries = $filter('orderBy')($scope.chartObject.entries, 'title');
         }
       }
 

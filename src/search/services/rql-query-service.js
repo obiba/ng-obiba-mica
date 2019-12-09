@@ -846,7 +846,7 @@ function typeToTarget(type) {
       return parsedQuery.serializeArgs(parsedQuery.args);
     };
 
-    this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs) {
+    this.prepareGraphicsQuery = function (query, aggregateArgs, bucketArgs, ensureIndividualStudies) {
       var parsedQuery = this.parseQuery(query);
       // aggregate
       var aggregate = new RqlQuery(RQL_NODE.AGGREGATE);
@@ -887,7 +887,18 @@ function typeToTarget(type) {
         study = new RqlQuery('study');
         parsedQuery.args.push(study);
       }
-      if (!hasQuery) {
+      if (ensureIndividualStudies) {
+        // Make sure the graphics query is done on individual studies
+        var classNameQuery = findQueryInTargetByVocabulary(study, 'className');
+        if (!classNameQuery) {
+          classNameQuery = new RqlQuery(RQL_NODE.IN);
+          classNameQuery.args = ['Mica_study.className', 'Study'];
+          RqlQueryUtils.addQuery(study, classNameQuery);
+        } else {
+          classNameQuery.args[1] = 'Study';
+        }
+      }
+      else if (!hasQuery) {
         study.args.push(new RqlQuery(RQL_NODE.MATCH));
       }
       study.args.push(aggregate);

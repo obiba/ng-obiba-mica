@@ -386,7 +386,7 @@
               $scope.search.loading = true;
               $scope.search.executedQuery = RqlQueryService.prepareGraphicsQuery(localizedQuery,
                 ['Mica_study.populations-selectionCriteria-countriesIso', 'Mica_study.populations-dataCollectionEvents-bioSamples', 'Mica_study.numberOfParticipants-participant-number'],
-                ['Mica_study.methods-design', 'Mica_study.start-range']);
+                ['Mica_study.methods-design', 'Mica_study.start-range', 'Mica_study.numberOfParticipants-participant-number']);
               JoinQuerySearchResource.studies({ query: $scope.search.executedQuery },
                 function onSuccess(response) {
                   $scope.search.result.graphics = response;
