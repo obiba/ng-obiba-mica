@@ -14,12 +14,12 @@
         <tr ng-repeat="row in (sort.sortingOrder?(chartObject.entries | orderBy:sort.sortingOrder:sort.reverse):(chartObject.entries)) track by $index" >
             <td ng-if="row.title.toLowerCase()!='total'">{{row.title}}</td>
             <td ng-if="row.title.toLowerCase()=='total'"><b>{{row.title}}</b></td>
-            <td ng-if="row.value=='0'" style="text-align: right; color: #7b8a8b">{{localizedNumber(row.value)}}<div style="width: 30%; display: inline-block"></div></td>
-            <td ng-if="row.value!='0'" style="text-align: right"><a href ng-click="updateCriteria(row.key, chartObject.vocabulary)">{{localizedNumber(row.value)}}</a><div style="width: 30%; display: inline-block"></div></td>
-            <td ng-if="row.perc=='0'" style="text-align: right;">{{row.perc}} %<div style="width: 30%; display: inline-block"></div></td>
-            <td ng-if="row.perc && row.perc!='0'" style="text-align: right">{{row.perc}} %<div style="width: 30%; display: inline-block"></div></td>
-            <td ng-if="row.participantsNbr" style="text-align: right">{{localizedNumber(row.participantsNbr)}}<div style="width: 30%; display: inline-block"></div></td>
-            <td ng-if="row.participantsNbr==0" style="text-align: right; color: #7b8a8b">-<div style="width: 30%; display: inline-block"></div></td>
+            <td ng-if="row.value=='0'" style="color: #7b8a8b">{{localizedNumber(row.value)}}</td>
+            <td ng-if="row.value!='0'" ><a href ng-click="updateCriteria(row.key, chartObject.vocabulary)">{{localizedNumber(row.value)}}</a></td>
+            <td ng-if="row.perc=='0'" >{{row.perc}} %</td>
+            <td ng-if="row.perc && row.perc!='0'" >{{row.perc}} %</td>
+            <td ng-if="row.participantsNbr" >{{localizedNumber(row.participantsNbr)}}</td>
+            <td ng-if="row.participantsNbr==0" style=" color: #7b8a8b">-</td>
         </tr>
         </tbody>
     </table>

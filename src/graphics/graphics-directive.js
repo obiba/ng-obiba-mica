@@ -26,7 +26,7 @@ ngObibaMica.graphics
       controller: 'GraphicChartsController'
     };
   }])
-  .directive('obibaTable', [function () {
+  .directive('obibaTable', ['ngObibaMicaGraphicTemplateUrl', function (ngObibaMicaGraphicTemplateUrl) {
   return {
     restrict: 'EA',
     replace: true,
@@ -37,7 +37,7 @@ ngObibaMica.graphics
       chartStudiesData: '=',
       onUpdateCriteria: '='
     },
-    templateUrl: 'graphics/views/tables-directive.html',
+    templateUrl: ngObibaMicaGraphicTemplateUrl.getTemplateUrl('graphicTableDirectiveTemplate'),
     controller: 'GraphicChartsController'
   };
 }]);

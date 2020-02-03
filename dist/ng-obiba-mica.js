@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2020-01-30
+ * Date: 2020-02-03
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -34,7 +34,8 @@ function NgObibaMicaTemplateUrlFactory() {
         'variableFrequenciesEmpty': 'analysis/crosstab/views/crosstab-variable-frequencies-empty.html',
         'variableStatistics': 'analysis/crosstab/views/crosstab-variable-statistics.html',
         'variableStatisticsEmpty': 'analysis/crosstab/views/crosstab-variable-statistics-empty.html',
-        'searchCellStatValue': 'search/components/result/cell-stat-value/component.html'
+        'searchCellStatValue': 'search/components/result/cell-stat-value/component.html',
+        'graphicTableDirectiveTemplate': 'graphics/views/tables-directive.html'
     };
     var factory = { registry: null };
     function TemplateUrlProvider(registry) {
@@ -15794,9 +15795,15 @@ ngObibaMica.graphics = angular.module('obiba.mica.graphics', [
     'obiba.utils',
     'templates-ngObibaMica'
 ]);
+/* global NgObibaMicaTemplateUrlFactory */
 ngObibaMica.graphics
     .config(['$provide', function ($provide) {
         $provide.provider('GraphicChartsData', GraphicChartsDataProvider);
+    }])
+    .config(['$provide', function ($provide) {
+        $provide.provider('ngObibaMicaGraphicTemplateUrl', new NgObibaMicaTemplateUrlFactory().create({
+            graphicTableDirectiveTemplate: { template: null },
+        }));
     }])
     .run(['GraphicChartsConfigurations',
     function (GraphicChartsConfigurations) {
@@ -15828,7 +15835,7 @@ ngObibaMica.graphics
             controller: 'GraphicChartsController'
         };
     }])
-    .directive('obibaTable', [function () {
+    .directive('obibaTable', ['ngObibaMicaGraphicTemplateUrl', function (ngObibaMicaGraphicTemplateUrl) {
         return {
             restrict: 'EA',
             replace: true,
@@ -15839,7 +15846,7 @@ ngObibaMica.graphics
                 chartStudiesData: '=',
                 onUpdateCriteria: '='
             },
-            templateUrl: 'graphics/views/tables-directive.html',
+            templateUrl: ngObibaMicaGraphicTemplateUrl.getTemplateUrl('graphicTableDirectiveTemplate'),
             controller: 'GraphicChartsController'
         };
     }]);
@@ -19340,12 +19347,12 @@ angular.module("graphics/views/tables-directive.html", []).run(["$templateCache"
     "        <tr ng-repeat=\"row in (sort.sortingOrder?(chartObject.entries | orderBy:sort.sortingOrder:sort.reverse):(chartObject.entries)) track by $index\" >\n" +
     "            <td ng-if=\"row.title.toLowerCase()!='total'\">{{row.title}}</td>\n" +
     "            <td ng-if=\"row.title.toLowerCase()=='total'\"><b>{{row.title}}</b></td>\n" +
-    "            <td ng-if=\"row.value=='0'\" style=\"text-align: right; color: #7b8a8b\">{{localizedNumber(row.value)}}<div style=\"width: 30%; display: inline-block\"></div></td>\n" +
-    "            <td ng-if=\"row.value!='0'\" style=\"text-align: right\"><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{localizedNumber(row.value)}}</a><div style=\"width: 30%; display: inline-block\"></div></td>\n" +
-    "            <td ng-if=\"row.perc=='0'\" style=\"text-align: right;\">{{row.perc}} %<div style=\"width: 30%; display: inline-block\"></div></td>\n" +
-    "            <td ng-if=\"row.perc && row.perc!='0'\" style=\"text-align: right\">{{row.perc}} %<div style=\"width: 30%; display: inline-block\"></div></td>\n" +
-    "            <td ng-if=\"row.participantsNbr\" style=\"text-align: right\">{{localizedNumber(row.participantsNbr)}}<div style=\"width: 30%; display: inline-block\"></div></td>\n" +
-    "            <td ng-if=\"row.participantsNbr==0\" style=\"text-align: right; color: #7b8a8b\">-<div style=\"width: 30%; display: inline-block\"></div></td>\n" +
+    "            <td ng-if=\"row.value=='0'\" style=\"color: #7b8a8b\">{{localizedNumber(row.value)}}</td>\n" +
+    "            <td ng-if=\"row.value!='0'\" ><a href ng-click=\"updateCriteria(row.key, chartObject.vocabulary)\">{{localizedNumber(row.value)}}</a></td>\n" +
+    "            <td ng-if=\"row.perc=='0'\" >{{row.perc}} %</td>\n" +
+    "            <td ng-if=\"row.perc && row.perc!='0'\" >{{row.perc}} %</td>\n" +
+    "            <td ng-if=\"row.participantsNbr\" >{{localizedNumber(row.participantsNbr)}}</td>\n" +
+    "            <td ng-if=\"row.participantsNbr==0\" style=\" color: #7b8a8b\">-</td>\n" +
     "        </tr>\n" +
     "        </tbody>\n" +
     "    </table>\n" +

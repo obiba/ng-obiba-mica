@@ -44,9 +44,18 @@ ngObibaMica.graphics = angular.module('obiba.mica.graphics', [
     'templates-ngObibaMica'
   ]);
 
+/* global NgObibaMicaTemplateUrlFactory */
+
 ngObibaMica.graphics
   .config(['$provide', function ($provide) {
     $provide.provider('GraphicChartsData', GraphicChartsDataProvider);
+  }])
+  .config(['$provide', function ($provide) {
+    $provide.provider('ngObibaMicaGraphicTemplateUrl', new NgObibaMicaTemplateUrlFactory().create(
+      {
+        graphicTableDirectiveTemplate: { template: null },
+      }
+    ));
   }])
   .run(['GraphicChartsConfigurations',
   function (GraphicChartsConfigurations) {
