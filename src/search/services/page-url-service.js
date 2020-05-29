@@ -18,7 +18,12 @@
       return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPage'), { ':type': urlEncode(sType), ':study': urlEncode(id) }) : '';
     };
 
-    this.studyPopulationPage = function (id, type, populationId) {
+    this.studyPopulationPage = function (id, type, populationId, cleanPopId) {
+      if(cleanPopId){
+        var pattern = {};
+        pattern[id + ':'] = '';
+        populationId = StringUtils.replaceAll(populationId, pattern) ;
+      }
       var sType = (type.toLowerCase() === 'individual' ? 'individual' : 'harmonization') + '-study';
       return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPopulationsPage'), { ':type': urlEncode(sType), ':study': urlEncode(id), ':population': urlEncode(populationId) }) : '';
     };

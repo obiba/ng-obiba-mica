@@ -53,12 +53,12 @@
               </a>
             </td>
             <td ng-if="optionsCols.showVariablesStudiesColumn && populationColumn">
-              <a ng-if="summary.populationName" ng-href="{{PageUrlService.studyPage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual')}}">
+              <a ng-if="summary.populationName" ng-href="{{PageUrlService.studyPopulationPage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual', summary.populationId, true)}}">
                 <localized value="summary.populationName" lang="lang"></localized>
               </a>
             </td>
             <td ng-if="optionsCols.showVariablesStudiesColumn && dceColumn">
-              <a ng-if="summary.dceName" ng-href="{{PageUrlService.studyPage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual')}}">
+              <a ng-if="summary.dceName" ng-href="{{PageUrlService.StudyDcePage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual', summary.dceId)}}">
                 <localized value="summary.dceName" lang="lang"></localized>
               </a>
               <span ng-if="!summary.dceName">-</span>

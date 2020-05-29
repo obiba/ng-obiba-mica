@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2020-05-25
+ * Date: 2020-05-27
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -7317,7 +7317,12 @@ ngObibaMica.search.service("CoverageGroupByService", ["ngObibaMicaSearch", Cover
             var sType = (type.toLowerCase().indexOf('individual') > -1 ? 'individual' : 'harmonization') + '-study';
             return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPage'), { ':type': urlEncode(sType), ':study': urlEncode(id) }) : '';
         };
-        this.studyPopulationPage = function (id, type, populationId) {
+        this.studyPopulationPage = function (id, type, populationId, cleanPopId) {
+            if (cleanPopId) {
+                var pattern = {};
+                pattern[id + ':'] = '';
+                populationId = StringUtils.replaceAll(populationId, pattern);
+            }
             var sType = (type.toLowerCase() === 'individual' ? 'individual' : 'harmonization') + '-study';
             return id ? StringUtils.replaceAll(ngObibaMicaUrl.getUrl('StudyPopulationsPage'), { ':type': urlEncode(sType), ':study': urlEncode(id), ':population': urlEncode(populationId) }) : '';
         };
@@ -22044,12 +22049,12 @@ angular.module("search/components/result/variables-result-table/component.html",
     "              </a>\n" +
     "            </td>\n" +
     "            <td ng-if=\"optionsCols.showVariablesStudiesColumn && populationColumn\">\n" +
-    "              <a ng-if=\"summary.populationName\" ng-href=\"{{PageUrlService.studyPage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual')}}\">\n" +
+    "              <a ng-if=\"summary.populationName\" ng-href=\"{{PageUrlService.studyPopulationPage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual', summary.populationId, true)}}\">\n" +
     "                <localized value=\"summary.populationName\" lang=\"lang\"></localized>\n" +
     "              </a>\n" +
     "            </td>\n" +
     "            <td ng-if=\"optionsCols.showVariablesStudiesColumn && dceColumn\">\n" +
-    "              <a ng-if=\"summary.dceName\" ng-href=\"{{PageUrlService.studyPage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual')}}\">\n" +
+    "              <a ng-if=\"summary.dceName\" ng-href=\"{{PageUrlService.StudyDcePage(summary.studyId, summary.variableType == 'Dataschema' ? 'harmonization' : 'individual', summary.dceId)}}\">\n" +
     "                <localized value=\"summary.dceName\" lang=\"lang\"></localized>\n" +
     "              </a>\n" +
     "              <span ng-if=\"!summary.dceName\">-</span>\n" +
