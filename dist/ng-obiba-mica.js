@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2020-05-27
+ * Date: 2020-06-15
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -3316,7 +3316,7 @@ var SetService = /** @class */ (function () {
         }
         if (id) {
             var queryStr = "variable(in(Mica_variable.sets," + id + "),limit(0," + this.maxItemsPerSets + ")"
-                + ",fields((attributes.label.*,variableType,datasetId,datasetAcronym))"
+                + ",fields((attributes.label.*,variableType,populationId,dceId,datasetId,datasetAcronym,attributes.Mlstr_area*))"
                 + ",sort(variableType,containerId,populationWeight,dataCollectionEventWeight,datasetId,index,name))"
                 + ",locale(" + this.$translate.use() + ")";
             return this.PageUrlService.downloadList(documentType, queryStr);
@@ -3919,6 +3919,12 @@ var CartDocumentsTableController = /** @class */ (function (_super) {
                 var studyName = _this.localize(doc.studySummary.name);
                 var studyType = doc.variableType === "Dataschema" ? "harmonization" : "individual";
                 var studyLink = _this.PageUrlService.studyPage(doc.studyId, studyType);
+                var population = (doc.studySummary.populationSummaries || [])[0];
+                var populationName = _this.localize(population.name);
+                var populationLink = _this.PageUrlService.studyPopulationPage(doc.studyId, studyType, population.id, true);
+                var dce = (population.dataCollectionEventSummaries || [])[0];
+                var dceName = dce ? _this.localize(dce.name) : undefined;
+                var dceLink = dce ? _this.PageUrlService.StudyDcePage(doc.studyId, studyType, dce.id) : undefined;
                 var datasetName = _this.localize(doc.datasetName);
                 var datasetLink = _this.PageUrlService.datasetPage(doc.datasetId, doc.variableType);
                 var variableLink = _this.PageUrlService.variablePage(doc.id);
@@ -3939,6 +3945,12 @@ var CartDocumentsTableController = /** @class */ (function (_super) {
                 }, {
                     link: studyLink,
                     value: studyAcronym,
+                }, {
+                    link: populationLink,
+                    value: populationName,
+                }, {
+                    link: dceLink,
+                    value: dceName,
                 }, {
                     link: datasetLink,
                     value: datasetName,
@@ -4037,6 +4049,12 @@ var VariablesSetTableComponentController = /** @class */ (function (_super) {
                 var studyName = _this.localize(doc.studySummary.name);
                 var studyType = doc.variableType === "Dataschema" ? "harmonization" : "individual";
                 var studyLink = _this.PageUrlService.studyPage(doc.studyId, studyType);
+                var population = (doc.studySummary.populationSummaries || [])[0];
+                var populationName = _this.localize(population.name);
+                var populationLink = _this.PageUrlService.studyPopulationPage(doc.studyId, studyType, population.id, true);
+                var dce = (population.dataCollectionEventSummaries || [])[0];
+                var dceName = dce ? _this.localize(dce.name) : undefined;
+                var dceLink = dce ? _this.PageUrlService.StudyDcePage(doc.studyId, studyType, dce.id) : undefined;
                 var datasetName = _this.localize(doc.datasetName);
                 var datasetLink = _this.PageUrlService.datasetPage(doc.datasetId, doc.variableType);
                 var variableLink = _this.PageUrlService.variablePage(doc.id);
@@ -4057,6 +4075,12 @@ var VariablesSetTableComponentController = /** @class */ (function (_super) {
                 }, {
                     link: studyLink,
                     value: studyAcronym,
+                }, {
+                    link: populationLink,
+                    value: populationName,
+                }, {
+                    link: dceLink,
+                    value: dceName,
                 }, {
                     link: datasetLink,
                     value: datasetName,
@@ -22919,6 +22943,8 @@ angular.module("sets/components/cart-documents-table/component.html", []).run(["
     "        <th class=\"col-width-md\" translate>search.variable.label</th>\n" +
     "        <th ng-if=\"$ctrl.options.variablesColumn.showVariablesTypeColumn\" translate>type</th>\n" +
     "        <th ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\" translate>search.study.label</th>\n" +
+    "        <th class=\"col-width-10\" translate ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\">search.study.population-name</th>\n" +
+    "        <th class=\"col-width-10\" translate ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\">search.study.dce-name</th>\n" +
     "        <th ng-if=\"$ctrl.options.variablesColumn.showVariablesDatasetsColumn\" translate>search.dataset.label</th>\n" +
     "      </thead>\n" +
     "      <tbody>\n" +
@@ -22933,7 +22959,12 @@ angular.module("sets/components/cart-documents-table/component.html", []).run(["
     "          <td>{{row[2].value}}</td>\n" +
     "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesTypeColumn\">{{'search.variable.' + row[3].value.toLowerCase() | translate}}</td>\n" +
     "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\"><a href=\"{{row[4].link}}\">{{row[4].value}}</a></td>\n" +
-    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesDatasetsColumn\"><a href=\"{{row[5].link}}\">{{row[5].value}}</a></td>\n" +
+    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\"><a href=\"{{row[5].link}}\">{{row[5].value}}</a></td>\n" +
+    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\">\n" +
+    "            <a ng-if=\"row[6].link\" href=\"{{row[6].link}}\">{{row[6].value}}</a>\n" +
+    "            <span ng-if=\"!row[6].link\">-</span>\n" +
+    "          </td>\n" +
+    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesDatasetsColumn\"><a href=\"{{row[7].link}}\">{{row[7].value}}</a></td>\n" +
     "        </tr>\n" +
     "      </tbody>\n" +
     "    </table>\n" +
@@ -23016,10 +23047,12 @@ angular.module("sets/components/set-variables-table/component.html", []).run(["$
     "        <th class=\"checkbox-width\">\n" +
     "          <input ng-model=\"$ctrl.allPageSelected[$ctrl.pagination.currentPage]\" type=\"checkbox\" ng-click=\"$ctrl.updateAllCurrentPageSelected()\" />\n" +
     "        </th>\n" +
-    "        <th class=\"col-width-35\" translate>taxonomy.target.variable</th>\n" +
-    "        <th class=\"col-width-35\" translate>search.variable.label</th>\n" +
-    "        <th class=\"col-width-10\" ng-if=\"$ctrl.options.variablesColumn.showVariablesTypeColumn\" translate>type</th>\n" +
-    "        <th class=\"col-width-10\" ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\" translate>search.study.label</th>\n" +
+    "        <th class=\"col-width-md\" translate>taxonomy.target.variable</th>\n" +
+    "        <th class=\"col-width-md\" translate>search.variable.label</th>\n" +
+    "        <th ng-if=\"$ctrl.options.variablesColumn.showVariablesTypeColumn\" translate>type</th>\n" +
+    "        <th ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\" translate>search.study.label</th>\n" +
+    "        <th class=\"col-width-10\" translate ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\">search.study.population-name</th>\n" +
+    "        <th class=\"col-width-10\" translate ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\">search.study.dce-name</th>\n" +
     "        <th class=\"col-width-15\" ng-if=\"$ctrl.options.variablesColumn.showVariablesDatasetsColumn\" translate>search.dataset.label</th>\n" +
     "      </thead>\n" +
     "      <tbody>\n" +
@@ -23031,7 +23064,12 @@ angular.module("sets/components/set-variables-table/component.html", []).run(["$
     "          <td>{{row[2].value}}</td>\n" +
     "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesTypeColumn\">{{'search.variable.' + row[3].value.toLowerCase() | translate}}</td>\n" +
     "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\"><a href=\"{{row[4].link}}\">{{row[4].value}}</a></td>\n" +
-    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesDatasetsColumn\"><a href=\"{{row[5].link}}\">{{row[5].value}}</a></td>\n" +
+    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\"><a href=\"{{row[5].link}}\">{{row[5].value}}</a></td>\n" +
+    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesStudiesColumn\">\n" +
+    "            <a ng-if=\"row[6].link\" href=\"{{row[6].link}}\">{{row[6].value}}</a>\n" +
+    "            <span ng-if=\"!row[6].link\">-</span>\n" +
+    "          </td>\n" +
+    "          <td ng-if=\"$ctrl.options.variablesColumn.showVariablesDatasetsColumn\"><a href=\"{{row[7].link}}\">{{row[7].value}}</a></td>\n" +
     "        </tr>\n" +
     "      </tbody>\n" +
     "    </table>\n" +
