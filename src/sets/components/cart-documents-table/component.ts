@@ -102,9 +102,21 @@ class CartDocumentsTableController extends DocumentsSetTableComponentController 
           this.selections[doc.id] = true;
         }
         const studyAcronym = this.localize(doc.studySummary.acronym);
+
         const studyName = this.localize(doc.studySummary.name);
         const studyType = doc.variableType === "Dataschema" ? "harmonization" : "individual";
         const studyLink = this.PageUrlService.studyPage(doc.studyId, studyType);
+
+        const population = (doc.studySummary.populationSummaries || [])[0];
+        const populationName = this.localize(population.name);
+        const populationLink = this.PageUrlService.studyPopulationPage(doc.studyId,
+          studyType, population.id, true);
+
+        const dce = (population.dataCollectionEventSummaries || [])[0];
+        const dceName = dce ? this.localize(dce.name) : undefined;
+        const dceLink = dce ? this.PageUrlService.StudyDcePage(doc.studyId,
+          studyType, dce.id) : undefined;
+
         const datasetName = this.localize(doc.datasetName);
         const datasetLink = this.PageUrlService.datasetPage(doc.datasetId, doc.variableType);
         const variableLink = this.PageUrlService.variablePage(doc.id);
@@ -130,6 +142,14 @@ class CartDocumentsTableController extends DocumentsSetTableComponentController 
           {
             link: studyLink,
             value: studyAcronym,
+          },
+          {
+            link: populationLink,
+            value: populationName,
+          },
+          {
+            link: dceLink,
+            value: dceName,
           },
           {
             link: datasetLink,

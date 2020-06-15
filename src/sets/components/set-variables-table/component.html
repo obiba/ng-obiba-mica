@@ -71,10 +71,12 @@
         <th class="checkbox-width">
           <input ng-model="$ctrl.allPageSelected[$ctrl.pagination.currentPage]" type="checkbox" ng-click="$ctrl.updateAllCurrentPageSelected()" />
         </th>
-        <th class="col-width-35" translate>taxonomy.target.variable</th>
-        <th class="col-width-35" translate>search.variable.label</th>
-        <th class="col-width-10" ng-if="$ctrl.options.variablesColumn.showVariablesTypeColumn" translate>type</th>
-        <th class="col-width-10" ng-if="$ctrl.options.variablesColumn.showVariablesStudiesColumn" translate>search.study.label</th>
+        <th class="col-width-md" translate>taxonomy.target.variable</th>
+        <th class="col-width-md" translate>search.variable.label</th>
+        <th ng-if="$ctrl.options.variablesColumn.showVariablesTypeColumn" translate>type</th>
+        <th ng-if="$ctrl.options.variablesColumn.showVariablesStudiesColumn" translate>search.study.label</th>
+        <th class="col-width-10" translate ng-if="$ctrl.options.variablesColumn.showVariablesStudiesColumn">search.study.population-name</th>
+        <th class="col-width-10" translate ng-if="$ctrl.options.variablesColumn.showVariablesStudiesColumn">search.study.dce-name</th>
         <th class="col-width-15" ng-if="$ctrl.options.variablesColumn.showVariablesDatasetsColumn" translate>search.dataset.label</th>
       </thead>
       <tbody>
@@ -86,7 +88,12 @@
           <td>{{row[2].value}}</td>
           <td ng-if="$ctrl.options.variablesColumn.showVariablesTypeColumn">{{'search.variable.' + row[3].value.toLowerCase() | translate}}</td>
           <td ng-if="$ctrl.options.variablesColumn.showVariablesStudiesColumn"><a href="{{row[4].link}}">{{row[4].value}}</a></td>
-          <td ng-if="$ctrl.options.variablesColumn.showVariablesDatasetsColumn"><a href="{{row[5].link}}">{{row[5].value}}</a></td>
+          <td ng-if="$ctrl.options.variablesColumn.showVariablesStudiesColumn"><a href="{{row[5].link}}">{{row[5].value}}</a></td>
+          <td ng-if="$ctrl.options.variablesColumn.showVariablesStudiesColumn">
+            <a ng-if="row[6].link" href="{{row[6].link}}">{{row[6].value}}</a>
+            <span ng-if="!row[6].link">-</span>
+          </td>
+          <td ng-if="$ctrl.options.variablesColumn.showVariablesDatasetsColumn"><a href="{{row[7].link}}">{{row[7].value}}</a></td>
         </tr>
       </tbody>
     </table>

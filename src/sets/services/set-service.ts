@@ -373,9 +373,9 @@ class SetService implements ISetService {
     }
     if (id) {
       const queryStr = "variable(in(Mica_variable.sets," + id + "),limit(0," + this.maxItemsPerSets + ")"
-        + ",fields((attributes.label.*,variableType,datasetId,datasetAcronym))"
-        + ",sort(variableType,containerId,populationWeight,dataCollectionEventWeight,datasetId,index,name))"
-        + ",locale(" + this.$translate.use() + ")";
+      + ",fields((attributes.label.*,variableType,populationId,dceId,datasetId,datasetAcronym,attributes.Mlstr_area*))"
+      + ",sort(variableType,containerId,populationWeight,dataCollectionEventWeight,datasetId,index,name))"
+      + ",locale(" + this.$translate.use() + ")";
       return this.PageUrlService.downloadList(documentType, queryStr);
     }
     return null;
