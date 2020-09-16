@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2020-06-15
+ * Date: 2020-09-16
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -17939,7 +17939,7 @@ angular.module("access/components/entity-list/component.html", []).run(["$templa
     "    </div>\n" +
     "\n" +
     "    <div class=\"table-responsive\">\n" +
-    "      <table class=\"table table-bordered table-striped\" obiba-table-sorter=\"$ctrl.requests\">\n" +
+    "      <table class=\"table table-bordered table-striped\" obiba-table-sorter=\"$ctrl.requests\" data-column-name=\"lastUpdate\" data-order=\"down\">\n" +
     "        <thead>\n" +
     "          <tr>\n" +
     "            <th data-column-name=\"id\">ID</th>\n" +
@@ -23300,5 +23300,13 @@ angular.module("views/pagination-template.html", []).run(["$templateCache", func
     "  <li>\n" +
     "    <a href=\"\" class=\"pagination-total\" ng-if=\"1 < pages.length\" class=\"pagination-total\"><span>{{ range.lower }} - {{ range.upper }} </span><span translate>pagination.of</span><span> {{ range.total }}</span></a>\n" +
     "  </li>\n" +
-    "</ul>");
+    "</ul>\n" +
+    "\n" +
+    "<ul class=\"pagination no-margin pagination-sm\" ng-if=\"1 === pages.length\">\n" +
+    "  <li>\n" +
+    "    <a href=\"\" class=\"pagination-total\" class=\"pagination-total\"><span>{{'total' | translate}} {{ range.total }}</span></a>\n" +
+    "  </li>\n" +
+    "</ul>\n" +
+    "\n" +
+    "");
 }]);
