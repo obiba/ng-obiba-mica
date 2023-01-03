@@ -20,14 +20,6 @@ ngObibaMica.search
       }];
 
       $routeProvider
-        .when('/search', {
-          templateUrl: 'search/views/search-layout.html',
-          controller: 'SearchController',
-          reloadOnSearch: false,
-          resolve: {
-            options: optionsResolve
-          }
-        })
         .when('/classifications', {
           templateUrl: 'search/views/classifications.html',
           controller: 'SearchController',

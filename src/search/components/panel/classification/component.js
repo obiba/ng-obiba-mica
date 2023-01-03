@@ -125,7 +125,6 @@
     });
 
     this.refreshTaxonomyCache = function () {
-      $scope.clearCache();
       getClassificationTaxonomies();
     };
 

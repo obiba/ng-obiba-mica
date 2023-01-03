@@ -81,7 +81,6 @@
     });
 
     this.refreshTaxonomyCache = function (target, taxonomyName) {
-      $scope.clearCache();
       getPanelTaxonomies(target, taxonomyName);
     };
 

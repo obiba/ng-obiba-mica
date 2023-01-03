@@ -13,14 +13,13 @@
 (function () {
 
   ngObibaMica.search
-    .factory('TaxonomiesResource', ['$resource', 'ngObibaMicaUrl', '$cacheFactory', 'SetService', '$translate',
-      function ($resource, ngObibaMicaUrl, $cacheFactory, SetService, $translate) {
+    .factory('TaxonomiesResource', ['$resource', 'ngObibaMicaUrl', 'SetService', '$translate',
+      function ($resource, ngObibaMicaUrl, SetService, $translate) {
         return $resource(ngObibaMicaUrl.getUrl('TaxonomiesResource'), {}, {
           'get': {
             method: 'GET',
             isArray: true,
             errorHandler: true,
-            cache: $cacheFactory('taxonomiesResource'),
             transformResponse: (data) => {
               var parsedData = JSON.parse(data);
 

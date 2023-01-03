@@ -116,13 +116,6 @@
       $scope.onSelectTerm(target, taxonomy, vocabulary, args);
     };
 
-    this.clearCache = function () {
-      var taxonomyResourceCache = $cacheFactory.get('taxonomyResource');
-      if (taxonomyResourceCache) {
-        taxonomyResourceCache.removeAll();
-      }
-    };
-
     var self = this;
 
     $scope.$on('$locationChangeSuccess', function () {
@@ -142,5 +135,4 @@
 
     $scope.navigateTaxonomy = this.navigateTaxonomy;
     $scope.selectTerm = this.selectTerm;
-    $scope.clearCache = this.clearCache;
   }

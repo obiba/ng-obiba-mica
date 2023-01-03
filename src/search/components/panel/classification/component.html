@@ -1,4 +1,4 @@
-<div ng-show="!inSearchMode()" class="voffset2">
+<div class="voffset2">
     <div>
       <ol class="breadcrumb">
         <li ng-if="!taxonomies.taxonomy">
@@ -97,15 +97,15 @@
         <div ng-repeat="term in taxonomies.vocabulary.terms" ng-if="$index % 3 == 0" class="row">
           <div class="col-md-4">
             <div term-panel target="taxonomies.target" taxonomy="taxonomies.taxonomy" vocabulary="taxonomies.vocabulary" term="taxonomies.vocabulary.terms[$index]"
-                 lang="lang" on-navigate="navigateTaxonomy" on-select="selectTerm"></div>
+                 lang="lang" on-navigate="navigateTaxonomy"></div>
           </div>
           <div class="col-md-4">
             <div term-panel target="taxonomies.target" taxonomy="taxonomies.taxonomy" vocabulary="taxonomies.vocabulary" term="taxonomies.vocabulary.terms[$index + 1]"
-                 lang="lang" on-navigate="navigateTaxonomy" on-select="selectTerm"></div>
+                 lang="lang" on-navigate="navigateTaxonomy"></div>
           </div>
           <div class="col-md-4">
             <div term-panel target="taxonomies.target" taxonomy="taxonomies.taxonomy" vocabulary="taxonomies.vocabulary" term="taxonomies.vocabulary.terms[$index + 2]"
-                 lang="lang" on-navigate="navigateTaxonomy" on-select="selectTerm"></div>
+                 lang="lang" on-navigate="navigateTaxonomy"></div>
           </div>
         </div>
       </div>

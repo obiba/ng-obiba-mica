@@ -19,8 +19,7 @@
         taxonomy: '=',
         vocabulary: '=',
         term: '=',
-        lang: '=',
-        onSelect: '='
+        lang: '='
       },
       templateUrl: 'search/components/panel/term-panel/component.html'
     };

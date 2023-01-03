@@ -20,7 +20,6 @@
           'get': {
             method: 'GET',
             errorHandler: true,
-            cache: $cacheFactory('taxonomyResource'),
             transformResponse: (data) => {
               var taxonomy = JSON.parse(data);
 

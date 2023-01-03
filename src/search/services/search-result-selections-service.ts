@@ -7,15 +7,6 @@ class SearchResultSelectionsService {
     this.decorators = {};
   }
 
-  public decorateSearchResult(type: string, searchResult: any): void {
-    if (!this.decorators[type]) {
-      this.decorators[type] =
-        new SearchResultSelectionsDecorator(QUERY_TARGETS.VARIABLE, this.PaginationService);
-    }
-
-    this.decorators[type].decorate(searchResult);
-  }
-
   public getSelections(type: string): any {
     return this.decorators[type] ? this.decorators[type].getSelections() : {};
   }
