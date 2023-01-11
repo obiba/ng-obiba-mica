@@ -2,24 +2,28 @@
   <div class="panel panel-default" ng-if="taxonomy">
     <div class="panel-heading">
       <div ng-repeat="label in taxonomy.title" ng-if="label.locale === lang">
-        <a href ng-click="onNavigate(taxonomy)">{{label.text}}</a>
-        <a href ng-click="onUp(taxonomy)">
+        <a href ng-click="onNavigate(taxonomy)">
+          <span ng-if="taxonomy.props.hidden !== 'true'">{{label.text}}</span>
+          <em ng-if="taxonomy.props.hidden === 'true'">{{label.text}}</em>
+        </a>
+        <a href ng-click="onUp(taxonomy)" ng-if="!taxonomy.props._first">
           <i class="fa fa-arrow-up" title="{{'up' | translate}}"></i>
         </a>
-        <a href ng-click="onDown(taxonomy)">
+        <a href ng-click="onDown(taxonomy)" ng-if="!taxonomy.props._last">
           <i class="fa fa-arrow-down" title="{{'down' | translate}}"></i>
         </a>
-        <a href ng-click="onHide(taxonomy)" ng-if="taxonomy.attrs.hidden !== 'true'">
+        <a href ng-click="onHide(taxonomy)" ng-if="taxonomy.props.hidden !== 'true'">
           <i class="fa fa-eye-slash" title="{{'hide' | translate}}"></i>
         </a>
-        <a href ng-click="onShow(taxonomy)" ng-if="taxonomy.attrs.hidden === 'true'">
+        <a href ng-click="onShow(taxonomy)" ng-if="taxonomy.props.hidden === 'true'">
           <i class="fa fa-eye" title="{{'show' | translate}}"></i>
         </a>
       </div>
     </div>
     <div class="panel-body">
       <div ng-repeat="label in taxonomy.description" ng-if="label.locale === lang">
-        {{label.text}}
+        <span ng-if="taxonomy.props.hidden !== 'true'">{{label.text}}</span>
+        <em ng-if="taxonomy.props.hidden === 'true'">{{label.text}}</em>
       </div>
     </div>
   </div>

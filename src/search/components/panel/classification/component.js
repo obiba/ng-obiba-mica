@@ -64,6 +64,13 @@
 
             taxonomy.title = v.title;
             taxonomy.description = v.description;
+            taxonomy.props = {
+              _first: true,
+              _last: true
+            };
+            if (taxonomy.attributes) {
+              taxonomy.attributes.forEach(attr => taxonomy.props[attr.key] = attr.value);
+            }
             return { title: null, taxonomies: [taxonomy] };
           }
 
@@ -83,14 +90,16 @@
                 taxonomy.attributes = t.attributes;
               }
             }
-            taxonomy.attrs = {};  
+            taxonomy.props = {};  
             if (taxonomy.attributes) {
-              taxonomy.attributes.forEach(attr => taxonomy.attrs[attr.key] = attr.value);
+              taxonomy.attributes.forEach(attr => taxonomy.props[attr.key] = attr.value);
             }
             return taxonomy;
           }).filter(function (t) {
             return t;
           });
+          taxonomies[0].props._first = true;
+          taxonomies[taxonomies.length - 1].props._last = true;
 
           var title = v.title.filter(function (t) {
             return t.locale === $scope.lang;

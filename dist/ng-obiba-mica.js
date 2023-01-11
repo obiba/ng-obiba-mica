@@ -9578,6 +9578,13 @@ function BaseTaxonomiesController($rootScope, $scope, $translate, $location, Met
                         }
                         taxonomy.title = v.title;
                         taxonomy.description = v.description;
+                        taxonomy.props = {
+                            _first: true,
+                            _last: true
+                        };
+                        if (taxonomy.attributes) {
+                            taxonomy.attributes.forEach(function (attr) { return taxonomy.props[attr.key] = attr.value; });
+                        }
                         return { title: null, taxonomies: [taxonomy] };
                     }
                     var taxonomies = v.terms.map(function (t) {
@@ -9595,14 +9602,16 @@ function BaseTaxonomiesController($rootScope, $scope, $translate, $location, Met
                                 taxonomy.attributes = t.attributes;
                             }
                         }
-                        taxonomy.attrs = {};
+                        taxonomy.props = {};
                         if (taxonomy.attributes) {
-                            taxonomy.attributes.forEach(function (attr) { return taxonomy.attrs[attr.key] = attr.value; });
+                            taxonomy.attributes.forEach(function (attr) { return taxonomy.props[attr.key] = attr.value; });
                         }
                         return taxonomy;
                     }).filter(function (t) {
                         return t;
                     });
+                    taxonomies[0].props._first = true;
+                    taxonomies[taxonomies.length - 1].props._last = true;
                     var title = v.title.filter(function (t) {
                         return t.locale === $scope.lang;
                     })[0];
@@ -17377,24 +17386,28 @@ angular.module("search/components/panel/taxonomy-panel/component.html", []).run(
     "  <div class=\"panel panel-default\" ng-if=\"taxonomy\">\n" +
     "    <div class=\"panel-heading\">\n" +
     "      <div ng-repeat=\"label in taxonomy.title\" ng-if=\"label.locale === lang\">\n" +
-    "        <a href ng-click=\"onNavigate(taxonomy)\">{{label.text}}</a>\n" +
-    "        <a href ng-click=\"onUp(taxonomy)\">\n" +
+    "        <a href ng-click=\"onNavigate(taxonomy)\">\n" +
+    "          <span ng-if=\"taxonomy.props.hidden !== 'true'\">{{label.text}}</span>\n" +
+    "          <em ng-if=\"taxonomy.props.hidden === 'true'\">{{label.text}}</em>\n" +
+    "        </a>\n" +
+    "        <a href ng-click=\"onUp(taxonomy)\" ng-if=\"!taxonomy.props._first\">\n" +
     "          <i class=\"fa fa-arrow-up\" title=\"{{'up' | translate}}\"></i>\n" +
     "        </a>\n" +
-    "        <a href ng-click=\"onDown(taxonomy)\">\n" +
+    "        <a href ng-click=\"onDown(taxonomy)\" ng-if=\"!taxonomy.props._last\">\n" +
     "          <i class=\"fa fa-arrow-down\" title=\"{{'down' | translate}}\"></i>\n" +
     "        </a>\n" +
-    "        <a href ng-click=\"onHide(taxonomy)\" ng-if=\"taxonomy.attrs.hidden !== 'true'\">\n" +
+    "        <a href ng-click=\"onHide(taxonomy)\" ng-if=\"taxonomy.props.hidden !== 'true'\">\n" +
     "          <i class=\"fa fa-eye-slash\" title=\"{{'hide' | translate}}\"></i>\n" +
     "        </a>\n" +
-    "        <a href ng-click=\"onShow(taxonomy)\" ng-if=\"taxonomy.attrs.hidden === 'true'\">\n" +
+    "        <a href ng-click=\"onShow(taxonomy)\" ng-if=\"taxonomy.props.hidden === 'true'\">\n" +
     "          <i class=\"fa fa-eye\" title=\"{{'show' | translate}}\"></i>\n" +
     "        </a>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "    <div class=\"panel-body\">\n" +
     "      <div ng-repeat=\"label in taxonomy.description\" ng-if=\"label.locale === lang\">\n" +
-    "        {{label.text}}\n" +
+    "        <span ng-if=\"taxonomy.props.hidden !== 'true'\">{{label.text}}</span>\n" +
+    "        <em ng-if=\"taxonomy.props.hidden === 'true'\">{{label.text}}</em>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
