@@ -14,68 +14,24 @@
 var QUERY_GROWL_EVENT = 'query.growl-event';
 
 (function () {
-  function manageSearchHelpText($scope, $translate, $cookies) {
-    var cookiesSearchHelp = 'micaHideSearchHelpText';
-    var cookiesClassificationHelp = 'micaHideClassificationHelpBox';
-
-    $translate(['search.help', 'search.coverage-help'])
-      .then(function (translation) {
-        if (!$scope.options.SearchHelpText && !$cookies.get(cookiesSearchHelp)) {
-          $scope.options.SearchHelpText = translation['search.help'];
-        }
-        if (!$scope.options.ClassificationHelpText && !$cookies.get(cookiesClassificationHelp)) {
-          $scope.options.ClassificationHelpText = translation['classifications.help'];
-        }
-      });
-
-    // Close the Help search box and set the local cookies
-    $scope.closeHelpBox = function () {
-      $cookies.put(cookiesSearchHelp, true);
-      $scope.options.SearchHelpText = null;
-    };
-
-    // Close the Help classification box and set the local cookies
-    $scope.closeClassificationHelpBox = function () {
-      $cookies.put(cookiesClassificationHelp, true);
-      $scope.options.ClassificationHelpText = null;
-    };
-
-    // Retrieve from local cookies if user has disabled the Help Search Box and hide the box if true
-    if ($cookies.get(cookiesSearchHelp)) {
-      $scope.options.SearchHelpText = null;
-    }
-
-    // Retrieve from local cookies if user has disabled the Help Classification Box and hide the box if true
-    if ($cookies.get(cookiesClassificationHelp)) {
-      $scope.options.ClassificationHelpText = null;
-    }
-  }
-
   ngObibaMica.search
     .controller('SearchController', ['$timeout',
       '$scope',
-      '$rootScope',
       '$location',
       '$translate',
       '$filter',
-      '$cookies',
-      'ngObibaMicaSearchTemplateUrl',
       'AlertService',
       'LocalizedValues',
       'options',
       function ($timeout, $scope,
-        $rootScope,
         $location,
         $translate,
         $filter,
-        $cookies,
-        ngObibaMicaSearchTemplateUrl,
         AlertService,
         LocalizedValues,
         options) {
 
         $scope.options = options;
-        manageSearchHelpText($scope, $translate, $cookies);
 
         $scope.taxonomyTypeMap = { //backwards compatibility for pluralized naming in configs.
           variable: 'variables',
@@ -158,7 +114,6 @@ var QUERY_GROWL_EVENT = 'query.growl-event';
           });
         });
 
-        $scope.classificationsHeaderTemplateUrl = ngObibaMicaSearchTemplateUrl.getHeaderUrl('classifications');
         $scope.onSelectTerm = onSelectTerm;
 
         $scope.toggleFullscreen = function (fullscreen) {

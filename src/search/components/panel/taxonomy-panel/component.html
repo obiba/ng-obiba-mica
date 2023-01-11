@@ -3,6 +3,18 @@
     <div class="panel-heading">
       <div ng-repeat="label in taxonomy.title" ng-if="label.locale === lang">
         <a href ng-click="onNavigate(taxonomy)">{{label.text}}</a>
+        <a href ng-click="onUp(taxonomy)">
+          <i class="fa fa-arrow-up" title="{{'up' | translate}}"></i>
+        </a>
+        <a href ng-click="onDown(taxonomy)">
+          <i class="fa fa-arrow-down" title="{{'down' | translate}}"></i>
+        </a>
+        <a href ng-click="onHide(taxonomy)" ng-if="taxonomy.attrs.hidden !== 'true'">
+          <i class="fa fa-eye-slash" title="{{'hide' | translate}}"></i>
+        </a>
+        <a href ng-click="onShow(taxonomy)" ng-if="taxonomy.attrs.hidden === 'true'">
+          <i class="fa fa-eye" title="{{'show' | translate}}"></i>
+        </a>
       </div>
     </div>
     <div class="panel-body">

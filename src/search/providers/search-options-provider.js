@@ -50,7 +50,6 @@
       showSearchBox: true,
       showSearchBrowser: true,
       showCopyQuery: true,
-      showSearchRefreshButton: false,
       variableTaxonomiesOrder: [],
       studyTaxonomiesOrder: [],
       datasetTaxonomiesOrder: [],
@@ -273,7 +272,6 @@
           var updatedOptions = {
             searchLayout: micaConfig.searchLayout,
             locale: micaConfig.languages || $translate.use(),
-            showSearchRefreshButton: true,
             networks: {
               showSearchTab: hasMultipleNetworks,
               networksColumn: {

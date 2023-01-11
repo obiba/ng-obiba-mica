@@ -10,7 +10,7 @@
   * @param $scope
   * @param $translate
   * @param $location
-  * @param TaxonomyResource
+  * @param MetaTaxonomyResource
   * @param TaxonomiesResource
   * @param ngObibaMicaSearch
   * @param RqlQueryUtils
@@ -22,28 +22,28 @@
     $scope,
     $translate,
     $location,
-    TaxonomyResource,
+    MetaTaxonomyResource,
+    MetaTaxonomyMoveResource,
+    MetaTaxonomyAttributeResource,
     TaxonomiesResource,
     ngObibaMicaSearch,
     RqlQueryUtils,
-    $cacheFactory,
     VocabularyService) {
     BaseTaxonomiesController.call(this,
       $rootScope,
       $scope,
       $translate,
       $location,
-      TaxonomyResource,
-      TaxonomiesResource,
+      MetaTaxonomyResource,
+      MetaTaxonomyMoveResource,
+      MetaTaxonomyAttributeResource,
       ngObibaMicaSearch,
       RqlQueryUtils,
-      $cacheFactory,
       VocabularyService);
 
     var groupTaxonomies = function (taxonomies, target) {
       var res = taxonomies.reduce(function (res, t) {
         if (target) {
-          t.vocabularies = VocabularyService.visibleVocabularies(t.vocabularies);
           res[t.name] = t;
           return res;
         }
@@ -76,10 +76,22 @@
 
             taxonomy.title = t.title;
             taxonomy.description = t.description;
+            if (t.attributes) {
+              if (taxonomy.attributes) {
+                taxonomy.attributes = taxonomy.attributes.concat(t.attributes);
+              } else {
+                taxonomy.attributes = t.attributes;
+              }
+            }
+            taxonomy.attrs = {};  
+            if (taxonomy.attributes) {
+              taxonomy.attributes.forEach(attr => taxonomy.attrs[attr.key] = attr.value);
+            }
             return taxonomy;
           }).filter(function (t) {
             return t;
           });
+
           var title = v.title.filter(function (t) {
             return t.locale === $scope.lang;
           })[0];
@@ -102,7 +114,8 @@
 
     function getClassificationTaxonomies() {
       TaxonomiesResource.get({
-        target: $scope.taxonomies.target
+        target: $scope.taxonomies.target,
+        mode: 'admin'
       }, function onSuccess(taxonomies) {
         $scope.taxonomies.all = taxonomies;
         groupTaxonomies(taxonomies, $scope.taxonomies.target);
@@ -124,6 +137,10 @@
       }
     });
 
+    $scope.$watch('metaTaxonomy', function () {
+      getClassificationTaxonomies();
+    });
+
     this.refreshTaxonomyCache = function () {
       getClassificationTaxonomies();
     };
@@ -136,11 +153,12 @@
       '$scope',
       '$translate',
       '$location',
-      'TaxonomyResource',
+      'MetaTaxonomyResource',
+      'MetaTaxonomyMoveResource',
+      'MetaTaxonomyAttributeResource',
       'TaxonomiesResource',
       'ngObibaMicaSearch',
       'RqlQueryUtils',
-      '$cacheFactory',
       'VocabularyService',
       ClassificationPanelController])
 

@@ -15,19 +15,16 @@
     $scope,
     $translate,
     $location,
-    TaxonomyResource,
-    TaxonomiesResource,
+    MetaTaxonomyResource,
+    MetaTaxonomyMoveResource,
+    MetaTaxonomyAttributeResource,
     ngObibaMicaSearch,
     RqlQueryUtils,
-    $cacheFactory,
     VocabularyService) {
 
     $scope.options = ngObibaMicaSearch.getOptions();
     $scope.RqlQueryUtils = RqlQueryUtils;
-    $scope.metaTaxonomy = TaxonomyResource.get({
-      target: 'taxonomy',
-      taxonomy: 'Mica_taxonomy'
-    });
+    $scope.metaTaxonomy = MetaTaxonomyResource.get();
 
     $scope.taxonomies = {
       all: [],
@@ -79,6 +76,56 @@
 
         $scope.taxonomies.vocabulary = vocabulary;
       }
+    };
+
+    this.moveTaxonomyUp = function (taxonomy) {
+      MetaTaxonomyMoveResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        dir: 'up'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
+    };
+
+    this.moveTaxonomyDown = function (taxonomy) {
+      MetaTaxonomyMoveResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        dir: 'down'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
+    };
+
+    this.isTaxonomyHidden = function (taxonomy) {
+      if (taxonomy.attributes) {
+        var attr = taxonomy.attributes.filter(attr => attr.key === 'hidden').pop();
+        return attr && attr.value === 'true';
+      }
+      return false;
+    };
+
+    this.hideTaxonomy = function (taxonomy) {
+      MetaTaxonomyAttributeResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        name: 'hidden',
+        value: 'true'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
+    };
+
+    this.showTaxonomy = function (taxonomy) {
+      MetaTaxonomyAttributeResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        name: 'hidden',
+        value: 'false'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
     };
 
     this.updateStateFromLocation = function () {
@@ -134,5 +181,9 @@
     });
 
     $scope.navigateTaxonomy = this.navigateTaxonomy;
+    $scope.moveTaxonomyUp = this.moveTaxonomyUp;
+    $scope.moveTaxonomyDown = this.moveTaxonomyDown;
+    $scope.hideTaxonomy = this.hideTaxonomy;
+    $scope.showTaxonomy = this.showTaxonomy;
     $scope.selectTerm = this.selectTerm;
   }

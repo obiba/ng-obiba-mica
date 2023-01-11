@@ -27,6 +27,7 @@
     function getTaxonomiesInternal(target, taxonomyNames) {
       return TaxonomiesResource.get({
         target: target,
+        mode: 'admin',
         query: 'taxonomyName:' + taxonomyNames.join(' OR taxonomyName:')
       }).$promise;
     }

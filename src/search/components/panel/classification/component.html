@@ -23,7 +23,7 @@
             {{label.text}}
           </span>
         </li>
-        <a ng-if="options.showSearchRefreshButton" title="{{'search.refresh-taxonomies' | translate}}"
+        <a title="{{'search.refresh-taxonomies' | translate}}"
            href class="hoffset1" ng-click="refreshTaxonomyCache()">
           <span class="fa fa-refresh"></span>
         </a>
@@ -42,15 +42,27 @@
             <div ng-repeat="taxonomy in group.taxonomies" ng-if="$index % 3 == 0" class="row">
               <div class="col-md-4">
                 <div taxonomy-panel taxonomy="group.taxonomies[$index]" lang="lang"
-                     on-navigate="navigateTaxonomy"></div>
+                     on-navigate="navigateTaxonomy"
+                     on-up="moveTaxonomyUp"
+                     on-down="moveTaxonomyDown"
+                     on-hide="hideTaxonomy"
+                     on-show="showTaxonomy"></div>
               </div>
               <div class="col-md-4">
                 <div taxonomy-panel taxonomy="group.taxonomies[$index + 1]" lang="lang"
-                     on-navigate="navigateTaxonomy"></div>
+                     on-navigate="navigateTaxonomy"
+                     on-up="moveTaxonomyUp"
+                     on-down="moveTaxonomyDown"
+                     on-hide="hideTaxonomy"
+                     on-show="showTaxonomy"></div>
               </div>
               <div class="col-md-4">
                 <div taxonomy-panel taxonomy="group.taxonomies[$index + 2]" lang="lang"
-                     on-navigate="navigateTaxonomy"></div>
+                     on-navigate="navigateTaxonomy"
+                     on-up="moveTaxonomyUp"
+                     on-down="moveTaxonomyDown"
+                     on-hide="hideTaxonomy"
+                     on-show="showTaxonomy"></div>
               </div>
             </div>
           </div>
@@ -70,15 +82,15 @@
         <div ng-repeat="vocabulary in taxonomies.taxonomy.vocabularies" ng-if="$index % 3 == 0" class="row">
           <div class="col-md-4">
             <div vocabulary-panel target="taxonomies.target" taxonomy="taxonomies.taxonomy" vocabulary="taxonomies.taxonomy.vocabularies[$index]"
-                 lang="lang" on-navigate="navigateTaxonomy" on-select="selectTerm"></div>
+                 lang="lang" on-navigate="navigateTaxonomy"></div>
           </div>
           <div class="col-md-4">
             <div vocabulary-panel target="taxonomies.target" taxonomy="taxonomies.taxonomy" vocabulary="taxonomies.taxonomy.vocabularies[$index + 1]"
-                 lang="lang" on-navigate="navigateTaxonomy" on-select="selectTerm"></div>
+                 lang="lang" on-navigate="navigateTaxonomy"></div>
           </div>
           <div class="col-md-4">
             <div vocabulary-panel target="taxonomies.target" taxonomy="taxonomies.taxonomy" vocabulary="taxonomies.taxonomy.vocabularies[$index + 2]"
-                 lang="lang" on-navigate="navigateTaxonomy" on-select="selectTerm"></div>
+                 lang="lang" on-navigate="navigateTaxonomy"></div>
           </div>
         </div>
       </div>
