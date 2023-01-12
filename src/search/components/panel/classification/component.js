@@ -6,44 +6,32 @@
   /**
   * ClassificationPanelController
   * 
-  * @param $rootScope
-  * @param $scope
-  * @param $translate
-  * @param $location
-  * @param TaxonomyResource
-  * @param TaxonomiesResource
-  * @param ngObibaMicaSearch
-  * @param RqlQueryUtils
-  * @param $cacheFactory
-  * @param VocabularyService
   * @constructor
   */
   function ClassificationPanelController($rootScope,
     $scope,
     $translate,
     $location,
-    TaxonomyResource,
+    MetaTaxonomyResource,
+    MetaTaxonomyMoveResource,
+    MetaTaxonomyAttributeResource,
     TaxonomiesResource,
     ngObibaMicaSearch,
-    RqlQueryUtils,
-    $cacheFactory,
     VocabularyService) {
     BaseTaxonomiesController.call(this,
       $rootScope,
       $scope,
       $translate,
       $location,
-      TaxonomyResource,
-      TaxonomiesResource,
+      MetaTaxonomyResource,
+      MetaTaxonomyMoveResource,
+      MetaTaxonomyAttributeResource,
       ngObibaMicaSearch,
-      RqlQueryUtils,
-      $cacheFactory,
       VocabularyService);
 
     var groupTaxonomies = function (taxonomies, target) {
       var res = taxonomies.reduce(function (res, t) {
         if (target) {
-          t.vocabularies = VocabularyService.visibleVocabularies(t.vocabularies);
           res[t.name] = t;
           return res;
         }
@@ -64,6 +52,20 @@
 
             taxonomy.title = v.title;
             taxonomy.description = v.description;
+            taxonomy.props = {
+              _first: true,
+              _last: true
+            };
+            if (v.attributes) {
+              if (taxonomy.attributes) {
+                taxonomy.attributes = taxonomy.attributes.concat(v.attributes);
+              } else {
+                taxonomy.attributes = v.attributes;
+              }
+            }
+            if (taxonomy.attributes) {
+              taxonomy.attributes.forEach(attr => taxonomy.props[attr.key] = attr.value);
+            }
             return { title: null, taxonomies: [taxonomy] };
           }
 
@@ -76,10 +78,24 @@
 
             taxonomy.title = t.title;
             taxonomy.description = t.description;
+            if (t.attributes) {
+              if (taxonomy.attributes) {
+                taxonomy.attributes = taxonomy.attributes.concat(t.attributes);
+              } else {
+                taxonomy.attributes = t.attributes;
+              }
+            }
+            taxonomy.props = {};  
+            if (taxonomy.attributes) {
+              taxonomy.attributes.forEach(attr => taxonomy.props[attr.key] = attr.value);
+            }
             return taxonomy;
           }).filter(function (t) {
             return t;
           });
+          taxonomies[0].props._first = true;
+          taxonomies[taxonomies.length - 1].props._last = true;
+
           var title = v.title.filter(function (t) {
             return t.locale === $scope.lang;
           })[0];
@@ -102,7 +118,8 @@
 
     function getClassificationTaxonomies() {
       TaxonomiesResource.get({
-        target: $scope.taxonomies.target
+        target: $scope.taxonomies.target,
+        mode: 'admin'
       }, function onSuccess(taxonomies) {
         $scope.taxonomies.all = taxonomies;
         groupTaxonomies(taxonomies, $scope.taxonomies.target);
@@ -124,8 +141,11 @@
       }
     });
 
+    $scope.$watch('metaTaxonomy', function () {
+      getClassificationTaxonomies();
+    });
+
     this.refreshTaxonomyCache = function () {
-      $scope.clearCache();
       getClassificationTaxonomies();
     };
 
@@ -137,11 +157,11 @@
       '$scope',
       '$translate',
       '$location',
-      'TaxonomyResource',
+      'MetaTaxonomyResource',
+      'MetaTaxonomyMoveResource',
+      'MetaTaxonomyAttributeResource',
       'TaxonomiesResource',
       'ngObibaMicaSearch',
-      'RqlQueryUtils',
-      '$cacheFactory',
       'VocabularyService',
       ClassificationPanelController])
 

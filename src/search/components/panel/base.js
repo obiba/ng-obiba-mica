@@ -15,19 +15,14 @@
     $scope,
     $translate,
     $location,
-    TaxonomyResource,
-    TaxonomiesResource,
+    MetaTaxonomyResource,
+    MetaTaxonomyMoveResource,
+    MetaTaxonomyAttributeResource,
     ngObibaMicaSearch,
-    RqlQueryUtils,
-    $cacheFactory,
     VocabularyService) {
 
     $scope.options = ngObibaMicaSearch.getOptions();
-    $scope.RqlQueryUtils = RqlQueryUtils;
-    $scope.metaTaxonomy = TaxonomyResource.get({
-      target: 'taxonomy',
-      taxonomy: 'Mica_taxonomy'
-    });
+    $scope.metaTaxonomy = MetaTaxonomyResource.get();
 
     $scope.taxonomies = {
       all: [],
@@ -48,10 +43,6 @@
 
     // vocabulary (or term) will appear in navigation iff it doesn't have the 'showNavigate' attribute
     $scope.canNavigate = function (vocabulary) {
-      if ($scope.options.hideNavigate.indexOf(vocabulary.name) > -1) {
-        return false;
-      }
-
       return (vocabulary.attributes || []).filter(function (attr) { return attr.key === 'showNavigate'; }).length === 0;
     };
 
@@ -79,6 +70,56 @@
 
         $scope.taxonomies.vocabulary = vocabulary;
       }
+    };
+
+    this.moveTaxonomyUp = function (taxonomy) {
+      MetaTaxonomyMoveResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        dir: 'up'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
+    };
+
+    this.moveTaxonomyDown = function (taxonomy) {
+      MetaTaxonomyMoveResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        dir: 'down'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
+    };
+
+    this.isTaxonomyHidden = function (taxonomy) {
+      if (taxonomy.attributes) {
+        var attr = taxonomy.attributes.filter(attr => attr.key === 'hidden').pop();
+        return attr && attr.value === 'true';
+      }
+      return false;
+    };
+
+    this.hideTaxonomy = function (taxonomy) {
+      MetaTaxonomyAttributeResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        name: 'hidden',
+        value: 'true'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
+    };
+
+    this.showTaxonomy = function (taxonomy) {
+      MetaTaxonomyAttributeResource.put({
+        target: $scope.target,
+        taxonomy: taxonomy.name,
+        name: 'hidden',
+        value: 'false'
+      }).$promise.then(function() {
+        $scope.metaTaxonomy = MetaTaxonomyResource.get();
+      });
     };
 
     this.updateStateFromLocation = function () {
@@ -116,13 +157,6 @@
       $scope.onSelectTerm(target, taxonomy, vocabulary, args);
     };
 
-    this.clearCache = function () {
-      var taxonomyResourceCache = $cacheFactory.get('taxonomyResource');
-      if (taxonomyResourceCache) {
-        taxonomyResourceCache.removeAll();
-      }
-    };
-
     var self = this;
 
     $scope.$on('$locationChangeSuccess', function () {
@@ -130,17 +164,11 @@
         self.updateStateFromLocation();
       }
     });
-    $scope.$watch('taxonomies.vocabulary', function (value) {
-      if (RqlQueryUtils && value) {
-        $scope.taxonomies.isNumericVocabulary = VocabularyService.isNumericVocabulary($scope.taxonomies.vocabulary);
-        $scope.taxonomies.isMatchVocabulary = VocabularyService.isMatchVocabulary($scope.taxonomies.vocabulary);
-      } else {
-        $scope.taxonomies.isNumericVocabulary = null;
-        $scope.taxonomies.isMatchVocabulary = null;
-      }
-    });
 
     $scope.navigateTaxonomy = this.navigateTaxonomy;
+    $scope.moveTaxonomyUp = this.moveTaxonomyUp;
+    $scope.moveTaxonomyDown = this.moveTaxonomyDown;
+    $scope.hideTaxonomy = this.hideTaxonomy;
+    $scope.showTaxonomy = this.showTaxonomy;
     $scope.selectTerm = this.selectTerm;
-    $scope.clearCache = this.clearCache;
   }

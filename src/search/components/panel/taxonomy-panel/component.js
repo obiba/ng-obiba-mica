@@ -17,7 +17,11 @@
       scope: {
         taxonomy: '=',
         lang: '=',
-        onNavigate: '='
+        onNavigate: '=',
+        onUp: '=',
+        onDown: '=',
+        onHide: '=',
+        onShow: '='
       },
       templateUrl: 'search/components/panel/taxonomy-panel/component.html'
     };

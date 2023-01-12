@@ -10,7 +10,7 @@
 
 'use strict';
 (function () {
-  ngObibaMica.search.VocabularyPanel = function () {
+  function VocabularyPanel() {
     return {
       restrict: 'EA',
       replace: true,
@@ -19,14 +19,11 @@
         taxonomy: '=',
         vocabulary: '=',
         lang: '=',
-        onNavigate: '=',
-        onSelect: '=',
-        onHideSearchNavigate: '=',
-        isInHideNavigate: '='
+        onNavigate: '='
       },
       templateUrl: 'search/components/panel/vocabulary-panel/component.html'
     };
-  };
+  }
 
-  ngObibaMica.search.directive('vocabularyPanel', [ngObibaMica.search.VocabularyPanel]);
+  ngObibaMica.search.directive('vocabularyPanel', [VocabularyPanel]);
 })();
