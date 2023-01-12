@@ -19,9 +19,7 @@
         taxonomy: '=',
         vocabulary: '=',
         lang: '=',
-        onNavigate: '=',
-        onHideSearchNavigate: '=',
-        isInHideNavigate: '='
+        onNavigate: '='
       },
       templateUrl: 'search/components/panel/vocabulary-panel/component.html'
     };

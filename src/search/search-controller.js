@@ -133,8 +133,5 @@ var QUERY_GROWL_EVENT = 'query.growl-event';
         }
 
         init();
-      }])
-
-    .controller('ResultTabsOrderCountController', [function () {
-    }]);
+      }]);
 })();

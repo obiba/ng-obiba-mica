@@ -6,16 +6,6 @@
   /**
   * ClassificationPanelController
   * 
-  * @param $rootScope
-  * @param $scope
-  * @param $translate
-  * @param $location
-  * @param MetaTaxonomyResource
-  * @param TaxonomiesResource
-  * @param ngObibaMicaSearch
-  * @param RqlQueryUtils
-  * @param $cacheFactory
-  * @param VocabularyService
   * @constructor
   */
   function ClassificationPanelController($rootScope,
@@ -27,7 +17,6 @@
     MetaTaxonomyAttributeResource,
     TaxonomiesResource,
     ngObibaMicaSearch,
-    RqlQueryUtils,
     VocabularyService) {
     BaseTaxonomiesController.call(this,
       $rootScope,
@@ -38,7 +27,6 @@
       MetaTaxonomyMoveResource,
       MetaTaxonomyAttributeResource,
       ngObibaMicaSearch,
-      RqlQueryUtils,
       VocabularyService);
 
     var groupTaxonomies = function (taxonomies, target) {
@@ -174,7 +162,6 @@
       'MetaTaxonomyAttributeResource',
       'TaxonomiesResource',
       'ngObibaMicaSearch',
-      'RqlQueryUtils',
       'VocabularyService',
       ClassificationPanelController])
 

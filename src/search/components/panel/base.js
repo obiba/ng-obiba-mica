@@ -19,11 +19,9 @@
     MetaTaxonomyMoveResource,
     MetaTaxonomyAttributeResource,
     ngObibaMicaSearch,
-    RqlQueryUtils,
     VocabularyService) {
 
     $scope.options = ngObibaMicaSearch.getOptions();
-    $scope.RqlQueryUtils = RqlQueryUtils;
     $scope.metaTaxonomy = MetaTaxonomyResource.get();
 
     $scope.taxonomies = {
@@ -45,10 +43,6 @@
 
     // vocabulary (or term) will appear in navigation iff it doesn't have the 'showNavigate' attribute
     $scope.canNavigate = function (vocabulary) {
-      if ($scope.options.hideNavigate.indexOf(vocabulary.name) > -1) {
-        return false;
-      }
-
       return (vocabulary.attributes || []).filter(function (attr) { return attr.key === 'showNavigate'; }).length === 0;
     };
 
@@ -168,15 +162,6 @@
     $scope.$on('$locationChangeSuccess', function () {
       if ($scope.isHistoryEnabled) {
         self.updateStateFromLocation();
-      }
-    });
-    $scope.$watch('taxonomies.vocabulary', function (value) {
-      if (RqlQueryUtils && value) {
-        $scope.taxonomies.isNumericVocabulary = VocabularyService.isNumericVocabulary($scope.taxonomies.vocabulary);
-        $scope.taxonomies.isMatchVocabulary = VocabularyService.isMatchVocabulary($scope.taxonomies.vocabulary);
-      } else {
-        $scope.taxonomies.isNumericVocabulary = null;
-        $scope.taxonomies.isMatchVocabulary = null;
       }
     });
 

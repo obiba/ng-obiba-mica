@@ -23,8 +23,6 @@ function NgObibaMicaTemplateUrlFactory() {
     'CriterionDropdownTemplate': 'search/components/criteria/item-region/dropdown/component.html',
     'searchResultList': 'search/components/result/search-result/list.html',
     'searchInputList': 'lists/views/input-search-widget/input-search-widget-template.html',
-    'searchResultCoverage': 'search/components/result/search-result/coverage.html',
-    'searchResultGraphics': 'search/components/result/search-result/graphics.html',
     'variableCrosstab': 'analysis/crosstab/views/crosstab-variable-crosstab.html',
     'variableFrequencies': 'analysis/crosstab/views/crosstab-variable-frequencies.html',
     'variableFrequenciesEmpty': 'analysis/crosstab/views/crosstab-variable-frequencies-empty.html',
@@ -102,7 +100,6 @@ function NgObibaMicaTemplateUrlFactory() {
       'obiba.mica.search',
       'obiba.mica.analysis',
       'obiba.mica.sets',
-      'obiba.mica.graphics',
       'obiba.mica.localized',
       'obiba.mica.fileBrowser',
       'angularUtils.directives.dirPagination'

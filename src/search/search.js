@@ -10,13 +10,6 @@
 
 'use strict';
 
-/* exported DISPLAY_TYPES */
-var DISPLAY_TYPES = {
-  LIST: 'list',
-  COVERAGE: 'coverage',
-  GRAPHICS: 'graphics'
-};
-
 ngObibaMica.search = angular.module('obiba.mica.search', [
   'obiba.alert',
   'ui.bootstrap',
