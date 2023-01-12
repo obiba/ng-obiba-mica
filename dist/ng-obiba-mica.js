@@ -3,7 +3,7 @@
  * https://github.com/obiba/ng-obiba-mica
  *
  * License: GNU Public License version 3
- * Date: 2023-01-11
+ * Date: 2023-01-12
  */
 /*
  * Copyright (c) 2018 OBiBa. All rights reserved.
@@ -9582,6 +9582,14 @@ function BaseTaxonomiesController($rootScope, $scope, $translate, $location, Met
                             _first: true,
                             _last: true
                         };
+                        if (v.attributes) {
+                            if (taxonomy.attributes) {
+                                taxonomy.attributes = taxonomy.attributes.concat(v.attributes);
+                            }
+                            else {
+                                taxonomy.attributes = v.attributes;
+                            }
+                        }
                         if (taxonomy.attributes) {
                             taxonomy.attributes.forEach(function (attr) { return taxonomy.props[attr.key] = attr.value; });
                         }
@@ -17245,18 +17253,18 @@ angular.module("search/components/panel/classification/component.html", []).run(
     "            translate}}</a>\n" +
     "        </li>\n" +
     "        <li ng-if=\"taxonomies.taxonomy\">\n" +
-    "          <span ng-repeat=\"label in taxonomies.taxonomy.title\" ng-if=\"!taxonomies.vocabulary && label.locale === lang\">\n" +
-    "            {{label.text}}\n" +
+    "          <span ng-if=\"!taxonomies.vocabulary\">\n" +
+    "            <localized value=\"taxonomies.taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "          </span>\n" +
     "          <a href ng-click=\"navigateTaxonomy(taxonomies.taxonomy)\" ng-if=\"taxonomies.vocabulary\">\n" +
-    "            <span ng-repeat=\"label in taxonomies.taxonomy.title\" ng-if=\"label.locale === lang\">\n" +
-    "              {{label.text}}\n" +
+    "            <span>\n" +
+    "              <localized value=\"taxonomies.taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "            </span>\n" +
     "          </a>\n" +
     "        </li>\n" +
     "        <li ng-if=\"taxonomies.vocabulary\">\n" +
-    "          <span ng-repeat=\"label in taxonomies.vocabulary.title\" ng-if=\"label.locale === lang\">\n" +
-    "            {{label.text}}\n" +
+    "          <span>\n" +
+    "            <localized value=\"taxonomies.vocabulary.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "          </span>\n" +
     "        </li>\n" +
     "        <a title=\"{{'search.refresh-taxonomies' | translate}}\"\n" +
@@ -17384,11 +17392,10 @@ angular.module("search/components/panel/taxonomy-panel/component.html", []).run(
   $templateCache.put("search/components/panel/taxonomy-panel/component.html",
     "<div>\n" +
     "  <div class=\"panel panel-default\" ng-if=\"taxonomy\">\n" +
-    "    <div class=\"panel-heading\">\n" +
-    "      <div ng-repeat=\"label in taxonomy.title\" ng-if=\"label.locale === lang\">\n" +
+    "    <div class=\"panel-heading\" ng-class=\"taxonomy.props.hidden !== 'true' ? '' : 'panel-heading-none'\">\n" +
+    "      <div>\n" +
     "        <a href ng-click=\"onNavigate(taxonomy)\">\n" +
-    "          <span ng-if=\"taxonomy.props.hidden !== 'true'\">{{label.text}}</span>\n" +
-    "          <em ng-if=\"taxonomy.props.hidden === 'true'\">{{label.text}}</em>\n" +
+    "          <localized value=\"taxonomy.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "        </a>\n" +
     "        <a href ng-click=\"onUp(taxonomy)\" ng-if=\"!taxonomy.props._first\">\n" +
     "          <i class=\"fa fa-arrow-up\" title=\"{{'up' | translate}}\"></i>\n" +
@@ -17405,9 +17412,8 @@ angular.module("search/components/panel/taxonomy-panel/component.html", []).run(
     "      </div>\n" +
     "    </div>\n" +
     "    <div class=\"panel-body\">\n" +
-    "      <div ng-repeat=\"label in taxonomy.description\" ng-if=\"label.locale === lang\">\n" +
-    "        <span ng-if=\"taxonomy.props.hidden !== 'true'\">{{label.text}}</span>\n" +
-    "        <em ng-if=\"taxonomy.props.hidden === 'true'\">{{label.text}}</em>\n" +
+    "      <div>\n" +
+    "        <localized value=\"taxonomy.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "  </div>\n" +
@@ -17421,14 +17427,12 @@ angular.module("search/components/panel/term-panel/component.html", []).run(["$t
     "    <div class=\"panel-heading\">\n" +
     "      <div>\n" +
     "        <localized value=\"term.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
-    "        {{label.text}}\n" +
     "      </div>\n" +
     "    </div>\n" +
     "    <div class=\"panel-body\">\n" +
     "      <div>\n" +
     "        <localized value=\"term.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "      </div>\n" +
-    "      <div ng-if=\"!term.description\" class=\"help-block\" translate>search.no-description</div>\n" +
     "    </div>\n" +
     "  </div>\n" +
     "</div>");
@@ -17439,16 +17443,19 @@ angular.module("search/components/panel/vocabulary-panel/component.html", []).ru
     "<div>\n" +
     "  <div class=\"panel panel-default\" ng-if=\"vocabulary\">\n" +
     "    <div class=\"panel-heading\">\n" +
-    "      <div ng-repeat=\"label in vocabulary.title\" ng-if=\"label.locale === lang\" class=\"clearfix\">\n" +
-    "        <a href ng-click=\"onNavigate(taxonomy, vocabulary)\" ng-if=\"vocabulary.terms\">{{label.text}}</a>\n" +
-    "        <span ng-if=\"!vocabulary.terms\">{{label.text}}</span>\n" +
+    "      <div class=\"clearfix\">\n" +
+    "        <a href ng-click=\"onNavigate(taxonomy, vocabulary)\" ng-if=\"vocabulary.terms\">\n" +
+    "          <localized value=\"vocabulary.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
+    "        </a>\n" +
+    "        <span ng-if=\"!vocabulary.terms\">\n" +
+    "          <localized value=\"vocabulary.title\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
+    "        </span>\n" +
     "      </div>\n" +
     "    </div>\n" +
     "    <div class=\"panel-body\">\n" +
     "      <div>\n" +
     "        <localized value=\"vocabulary.description\" lang=\"lang\" key-lang=\"locale\" key-value=\"text\"></localized>\n" +
     "      </div>\n" +
-    "      <div ng-if=\"!vocabulary.description\" class=\"help-block\" translate>search.no-description</div>\n" +
     "    </div>\n" +
     "  </div>\n" +
     "</div>");

@@ -1,10 +1,9 @@
 <div>
   <div class="panel panel-default" ng-if="taxonomy">
-    <div class="panel-heading">
-      <div ng-repeat="label in taxonomy.title" ng-if="label.locale === lang">
+    <div class="panel-heading" ng-class="taxonomy.props.hidden !== 'true' ? '' : 'panel-heading-none'">
+      <div>
         <a href ng-click="onNavigate(taxonomy)">
-          <span ng-if="taxonomy.props.hidden !== 'true'">{{label.text}}</span>
-          <em ng-if="taxonomy.props.hidden === 'true'">{{label.text}}</em>
+          <localized value="taxonomy.title" lang="lang" key-lang="locale" key-value="text"></localized>
         </a>
         <a href ng-click="onUp(taxonomy)" ng-if="!taxonomy.props._first">
           <i class="fa fa-arrow-up" title="{{'up' | translate}}"></i>
@@ -21,9 +20,8 @@
       </div>
     </div>
     <div class="panel-body">
-      <div ng-repeat="label in taxonomy.description" ng-if="label.locale === lang">
-        <span ng-if="taxonomy.props.hidden !== 'true'">{{label.text}}</span>
-        <em ng-if="taxonomy.props.hidden === 'true'">{{label.text}}</em>
+      <div>
+        <localized value="taxonomy.description" lang="lang" key-lang="locale" key-value="text"></localized>
       </div>
     </div>
   </div>

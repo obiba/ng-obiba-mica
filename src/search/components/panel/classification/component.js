@@ -68,6 +68,13 @@
               _first: true,
               _last: true
             };
+            if (v.attributes) {
+              if (taxonomy.attributes) {
+                taxonomy.attributes = taxonomy.attributes.concat(v.attributes);
+              } else {
+                taxonomy.attributes = v.attributes;
+              }
+            }
             if (taxonomy.attributes) {
               taxonomy.attributes.forEach(attr => taxonomy.props[attr.key] = attr.value);
             }

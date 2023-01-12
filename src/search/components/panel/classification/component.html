@@ -9,18 +9,18 @@
             translate}}</a>
         </li>
         <li ng-if="taxonomies.taxonomy">
-          <span ng-repeat="label in taxonomies.taxonomy.title" ng-if="!taxonomies.vocabulary && label.locale === lang">
-            {{label.text}}
+          <span ng-if="!taxonomies.vocabulary">
+            <localized value="taxonomies.taxonomy.title" lang="lang" key-lang="locale" key-value="text"></localized>
           </span>
           <a href ng-click="navigateTaxonomy(taxonomies.taxonomy)" ng-if="taxonomies.vocabulary">
-            <span ng-repeat="label in taxonomies.taxonomy.title" ng-if="label.locale === lang">
-              {{label.text}}
+            <span>
+              <localized value="taxonomies.taxonomy.title" lang="lang" key-lang="locale" key-value="text"></localized>
             </span>
           </a>
         </li>
         <li ng-if="taxonomies.vocabulary">
-          <span ng-repeat="label in taxonomies.vocabulary.title" ng-if="label.locale === lang">
-            {{label.text}}
+          <span>
+            <localized value="taxonomies.vocabulary.title" lang="lang" key-lang="locale" key-value="text"></localized>
           </span>
         </li>
         <a title="{{'search.refresh-taxonomies' | translate}}"
